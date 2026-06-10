@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
 # dplaax rule catalog — chain (イベント連鎖の発行規則)
 # ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
 rules:

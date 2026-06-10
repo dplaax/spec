@@ -10,8 +10,9 @@
   `drafts/v1_001` / `drafts/v1_002` に保存されている。
 - **未転記の規範内容の台帳は、各 rule stub の `source` field に移行した**。
   `status: todo` の entry を grep すれば未転記一覧になる。転記完了で `source` を削除する。
-- **statement 転記は 2026-06-10 に一巡完了**（旧 draft + provin.oss からの抽出・統合）。
-  todo 残は `component.catalog` のみ。全 draft rule は vector 0 本（0.1 条件未達）。
+- **statement 転記は 2026-06-11 に完了**（旧 draft + provin.oss からの抽出・統合、todo 残なし）。
+  component 領域はチェーン挙動を trigger ベースに統一して転記
+  （type ベースの旧規定は置換、各 rule の notes 参照）。全 draft rule は vector 0 本（0.1 条件未達）。
 - 名称: 本 repo は dplaax のみを定義する。旧 protocol 名・旧実装名の語彙は spec 本文に
   持ち込まない（実装側の「FirstDrop」は spec では「チェーン起点」と表記）。
 
@@ -33,7 +34,6 @@
 
 - conformance vector の実体 — provin.oss のテストを seed にしつつ、実装の癖を encode せず
   spec 起点で書き直す（vectors/README.md の規律）。
-- `component.catalog` の転記（rules/component.yaml の todo stub）。
 - vc_resolver 領域の rule file — drafts に下敷きあり、未 stub 化。
 - 隣接クレデンシャル間の hash 連続性（outputHash と次の inputHash の一致）の規範化 —
   抽出時に言及はあったが出典の規範文が未特定。特定のうえ転記する。

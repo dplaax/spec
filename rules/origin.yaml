@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
 # dplaax rule catalog — origin (audit-reachable conformance class)
 # ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
 rules:

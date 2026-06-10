@@ -10,4 +10,5 @@ non-normative。用語は表の 1 行で定義し、説明文を書き足さな�
 | wire profile | 実装が宣言する選択の束（アルゴリズム・表現形式等）。dPLaaX が共通化するのは構造と判定であり、選択そのものではない |
 | conformance class | rule の適用範囲を区切る単位。rule entry の `class` field で表現される |
 | チェーン起点 | previousCredential を持たず、新しいチェーンを開始するクレデンシャル |
+| component type | 境界の振る舞いの分類（FilterConvert / Origin Source / External Sink / Custom）。判別は署名挙動による |
 | audit-reachable | 集約境界をまたぐ監査到達性を提供する optional な conformance class（→ rules/origin.yaml） |

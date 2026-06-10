@@ -3,7 +3,7 @@
 dPLaaX の normative spec。**規範の SoT は次の 3 artifact のみ**であり、散文は規範を持たない。
 
 | artifact | 担う規範 | 形式 |
-|---|---|---|
+| --- | --- | --- |
 | `rules/` | 挙動・判定の規範（rule catalog） | YAML |
 | `schemas/` | wire shape の規範 | JSON Schema 2020-12 |
 | `vectors/` | 挙動規範の実体化（conformance vector） | JSON |
@@ -22,7 +22,7 @@ markdown（本書、concept.md、GLOSSARY.md 等）はすべて non-normative。
 `rules/*.yaml` の各 entry:
 
 | field | 規約 |
-|---|---|
+| --- | --- |
 | `id` | `<domain>.<topic>[.<name>]`。`status: todo` の間は仮 id、`draft` 昇格で凍結 |
 | `status` | `todo`（転記前 stub）/ `draft` / `stable` |
 | `class` | `core`（既定）/ `audit-reachable`。conformance class の所属 |
@@ -46,6 +46,8 @@ python3 tools/lint.py
 ```
 
 強制内容: 規範語が `rules/*.yaml` の `statement` 以外（markdown 全文・`notes`）に出現したら fail / id の全ファイル横断 uniqueness / `uses`・`schemas`・`vectors` 参照の解決 / `status`・`class` の enum / `statement` の長さ・規範語包含。STATUS.md は一時的な作業台帳のため走査対象外。
+
+rule entry の構造（shape）は `tools/rule.schema.json` が定義し、各 `rules/*.yaml` 先頭の modeline で IDE 検証に束縛されている。内容規律は lint、構造は schema、と分担する。
 
 ## バージョニング
 

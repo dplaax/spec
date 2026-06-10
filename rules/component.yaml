@@ -1,19 +1,106 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
 # dplaax rule catalog — component (component type catalog)
 # ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
 rules:
   - id: component.catalog
-    status: todo
+    status: draft
     class: core
-    statement: null
+    statement: >-
+      PipelinePassCredential を発行する実装は、FilterConvert・Origin Source・
+      External Sink・Custom の 4 つの catalog type のいずれかに適合しなければ
+      ならない (MUST)。catalog type 名を名乗るコンポーネントは、その type の
+      契約に適合しなければならない (MUST)。
     uses: []
     schemas: []
     vectors: []
     notes: >-
-      credential.subject.output-hash 等の statement が component type
-      (FilterConvert / Origin Source / External Sink) を参照しているため、
-      catalog の定義と各 type の発行義務の転記が必要。
-    source: >-
-      旧 draft (dpfp-spec.protocols part-ii component-types.md / drafts/v1_002
-      component_type_catalog) — FilterConvert / Origin Source / External Sink /
-      Custom の catalog、各 type の発行義務、External Sink の受領証発行
-      (任意) を含む。provin.oss pipeline/ 側の実装語彙と突合のうえ転記する。
+      4 type は対等であり、特権的な type は存在しない。component type の判別は
+      wire 上の署名挙動 (チェーン起点の発行か previousCredential の保持か) に
+      よって決まり、deployment 上の名乗りや配置によらない。拡張は Custom 経由。
+
+  - id: component.filter-convert.stateless
+    status: draft
+    class: core
+    statement: >-
+      FilterConvert は状態を持たない 1:1 変換でなければならない (MUST)。
+      集約・join・window 等のチェーン状態を要する処理を FilterConvert として
+      実行してはならない (MUST NOT)。
+    uses: [component.catalog, chain.trigger.retention]
+    schemas: []
+    vectors: []
+    notes: >-
+      チェーン挙動は type ではなく trigger 規則が決める (2026-06-11 確定) —
+      旧 draft の「FilterConvert はチェーン起点発行の禁止」という type ベース
+      規則は採らない。イベント駆動でない実行の出力は trigger 規則により
+      チェーン起点となり、その署名挙動は Origin Source として分類される。
+      Filter / Converter の step 役割は内部機構であり wire に現れない。
+      filter による drop 時は出力 credential なし (または profile 選択で
+      outputHash 不在の credential)。典型の transformationType は
+      filter / convert / filter+convert。トリガーイベントへの side-fetch 結合
+      (enrichment) は profile 拡張値でチェーンを保持する。
+
+  - id: component.origin-source.firstdrop
+    status: draft
+    class: core
+    statement: >-
+      Origin Source はチェーン起点クレデンシャルを発行しなければならない (MUST)。
+      その定義的性質はチェーン起点の発行のみであり、入力として適合ストリームを
+      N ≥ 0 本取ってよい (MAY)。
+    uses: [component.catalog, chain.trigger.retention]
+    schemas: []
+    vectors: []
+    notes: >-
+      外部取り込み (N=0、典型 convert)・集約 (N≥1、aggregate)・boundary
+      translation (非適合 credential の再署名) はいずれも Origin Source の挙動。
+      旧 draft の「チェーン起点を発行できる唯一の type」という排他規定は
+      trigger ベースの分類に置換 (2026-06-11 確定)。audit-reachable class の
+      origin commitment は rules/origin.yaml が規定する。
+
+  - id: component.external-sink.verify
+    status: draft
+    class: core
+    statement: >-
+      External Sink は、receipt クレデンシャルの発行有無に関わらず、受信した
+      クレデンシャルチェーンを検証しなければならない (MUST)。
+    uses: [component.catalog, confidence.composition.weakest-link]
+    schemas: []
+    vectors: []
+    notes: >-
+      External Sink の適合側は入力のみ — 出力は外部システムに向かい
+      パイプライン適合ではない。役割は配送であり、変換の証明ではない。
+
+  - id: component.external-sink.receipt
+    status: draft
+    class: core
+    statement: >-
+      wire profile は、External Sink による配送 receipt クレデンシャルの発行を
+      許可してよい (MAY)。発行される receipt は PipelinePassCredential の schema に
+      適合し、最後の上流クレデンシャルを previousCredential で参照しなければ
+      ならない (MUST)。
+    uses: [component.external-sink.verify, credential.subject.previous-credential]
+    schemas: []
+    vectors: []
+    notes: >-
+      既定では External Sink はクレデンシャルを発行せず、チェーンは最後の
+      上流クレデンシャルで終端する。receipt の transformationType は
+      profile-namespaced 値とする — 例: provin:external-sink-receipt
+      (旧 draft の custom:dplaas:external-sink-receipt は 2 セグメント規則と
+      provin namespace に読み替え、2026-06-11 確定)。
+
+  - id: component.custom.interop
+    status: draft
+    class: core
+    statement: >-
+      Custom コンポーネントは、チェーン起点の発行時には previousCredential を
+      持たず (MUST NOT)、チェーン継続時には previousCredential を保持し (MUST)、
+      チェーン終端時には終端の前に受信チェーンを検証しなければならない (MUST)。
+      transformationType には namespace-prefixed 値を用いるべきである (SHOULD)。
+    uses: [component.catalog, chain.trigger.retention, credential.subject.previous-credential, credential.transformation.base-vocabulary]
+    schemas: []
+    vectors: []
+    notes: >-
+      前提は Pipeline Contract への適合 (少なくとも 1 つの I/O 側が
+      パイプライン適合の署名と VC 包装を行う)。独自の subject field は profile の
+      schema registry entry で文書化する。検証器側の未知 transformationType の
+      扱いは open-world 規則 (credential.transformation.open-world-*) が規定
+      しており、旧 draft の informational 扱い (弱い規定) は採らない。
