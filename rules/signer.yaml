@@ -1,0 +1,14 @@
+# dplaax rule catalog — signer (proof 構造と署名義務)
+# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+rules:
+  - id: signer.proof.structure
+    status: todo
+    class: core
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      drafts/v1_002 spec/5.specification/part1.federation_primitives/signer/ —
+      proof 構造の規範と cryptosuite lifecycle。cryptosuite の選択自体は wire profile 宣言。

@@ -1,0 +1,27 @@
+# dplaax rule catalog — canonicalization / decoding
+# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+rules:
+  - id: canon.jcs.profile
+    status: todo
+    class: core
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      provin.oss packages/canon/jcs/jcs.go package doc — JCS (RFC 8785) 準拠 + 意図的逸脱:
+      json.Number の 64bit 整数リテラル verbatim emit (>2^53 の精度保持)、U+2028/U+2029 raw、
+      ES6 number 形式。転記時に逸脱ごとへ rule を分割する。
+
+  - id: canon.strict-decode
+    status: todo
+    class: core
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      provin.oss packages/canon/strict.go — StrictDecoder:
+      duplicate-key / trailing-data / invalid-Unicode・unpaired surrogate の fail-closed 拒否。

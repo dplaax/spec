@@ -1,0 +1,58 @@
+# dplaax rule catalog — origin (audit-reachable conformance class)
+# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+rules:
+  - id: origin.class.definition
+    status: todo
+    class: audit-reachable
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      provin.oss pipeline/originsource/README.md + packages/vc/origin.go —
+      audit-reachable conformance class: derived_from / source_root / source_root_canonical、
+      監査属性 ≠ 親リンク、emit は config 駆動、deployment profile での必須化の余地。
+      class の動機 (集約境界をまたぐ汚染トレース) は論文 ch3 §3.4 Q5 に rationale あり。
+
+  - id: origin.source-root.construction
+    status: todo
+    class: audit-reachable
+    statement: null
+    uses: [canon.jcs.profile]
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      provin.oss packages/vc/origin.go (実装 + テスト済み) — RFC 6962 + multihash:
+      leaf = SHA-256(0x00‖canon(VC))、content hash 昇順 sort、odd leaf 昇格、
+      空集合 = SHA-256("")、f1220 encode。
+
+  - id: origin.verify.equality-fail-closed
+    status: todo
+    class: audit-reachable
+    statement: null
+    uses: [origin.source-root.construction]
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      provin.oss packages/vc/origin.go VerifyOriginCommitment — equality property と
+      fail-closed 規則: derived_from 配列内重複 / unknown canonicalization /
+      chain 保持 VC 上の commitment 共存 → 拒否。同一 issuer 複数 source は合法、
+      不完全性検出は issuer 粒度。
+
+  - id: origin.store.persistence
+    status: todo
+    class: audit-reachable
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: >-
+      限界宣言 (integrity は保証するが completeness は保証しない —
+      申告漏れの検出は ingress store との突合という監査層の作業に残る) も
+      non-normative としてここに付す。
+    source: >-
+      provin.oss network/README.md + vcresolver/store.go — 永続 VC ストア前提、
+      commitment は root + issuer set のみで所在特定は wire 外 (ingress store 経由)。

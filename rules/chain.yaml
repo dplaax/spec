@@ -1,0 +1,36 @@
+# dplaax rule catalog — chain (イベント連鎖の発行規則)
+# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+rules:
+  - id: chain.trigger.retention
+    status: todo
+    class: core
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      provin.oss (branch poc) pipeline/README.md — トリガー規則:
+      chain 保持は conformant な前イベントがちょうど 1 件のときに限る。
+
+  - id: chain.trigger.batch-of-one
+    status: todo
+    class: core
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      provin.oss (branch poc) pipeline/README.md — batch-of-1 規則。
+
+  - id: chain.trigger.fan-out
+    status: todo
+    class: core
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      provin.oss (branch poc) pipeline/README.md — fan-out の許容条件。

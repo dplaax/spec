@@ -1,0 +1,37 @@
+# dplaax rule catalog — confidence (検証判定の合成)
+# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+rules:
+  - id: confidence.axes.three-state
+    status: todo
+    class: core
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      provin.oss packages/vc/confidence.go + verifier.go — 検証 3 規範軸と
+      3 状態 (failed ⊏ indeterminate ⊏ verified)。数値計算式は non-normative。
+
+  - id: confidence.composition.weakest-link
+    status: todo
+    class: core
+    statement: null
+    uses: [confidence.axes.three-state]
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      provin.oss packages/vc/confidence.go — チェーンに沿った合成は最弱リンク。
+
+  - id: confidence.cryptosuite-lifecycle
+    status: todo
+    class: core
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: "再シャーディング候補: signer ドメイン。"
+    source: >-
+      provin.oss packages/vc/lifecycle.go — lifecycle registry
+      (proof.created キー、tlog 背面)。

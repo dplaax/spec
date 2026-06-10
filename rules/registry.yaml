@@ -1,0 +1,14 @@
+# dplaax rule catalog — registry (schema registry の不変項)
+# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+rules:
+  - id: registry.append-only
+    status: todo
+    class: core
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: ""
+    source: >-
+      drafts/v1_002 spec/5.specification/part1.federation_primitives/schema_registry/ —
+      append-only 不変項と版参照の規範。
