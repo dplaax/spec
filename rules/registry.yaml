@@ -2,13 +2,19 @@
 # ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
 rules:
   - id: registry.append-only
-    status: todo
+    status: draft
     class: core
-    statement: null
+    statement: >-
+      Schema Registry は、コミット済みエントリを変更または削除してはならない
+      (MUST NOT)。スキーマの更新は新しい版識別子を持つ新エントリの追加として行い、
+      既存エントリは元の版識別子で取得可能であり続けなければならない (MUST)。
+      版識別子は同一 registry key 内で一意でなければならず、再利用しては
+      ならない (MUST NOT)。
     uses: []
     schemas: []
     vectors: []
-    notes: ""
-    source: >-
-      drafts/v1_002 spec/5.specification/part1.federation_primitives/schema_registry/ —
-      append-only 不変項と版参照の規範。
+    notes: >-
+      版識別子の形式 (単調増加整数 / semver / content hash 等) と保持期間の下限は
+      profile / 運用選択。エントリの committedAt timestamp は wire-level の規定。
+      本 rule の出典は旧 draft のみで、provin.oss に対応実装が現れた時点で
+      要突合 (→ STATUS.md 未決)。

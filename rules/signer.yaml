@@ -2,13 +2,18 @@
 # ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
 rules:
   - id: signer.proof.structure
-    status: todo
+    status: draft
     class: core
-    statement: null
+    statement: >-
+      署名者は、W3C Data Integrity に準拠した proof オブジェクトをクレデンシャルに
+      付与しなければならない (MUST)。proof は type・cryptosuite・verificationMethod・
+      proofPurpose・proofValue を含まなければならず (MUST)、verificationMethod は
+      署名者の DID Document に解決可能でなければならない (MUST)。
     uses: []
     schemas: []
     vectors: []
-    notes: ""
-    source: >-
-      drafts/v1_002 spec/5.specification/part1.federation_primitives/signer/ —
-      proof 構造の規範と cryptosuite lifecycle。cryptosuite の選択自体は wire profile 宣言。
+    notes: >-
+      cryptosuite の選択は wire profile の宣言事項であり、本 catalog は固定しない。
+      proofPurpose は assertionMethod。created の存在は推奨にとどまるが、
+      欠落すると confidence.cryptosuite-lifecycle の判定キーが得られず
+      lifecycle 評価が成立しない (実質 fail-closed)。

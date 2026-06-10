@@ -1,0 +1,19 @@
+# dplaax rule catalog — component (component type catalog)
+# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+rules:
+  - id: component.catalog
+    status: todo
+    class: core
+    statement: null
+    uses: []
+    schemas: []
+    vectors: []
+    notes: >-
+      credential.subject.output-hash 等の statement が component type
+      (FilterConvert / Origin Source / External Sink) を参照しているため、
+      catalog の定義と各 type の発行義務の転記が必要。
+    source: >-
+      旧 draft (dpfp-spec.protocols part-ii component-types.md / drafts/v1_002
+      component_type_catalog) — FilterConvert / Origin Source / External Sink /
+      Custom の catalog、各 type の発行義務、External Sink の受領証発行
+      (任意) を含む。provin.oss pipeline/ 側の実装語彙と突合のうえ転記する。

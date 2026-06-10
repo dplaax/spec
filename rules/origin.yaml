@@ -2,57 +2,116 @@
 # ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
 rules:
   - id: origin.class.definition
-    status: todo
+    status: draft
     class: audit-reachable
-    statement: null
-    uses: []
-    schemas: []
-    vectors: []
-    notes: ""
-    source: >-
-      provin.oss pipeline/originsource/README.md + packages/vc/origin.go —
-      audit-reachable conformance class: derived_from / source_root / source_root_canonical、
-      監査属性 ≠ 親リンク、emit は config 駆動、deployment profile での必須化の余地。
-      class の動機 (集約境界をまたぐ汚染トレース) は論文 ch3 §3.4 Q5 に rationale あり。
-
-  - id: origin.source-root.construction
-    status: todo
-    class: audit-reachable
-    statement: null
-    uses: [canon.jcs.profile]
-    schemas: []
-    vectors: []
-    notes: ""
-    source: >-
-      provin.oss packages/vc/origin.go (実装 + テスト済み) — RFC 6962 + multihash:
-      leaf = SHA-256(0x00‖canon(VC))、content hash 昇順 sort、odd leaf 昇格、
-      空集合 = SHA-256("")、f1220 encode。
-
-  - id: origin.verify.equality-fail-closed
-    status: todo
-    class: audit-reachable
-    statement: null
-    uses: [origin.source-root.construction]
-    schemas: []
-    vectors: []
-    notes: ""
-    source: >-
-      provin.oss packages/vc/origin.go VerifyOriginCommitment — equality property と
-      fail-closed 規則: derived_from 配列内重複 / unknown canonicalization /
-      chain 保持 VC 上の commitment 共存 → 拒否。同一 issuer 複数 source は合法、
-      不完全性検出は issuer 粒度。
-
-  - id: origin.store.persistence
-    status: todo
-    class: audit-reachable
-    statement: null
-    uses: []
+    statement: >-
+      チェーン起点の発行者は、audit-reachable class において
+      derived_from・source_root・source_root_canonical の 3 属性からなる
+      origin commitment を付与してもよい (MAY)。commitment は監査属性であり
+      親リンクではない。emit の有無は deployment 設定で決まり、
+      deployment profile は本 class を必須として要求してよい (MAY)。
+    uses: [chain.trigger.retention]
     schemas: []
     vectors: []
     notes: >-
-      限界宣言 (integrity は保証するが completeness は保証しない —
-      申告漏れの検出は ingress store との突合という監査層の作業に残る) も
-      non-normative としてここに付す。
-    source: >-
-      provin.oss network/README.md + vcresolver/store.go — 永続 VC ストア前提、
-      commitment は root + issuer set のみで所在特定は wire 外 (ingress store 経由)。
+      wire profile 自体は commitment を要求しない — 要求するのは deployment profile
+      (例: 規制ドメイン)。commitment が保証するのは発行時点の source 集合への
+      束縛のみで、申告の完全性は保証しない。申告漏れの検出は ingress store との
+      突合という監査層の作業に残る (integrity と completeness の分離)。
+
+  - id: origin.commitment.derived-from
+    status: draft
+    class: audit-reachable
+    statement: >-
+      derived_from は重複のない issuer DID の集合であり、発行者は辞書順昇順で
+      直列化しなければならない (MUST)。空集合は合法であり、適合 upstream が
+      存在しないことの宣言として扱う。
+    uses: [origin.class.definition]
+    schemas: []
+    vectors: []
+    notes: >-
+      同一 issuer からの複数 source VC は合法 — issuer 集合への重複排除は
+      発行時に行われる。粒度が issuer であることの帰結は
+      origin.verify.equality-fail-closed の notes を参照。
+
+  - id: origin.source-root.leaf
+    status: draft
+    class: audit-reachable
+    statement: >-
+      発行者は、source_root の各 leaf を、受領時のままの署名済み wire 形式の
+      ソース VC (proof を含む) を正規化したうえで SHA-256(0x00 ‖ canon(VC)) として
+      計算しなければならない (MUST)。整列キーには SHA-256(canon(VC))
+      (content hash) を用いなければならない (MUST)。
+    uses: [origin.class.definition, canon.jcs.base]
+    schemas: []
+    vectors: []
+    notes: >-
+      入力は as-received の署名済み文書であることが要点 — 署名前の内部表現から
+      計算すると検証器の再計算と一致しない。正規化仕様の宣言は
+      source_root_canonical が担う。
+
+  - id: origin.source-root.tree
+    status: draft
+    class: audit-reachable
+    statement: >-
+      発行者は leaf を content hash の昇順で整列し、RFC 6962 §2.1 の MTH に従って
+      internal node を SHA-256(0x01 ‖ left ‖ right) で構成しなければならない (MUST)。
+      奇数 leaf は複製せず昇格させなければならない (MUST)。ソース集合が空の場合、
+      root は空文字列の SHA-256 とする。
+    uses: [origin.source-root.leaf]
+    schemas: []
+    vectors: []
+    notes: >-
+      left subtree の区切りは「n 未満の最大の 2 冪」(RFC 6962 §2.1 の k)。
+      この split 規則の明示が検証器との再計算一致の前提。
+
+  - id: origin.source-root.encode
+    status: draft
+    class: audit-reachable
+    statement: >-
+      発行者は Merkle root を multihash sha2-256 (0x12 0x20) かつ multibase
+      lowercase hex (f prefix) で encode し、f1220 に続く 64 hex 文字の文字列として
+      記録しなければならない (MUST)。検証器は multihash prefix で hash 関数を
+      dispatch し、未知の prefix を拒否すべきである (SHOULD)。
+    uses: [origin.source-root.tree]
+    schemas: []
+    vectors: []
+    notes: >-
+      multihash/multibase 形式は cross-profile 互換のための釘付けであり、
+      他所の sha256:<hex> 形式の content address とは別物 — 同一 hash 値でも
+      encode が異なれば不一致になる。未知 prefix の拒否強度を fail-closed の
+      必須要件へ引き上げるかは出典に明示がなく未決。
+
+  - id: origin.verify.equality-fail-closed
+    status: draft
+    class: audit-reachable
+    statement: >-
+      検証器は、derived_from に重複がある場合、source_root_canonical が未知の場合、
+      または chain-preserving VC に commitment が共存する場合、failed と
+      しなければならない (MUST)。再計算した root が source_root と一致しない場合も
+      failed としなければならない (MUST)。提供された issuer 集合が申告集合の
+      真部分集合にとどまる場合は indeterminate を返す。
+    uses: [origin.source-root.tree, origin.commitment.derived-from, chain.trigger.retention]
+    schemas: []
+    vectors: []
+    notes: >-
+      この検証は per-event 検証経路の外 (on-demand の監査チェック)。
+      不完全性の検出は issuer 粒度のみ — 同一 issuer の別 credential の欠落は
+      申告 issuer 集合が一致したまま root 不一致となるため、indeterminate ではなく
+      failed として表面化する (commitment 文法の既知の限界)。
+
+  - id: origin.store.persistence
+    status: draft
+    class: audit-reachable
+    statement: >-
+      audit-reachable class の deployment では、VC ストアは永続実装で
+      なければならない (MUST)。commitment が運ぶのは Merkle root と issuer DID
+      集合のみであり、ソース VC の所在特定は wire 外 (発行者の VC ストアおよび
+      相手方の ingress VC ストア経由) とする。
+    uses: [origin.class.definition]
+    schemas: []
+    vectors: []
+    notes: >-
+      遡及監査は発行から長期間を経てソース VC を解決するため、揮発ストアでは
+      要件を満たせない。監査用の列挙クエリ面はサービス API 層に属し、
+      本 catalog の scope 外 (→ STATUS.md 未決)。

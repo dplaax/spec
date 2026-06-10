@@ -10,10 +10,10 @@
   `drafts/v1_001` / `drafts/v1_002` に保存されている。
 - **未転記の規範内容の台帳は、各 rule stub の `source` field に移行した**。
   `status: todo` の entry を grep すれば未転記一覧になる。転記完了で `source` を削除する。
-- transformationType の open-world 規則（2026-06-10 設計会話起点）は
-  `credential.transformation.open-world-namespaced` / `.open-world-bare` として
-  最初の `status: draft` rule に転記済み。
-- 名称: 本 repo は dplaax のみを定義する。旧 protocol 名・旧実装名の語彙は spec 本文に持ち込まない。
+- **statement 転記は 2026-06-10 に一巡完了**（旧 draft + provin.oss からの抽出・統合）。
+  todo 残は `component.catalog` のみ。全 draft rule は vector 0 本（0.1 条件未達）。
+- 名称: 本 repo は dplaax のみを定義する。旧 protocol 名・旧実装名の語彙は spec 本文に
+  持ち込まない（実装側の「FirstDrop」は spec では「チェーン起点」と表記）。
 
 ## 転記元の概観
 
@@ -33,16 +33,21 @@
 
 - conformance vector の実体 — provin.oss のテストを seed にしつつ、実装の癖を encode せず
   spec 起点で書き直す（vectors/README.md の規律）。
+- `component.catalog` の転記（rules/component.yaml の todo stub）。
 - vc_resolver 領域の rule file — drafts に下敷きあり、未 stub 化。
+- 隣接クレデンシャル間の hash 連続性（outputHash と次の inputHash の一致）の規範化 —
+  抽出時に言及はあったが出典の規範文が未特定。特定のうえ転記する。
+- schema 参照の subject 内配置 — W3C VC Data Model の top-level credentialSchema 慣行からの
+  意図的逸脱として rationale の明記が未了（`credential.schema-ref` の notes 参照）。
+- cryptosuite lifecycle の補完候補（検証器ごとの allow-list / no-op identifier 禁止 /
+  Deprecated の cutoff date 規則）— 旧 draft 由来、provin.oss に対応なし。取り込み判断未了。
+- `registry.append-only` の出典は旧 draft のみ — provin.oss に対応実装が現れた時点で要突合。
 - 監査用列挙 API（issuer / ingress set でのクエリ面）— サービス API 側、未設計。
   spec scope 外（wire profile / 実装 repo 側）の可能性が高い。
 - JSON-LD context 文書の実体（`https://poc.dplaax.io/vc/v1`）— provin.oss
   `packages/vc/contexts/` も空。spec とどちらが先に持つか未決。
-- **`generate` のベース語彙昇格パス**（2026-06-10 設計会話起点）: 生成的派生（出力の情報源が
-  入力集合に閉じない = aggregate の閉じた畳み込みと意味論が異なる）は profile 非依存の
-  普遍要件。wire profile 拡張（`provin:generate`、provin 側 backlog で管理）として先行させ、
-  語彙が安定した時点で無印 `generate` のベース語彙入りを提案。昇格時はエイリアス対応表を
-  rules に明記する。→ `credential.transformation.base-vocabulary` の転記時に notes へ引き継ぐ。
+- `generate` のベース語彙昇格パス — `credential.transformation.base-vocabulary` の
+  notes に移行済み（本台帳からは削除）。
 
 ## trust model（L1/L2/L3）の行き先
 

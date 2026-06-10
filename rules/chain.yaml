@@ -2,35 +2,48 @@
 # ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
 rules:
   - id: chain.trigger.retention
-    status: todo
+    status: draft
     class: core
-    statement: null
+    statement: >-
+      境界の出力が chain-preserving となる (previousCredential を引き継ぐ) のは、
+      その実行がちょうど 1 件のパイプライン適合な先行イベントの到着によって
+      トリガーされた場合に限らなければならない (MUST)。それ以外のトリガー
+      (タイマー、ウィンドウ満了、外部プッシュ、ポーリング、非適合イベントの到着)
+      による実行の出力は、チェーン起点として発行しなければならない (MUST)。
     uses: []
     schemas: []
     vectors: []
-    notes: ""
-    source: >-
-      provin.oss (branch poc) pipeline/README.md — トリガー規則:
-      chain 保持は conformant な前イベントがちょうど 1 件のときに限る。
+    notes: >-
+      chain-preserving 判定は wire 上の previousCredential の有無と一致する。
+      非適合クレデンシャルの再署名 (boundary translation) は典型的なチェーン起点。
+      判定基準は実行時の起動原因であり、消費イベント数の事後観察ではない。
 
   - id: chain.trigger.batch-of-one
-    status: todo
+    status: draft
     class: core
-    statement: null
-    uses: []
+    statement: >-
+      イベント駆動でない実行がたまたま単一の保留入力を消費した場合でも、
+      発行者はその出力をチェーン起点として発行しなければならない (MUST)。
+      消費したイベント数の事後観察を chain-preserving 判定の根拠に
+      してはならない (MUST NOT)。
+    uses: [chain.trigger.retention]
     schemas: []
     vectors: []
-    notes: ""
-    source: >-
-      provin.oss (branch poc) pipeline/README.md — batch-of-1 規則。
+    notes: >-
+      「賢さより判定可能性」の設計方針の帰結 (→ concept.md)。
+      トリガー分類を実行時の起動原因に固定することで判定が決定可能になる。
 
   - id: chain.trigger.fan-out
-    status: todo
+    status: draft
     class: core
-    statement: null
-    uses: []
+    statement: >-
+      発行者は、1 件の chain-preserving 先行イベントから複数の後続クレデンシャルを
+      発行してもよい (MAY)。線形制約が限定するのは各クレデンシャルの先行者数
+      (高々 1 件) であり、1 件の先行者からの前方分岐は制約しない。
+    uses: [chain.trigger.retention]
     schemas: []
     vectors: []
-    notes: ""
-    source: >-
-      provin.oss (branch poc) pipeline/README.md — fan-out の許容条件。
+    notes: >-
+      join (複数先行者を持つクレデンシャル) は chain.trigger.retention の定義により
+      成立しない。audit-reachable class の origin commitment (→ rules/origin.yaml) は
+      線形性と独立した監査属性として共存する。
