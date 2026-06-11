@@ -95,10 +95,12 @@
   出典未発見）と cutoff date（Sunset 遷移で表現可能・冗長）は不採用、
   理由は `confidence.cryptosuite-lifecycle` notes に記録。
 - ~~claim token の文字集合が未 pin~~ — **2026-06-11 解決**: `credential.claim.charset`
-  として rule 化（White_Space / Cc / Cf / "+" を MUST NOT、違反 credential は reject）。
-  vector cred-028（zero-width = 表示偽装）/ cred-029（"+" join 復活阻止）。大文字・
-  非 ASCII は意図的に profile の裁量に残す — claim 同一性は (接地 URL, label) の
-  byte 比較なので、それ以上の受理差は発行可能 token を分けるだけで解釈は割らない。
+  として rule 化（White_Space / Cc / Cf / "+" を MUST NOT、違反 credential は reject、
+  property snapshot は **Unicode 15.0 に pin** — table 版差による受理 partition を防止、
+  bump は 0.x minor 扱い）。vector cred-028（zero-width = 表示偽装）/ cred-029（"+" join
+  復活阻止）。大文字・非 ASCII は意図的に profile の裁量に残す — claim 同一性は
+  (接地 URL, label) の byte 比較なので、それ以上の受理差は発行可能 token を分けるだけで
+  解釈は割らない。
 - `registry.append-only` の出典は旧 draft のみ — provin.oss に対応実装が現れた時点で要突合。
 - ~~監査用列挙 API（issuer / ingress set でのクエリ面）~~ — **2026-06-11 解決**:
   L2 監査モデルの仕分けにより provin 側（provin.oss docs/protocol、サービス API spec の
