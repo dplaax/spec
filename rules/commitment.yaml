@@ -20,6 +20,10 @@ rules:
       (例: 規制ドメイン)。commitment が保証するのは発行時点の source 集合への
       束縛のみで、申告の完全性は保証しない。申告漏れの検出は ingress store との
       突合という監査層の作業に残る (integrity と completeness の分離)。
+      本 class は trust layering の L2 (監査到達性) を担う — L1 (per-credential
+      自己整合) は confidence 規則群、L3 (申告ソースから出力が正しく導出されたか
+      という意味的監査) は protocol の決定範囲外で adapter / 監査基盤の関心事
+      (→ GLOSSARY.md trust layering、転記元: dplaas.oss provenance.md)。
       旧名 origin commitment (チェーン起点専用の概念化) は 2026-06-11 に改組 —
       名称が添付先を狭め、chain-preserving 境界の消費ソース集合を監査不可視に
       していた (→ STATUS.md)。

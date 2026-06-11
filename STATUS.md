@@ -78,14 +78,19 @@
   protocol context の正規は本 repo `contexts/v1.jsonld`（byte 単位）、provin.oss は
   byte-exact vendoring + sha256 固定テスト。詳細は contexts/README.md と
   `credential.field.context`。
-- `generate` のベース語彙昇格パス — `credential.transformation.base-vocabulary` の
-  notes に移行済み（本台帳からは削除）。
-- profile 識別の MUST 化 — ppc の MAY（`@context` への profile URI 追加）を provin
-  宣言で narrowing するか。旧 transformationType incubation draft（2026-06-11 に
-  転記完了・削除）の残置項目。JSON-LD context 実体の未決（上記）と相互作用。
+- ~~`generate` のベース語彙昇格パス~~ — base 語彙の解体（2026-06-11）により消滅。
+- ~~profile 識別の MUST 化~~ — **2026-06-11 解決**: 識別マーカーの MUST ではなく
+  **namespace 接地の MUST**（`credential.claim.grounding`）として再構成。claim の
+  同一性 = (接地 URL, label)、裸 prefix の衝突を署名スコープ内で排除。provin profile
+  context（接地担体）の正規は provin.oss 側。
+  ⚠ **provin.io ドメインの所有確認が未了** — poc.provin.io/vc/v1 が署名バイトに
+  入るため、外部 deployment 前に取得・確認必須。
 
 ## trust model（L1/L2/L3）の行き先
 
-L2（audit reachability）は `rules/origin.yaml` の class 定義の前提。concept.md には技術記述を
-置かない方針のため、規範部分は origin rules へ、非技術の動機部分のみ concept.md へ。
-定義の転記元は dplaas.oss salvage（上記）。
+**2026-06-11 転記完了**（転記元: dplaas.oss `docs/concepts/provenance.md` §1）。
+定義は GLOSSARY.md（trust layering entry）、L2 の位置づけと L3 の scope 外宣言は
+`commitment.class.definition` notes、非技術の動機は concept.md（点の監査、線の現実 の
+末尾段落）。L1 = confidence 3 軸、L2 = source commitment、L3 = 意味的監査（protocol 外）。
+dplaas.oss の origin 規範記述本体は本 catalog の commitment.* rules に対応あり
+（derived_from / source_root / source_root_canonical / 構築手順 / 外部参照の除外）。

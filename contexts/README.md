@@ -11,9 +11,11 @@ byte-exact コピーを compile-time embed する（runtime fetch 禁止）。`@
 
 1. **protocol context（本ディレクトリ）** — dplaax wire キー → IRI の写像。
    protocol が所有し、profile 間で同一。
-2. **profile 拡張 context（各 profile が任意で発行）** — profile 所有の
-   custom subject field の term のみ。protocol term の再定義は不可
-   （`@protected` が機械的にも阻止する）。
+2. **profile 拡張 context（各 profile が発行、正規は profile の SoT 側）** —
+   profile 所有の custom subject field の term と、claim namespace prefix の接地
+   （prefix → URL 写像、→ `credential.claim.grounding`）。protocol term の再定義は
+   不可（`@protected` が機械的にも阻止する）。例: provin profile context の正規は
+   provin.oss `packages/vc/contexts/provin-v1.jsonld`。
 
 claim 値（`provin:filter` 等）は wire 上の文字列値であり context の対象外 —
 意味の釘付けは profile の claim registry が担う（→ rules/credential.yaml の
