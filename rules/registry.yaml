@@ -13,7 +13,7 @@ rules:
       ならない (MUST NOT)。
     uses: []
     schemas: []
-    vectors: []
+    vectors: [registry-001]
     notes: >-
       版識別子の形式 (単調増加整数 / semver / content hash 等) と保持期間の下限は
       profile / 運用選択。エントリの committedAt timestamp は wire-level の規定。

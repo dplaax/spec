@@ -1,0 +1,17 @@
+{
+  "id": "component-004",
+  "rule": "component.external-sink.verify",
+  "description": "External Sink が受信チェーンを検証せずに終端",
+  "input": {
+    "component_type": "ExternalSink",
+    "sequence": [
+      {
+        "op": "receive"
+      },
+      {
+        "op": "terminate"
+      }
+    ]
+  },
+  "expect": "reject"
+}

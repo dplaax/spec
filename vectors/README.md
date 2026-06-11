@@ -32,7 +32,14 @@ vector ファイル自体が JSON のため、バイト精度が要る入力（�
 | `credential.*` | `{"credential": <wire 形式 JSON object>}` | `"accept"` / `"reject"` |
 | `chain.*` | `{"chain": [<credential>, ...]}`（チェーン起点が先頭） | `"accept"` / `"reject"` |
 | `commitment.*` | `{"credential": <object>, "sources": [<credential>, ...]}` | `{"confidence": "verified" \| "indeterminate" \| "failed"}`、構築系は期待出力 object |
-| `signer.*` / `confidence.*` / `component.*` / `resolver.*` | 起草時に本表へ追記する | 同上 |
+| `chain.trigger.*` | `{"trigger": "single-conformant-event" \| "timer" \| ..., "credential": <object>}`（fan-out は `"credentials"`、batch-of-one は `"consumed_pending"` 付き） | `"accept"` / `"reject"`（発行挙動の適合性） |
+| `commitment.scope.*` | `{"credential": <object>, "predecessor": <object>}` | `"accept"` / `"reject"` |
+| `commitment.source-root.*`（構築系） | `{"sources": [<credential>, ...], "source_root_canonical": <id>}` | `{"derived_from", "source_root", "source_root_canonical"}` の期待出力 |
+| `signer.*` | `{"credential": <object>}` または registry 操作 `{"registry_op": {...}}` | `"accept"` / `"reject"` |
+| `confidence.*` | 合成系 `{"axes": {<軸>: <state>}}`、lifecycle 系 `{"registry": [...], "cryptosuite", "proof_created"}` | `{"confidence": <state>}` |
+| `component.*` | `{"component_type", "credential"?, "behavior"?, "sequence"?}`（発行・検証挙動の適合性） | `"accept"` / `"reject"` |
+| `resolver.*` | 形式系 `{"key", "body"}`、状態系 `{"resolver_state"}` → confidence、挙動系 `{"sequence": [...]}`、batch `{"request", "response"}`、encoding `{"entry"}` | `"accept"` / `"reject"` / `{"confidence"}` / `{"state"}` |
+| 永続化・append-only 系（`commitment.store.*` / `registry.*`） | `{"sequence": [{"op": ...}, ...]}` | `"reject"` または期待状態 object |
 
 - id 採番は `<family>-<3 桁連番>`、ファイル名は `<id>.json`
 - description には「何の規範挙動を固定しているか」を 1 文で（実装名は書かない）

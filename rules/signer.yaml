@@ -12,7 +12,7 @@ rules:
       署名者の DID Document に解決可能でなければならない (MUST)。
     uses: []
     schemas: []
-    vectors: []
+    vectors: [signer-001]
     notes: >-
       cryptosuite の選択は wire profile の宣言事項であり、本 catalog は固定しない。
       proofPurpose は assertionMethod。created の存在は推奨にとどまるが、
@@ -29,7 +29,7 @@ rules:
       かかわらず拒否しなければならない (MUST)。
     uses: [confidence.cryptosuite-lifecycle]
     schemas: []
-    vectors: []
+    vectors: [signer-002, signer-003]
     notes: >-
       JOSE alg:none 級 downgrade の構造的封鎖。歴史的事故の本質は none が
       「正規に仕様化された合法値」だったこと — 本規則は no-op を自称する

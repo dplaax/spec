@@ -12,7 +12,7 @@ rules:
       契約に適合しなければならない (MUST)。
     uses: []
     schemas: []
-    vectors: []
+    vectors: [component-001]
     notes: >-
       4 type は対等であり、特権的な type は存在しない。component type の判別は
       wire 上の署名挙動 (チェーン起点の発行か previousCredential の保持か) に
@@ -27,7 +27,7 @@ rules:
       実行してはならない (MUST NOT)。
     uses: [component.catalog, chain.trigger.retention]
     schemas: []
-    vectors: []
+    vectors: [component-002]
     notes: >-
       チェーン挙動は type ではなく trigger 規則が決める (2026-06-11 確定) —
       旧 draft の「FilterConvert はチェーン起点発行の禁止」という type ベース
@@ -49,7 +49,7 @@ rules:
       N ≥ 0 本取ってよい (MAY)。
     uses: [component.catalog, chain.trigger.retention]
     schemas: []
-    vectors: []
+    vectors: [component-003]
     notes: >-
       外部取り込み (N=0、典型 provin:convert)・集約 (N≥1、provin:aggregate)・
       boundary translation (非適合 credential の再署名) はいずれも Origin Source の挙動。
@@ -65,7 +65,7 @@ rules:
       クレデンシャルチェーンを検証しなければならない (MUST)。
     uses: [component.catalog, confidence.composition.weakest-link]
     schemas: []
-    vectors: []
+    vectors: [component-004]
     notes: >-
       External Sink の適合側は入力のみ — 出力は外部システムに向かい
       パイプライン適合ではない。役割は配送であり、変換の証明ではない。
@@ -80,7 +80,7 @@ rules:
       ならない (MUST)。
     uses: [component.external-sink.verify, credential.subject.previous-credential]
     schemas: []
-    vectors: []
+    vectors: [component-005]
     notes: >-
       既定では External Sink はクレデンシャルを発行せず、チェーンは最後の
       上流クレデンシャルで終端する。receipt の transformationClaim の
@@ -97,7 +97,7 @@ rules:
       チェーン終端時には終端の前に受信チェーンを検証しなければならない (MUST)。
     uses: [component.catalog, chain.trigger.retention, credential.subject.previous-credential, credential.claim.grammar]
     schemas: []
-    vectors: []
+    vectors: [component-006]
     notes: >-
       前提は Pipeline Contract への適合 (少なくとも 1 つの I/O 側が
       パイプライン適合の署名と VC 包装を行う)。独自の subject field は profile の

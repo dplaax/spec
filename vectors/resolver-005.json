@@ -1,0 +1,11 @@
+{
+  "id": "resolver-005",
+  "rule": "resolver.states",
+  "description": "NotFound（不存在の確定的主張）→ failed",
+  "input": {
+    "resolver_state": "NotFound"
+  },
+  "expect": {
+    "confidence": "failed"
+  }
+}

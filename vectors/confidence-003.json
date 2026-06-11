@@ -1,0 +1,15 @@
+{
+  "id": "confidence-003",
+  "rule": "confidence.composition.weakest-link",
+  "description": "最弱リンク合成: failed は他が verified でも全体 failed",
+  "input": {
+    "axes": {
+      "signer-authenticity": "failed",
+      "chain-consistency": "verified",
+      "data-integrity": "indeterminate"
+    }
+  },
+  "expect": {
+    "confidence": "failed"
+  }
+}

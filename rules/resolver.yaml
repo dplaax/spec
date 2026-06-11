@@ -12,7 +12,7 @@ rules:
       なければならない (MUST)。
     uses: [canon.jcs.base, credential.prev.content-hash]
     schemas: []
-    vectors: []
+    vectors: [resolver-001, resolver-002]
     notes: >-
       resolver キー = 受信 credential から検証器が再計算するチェーンリンク hash、
       が要点 — 同一の正規化を共有しないと resolve 不能になる。
@@ -28,7 +28,7 @@ rules:
       しなければならない (MUST)。
     uses: [resolver.address.form]
     schemas: []
-    vectors: []
+    vectors: [resolver-003]
     notes: >-
       不変性は暗号学的に強制される — resolver 運用者は信頼主体ではなく、
       内容を偽造できない (可用性のみが運用者の裁量)。expiration / migration /
@@ -45,7 +45,7 @@ rules:
       NotFound を failed に対応付けなければならない (MUST)。
     uses: [confidence.axes.three-state]
     schemas: []
-    vectors: []
+    vectors: [resolver-004, resolver-005]
     notes: >-
       Unavailable / NotFound の区別が confidence 軸評価の決定論性を支える —
       再試行で解決し得るものと、し得ないものの分離。
@@ -60,7 +60,7 @@ rules:
       Unavailable に遷移しなければならない (MUST)。
     uses: [resolver.states, resolver.immutability]
     schemas: []
-    vectors: []
+    vectors: [resolver-006]
     notes: >-
       一度解決可能と観測された body は検証可能な履歴の一部 — NotFound への降格は
       「存在しなかった」という偽の確定主張になる。恒久削除 (規制対応等) は
@@ -77,7 +77,7 @@ rules:
       追加する場合も hash ごとの状態意味論を保存しなければならない (MUST)。
     uses: [resolver.states]
     schemas: []
-    vectors: []
+    vectors: [resolver-007]
     notes: >-
       部分可用は分散 resolver (peer cache / CDN) の自然状態であり、エラーとして
       表面化させると confidence 評価の indeterminate 意味論が壊れる。
@@ -93,7 +93,7 @@ rules:
       保たなければならない (MUST)。
     uses: [resolver.address.form]
     schemas: []
-    vectors: []
+    vectors: [resolver-008]
     notes: >-
       バイト列が canonical form そのものであることが要点 — 受領側は
       resolver.immutability の hash 再計算をそのまま適用できる。

@@ -13,7 +13,7 @@ rules:
       profile は本 class を必須化してよい (MAY)。
     uses: [chain.trigger.retention]
     schemas: []
-    vectors: []
+    vectors: [commitment-001]
     notes: >-
       「任意のクレデンシャル」= チェーン起点・chain-preserving のいずれも付与できる。
       wire profile 自体は commitment を要求しない — 要求するのは deployment profile
@@ -39,7 +39,7 @@ rules:
       チェーン起点のみ。
     uses: [commitment.class.definition, chain.trigger.retention]
     schemas: []
-    vectors: []
+    vectors: [commitment-002]
     notes: >-
       監査パリティ原則の帰結: 適合ソースを消費する限り、trigger の種類
       (= previousCredential の有無) は監査義務を変えない。trigger 分は
@@ -60,7 +60,7 @@ rules:
       commitment.scope.all-consumed)。
     uses: [commitment.class.definition, commitment.scope.all-consumed]
     schemas: []
-    vectors: []
+    vectors: [commitment-003, commitment-004]
     notes: >-
       同一 issuer からの複数 source VC は合法 — issuer 集合への重複排除は
       発行時に行われる。粒度が issuer であることの帰結は
@@ -76,7 +76,7 @@ rules:
       (content hash) を用いなければならない (MUST)。
     uses: [commitment.class.definition, canon.jcs.base]
     schemas: []
-    vectors: []
+    vectors: [commitment-005]
     notes: >-
       入力は as-received の署名済み文書であることが要点 — 署名前の内部表現から
       計算すると検証器の再計算と一致しない。正規化仕様の宣言は
@@ -92,7 +92,7 @@ rules:
       root は空文字列の SHA-256 とする。
     uses: [commitment.source-root.leaf]
     schemas: []
-    vectors: []
+    vectors: [commitment-006]
     notes: >-
       left subtree の区切りは「n 未満の最大の 2 冪」(RFC 6962 §2.1 の k)。
       この split 規則の明示が検証器との再計算一致の前提。
@@ -107,7 +107,7 @@ rules:
       dispatch し、未知の prefix を拒否すべきである (SHOULD)。
     uses: [commitment.source-root.tree]
     schemas: []
-    vectors: []
+    vectors: [commitment-007]
     notes: >-
       multihash/multibase 形式は cross-profile 互換のための釘付けであり、
       他所の sha256:<hex> 形式の content address とは別物 — 同一 hash 値でも
@@ -125,7 +125,7 @@ rules:
       集合が申告集合の真部分集合にとどまる場合は indeterminate を返す。
     uses: [commitment.source-root.tree, commitment.derived-from, commitment.scope.all-consumed]
     schemas: []
-    vectors: []
+    vectors: [commitment-008, commitment-009, commitment-010, commitment-011]
     notes: >-
       この検証は per-event 検証経路の外 (on-demand の監査チェック)。
       先行イベントの照合は issuer 粒度より強く実施できる — 検証器は
@@ -148,7 +148,7 @@ rules:
       相手方の ingress VC ストア経由) とする。
     uses: [commitment.class.definition]
     schemas: []
-    vectors: []
+    vectors: [commitment-012]
     notes: >-
       遡及監査は発行から長期間を経てソース VC を解決するため、揮発ストアでは
       要件を満たせない。監査用の列挙クエリ面はサービス API 層に属し、

@@ -1,0 +1,38 @@
+{
+  "id": "cred-025",
+  "rule": "credential.claim.open-world-accept",
+  "description": "未知 namespace の claim は opaque な準拠宣言として受理（構造検証は継続、閉世界推論は禁止）",
+  "input": {
+    "credential": {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://poc.dplaax.io/vc/v1",
+        "https://poc.provin.io/vc/v1",
+        "https://acme.example/vc/v1"
+      ],
+      "type": [
+        "VerifiableCredential",
+        "PipelinePassCredential"
+      ],
+      "issuer": "did:dplaax:poc.dplaax.io:org:acme:pipeline:p:process:x",
+      "validFrom": "2026-06-10T00:00:00Z",
+      "credentialSubject": {
+        "pipelineId": "pl-acme",
+        "processId": "proc-x",
+        "transformationClaim": "acme:distill",
+        "outputHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "inputHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "previousCredential": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+      },
+      "proof": {
+        "type": "DataIntegrityProof",
+        "cryptosuite": "eddsa-jcs-2022",
+        "created": "2026-06-10T00:00:01Z",
+        "verificationMethod": "did:dplaax:poc.dplaax.io:org:acme:pipeline:p:process:x#key-1",
+        "proofPurpose": "assertionMethod",
+        "proofValue": "z5fixture0value0not0a0real0signature0fixture0value0not0real00"
+      }
+    }
+  },
+  "expect": "accept"
+}

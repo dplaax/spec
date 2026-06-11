@@ -13,7 +13,7 @@ rules:
       規範外であり、profile / アプリケーション側の選択とする。
     uses: []
     schemas: []
-    vectors: []
+    vectors: [confidence-001]
     notes: >-
       indeterminate は「現在の入力では検証を完了できない (後に解決しうる)」の意味
       であり、条件付き成功の意味ではない。旧 draft 系の分類
@@ -31,7 +31,7 @@ rules:
       failed としなければならない (MUST)。
     uses: [confidence.axes.three-state]
     schemas: []
-    vectors: []
+    vectors: [confidence-002, confidence-003]
     notes: ""
 
   - id: confidence.cryptosuite-lifecycle
@@ -45,7 +45,7 @@ rules:
       追記のみの公開成果物でなければならない (MUST)。
     uses: [confidence.axes.three-state]
     schemas: []
-    vectors: []
+    vectors: [confidence-004, confidence-005, confidence-006]
     notes: >-
       判定キーは proof.created であり validFrom ではない。registry の背面は
       transparency log (実装選択)。no-op identifier の禁止は

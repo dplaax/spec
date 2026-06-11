@@ -13,7 +13,7 @@ rules:
       による実行の出力は、チェーン起点として発行しなければならない (MUST)。
     uses: []
     schemas: []
-    vectors: []
+    vectors: [chain-001, chain-002, chain-003]
     notes: >-
       chain-preserving 判定は wire 上の previousCredential の有無と一致する。
       非適合クレデンシャルの再署名 (boundary translation) は典型的なチェーン起点。
@@ -29,7 +29,7 @@ rules:
       してはならない (MUST NOT)。
     uses: [chain.trigger.retention]
     schemas: []
-    vectors: []
+    vectors: [chain-004]
     notes: >-
       「賢さより判定可能性」の設計方針の帰結 (→ concept.md)。
       トリガー分類を実行時の起動原因に固定することで判定が決定可能になる。
@@ -43,7 +43,7 @@ rules:
       (高々 1 件) であり、1 件の先行者からの前方分岐は制約しない。
     uses: [chain.trigger.retention]
     schemas: []
-    vectors: []
+    vectors: [chain-005]
     notes: >-
       join (複数先行者を持つクレデンシャル) は chain.trigger.retention の定義により
       成立しない。audit-reachable class の source commitment (→ rules/commitment.yaml) は
@@ -58,7 +58,7 @@ rules:
       検証器はチェーン検証において不一致を failed としなければならない (MUST)。
     uses: [credential.subject.input-hash, credential.subject.previous-credential]
     schemas: []
-    vectors: []
+    vectors: [chain-006, chain-007]
     notes: >-
       データフロー連続性 (input-output binding): チェーンが同一データの加工系譜で
       あることを hash で束縛する。チェーン起点は previousCredential を持たないため

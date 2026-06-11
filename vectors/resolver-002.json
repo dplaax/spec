@@ -1,0 +1,10 @@
+{
+  "id": "resolver-002",
+  "rule": "resolver.address.form",
+  "description": "キーが body の正規化ダイジェストと不一致",
+  "input": {
+    "key": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "body": "{\"@context\":[\"https://www.w3.org/ns/credentials/v2\",\"https://poc.dplaax.io/vc/v1\",\"https://poc.provin.io/vc/v1\"],\"credentialSubject\":{\"inputHash\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"outputHash\":\"sha256:5555555555555555555555555555555555555555555555555555555555555555\",\"pipelineId\":\"pl-mine\",\"processId\":\"proc-1\",\"transformationClaim\":\"provin:convert\"},\"issuer\":\"did:dplaax:poc.dplaax.io:org:mineA:pipeline:m:process:s\",\"type\":[\"VerifiableCredential\",\"PipelinePassCredential\"],\"validFrom\":\"2026-06-01T00:00:00Z\"}"
+  },
+  "expect": "reject"
+}

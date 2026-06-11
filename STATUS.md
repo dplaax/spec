@@ -56,8 +56,11 @@
 
 ## 未決
 
-- conformance vector の実体 — provin.oss のテストを seed にしつつ、実装の癖を encode せず
-  spec 起点で書き直す（vectors/README.md の規律）。
+- ~~conformance vector の実体~~ — **2026-06-11 解決**: 全 55 rules に 1 本以上、
+  計 78 vectors（family 別形状規約は vectors/README.md）。canon / commitment /
+  resolver の期待値は provin.oss（JCS・strict decoder・ComputeSourceRoot・Hash）で
+  実検証した実値。**0.1 タグの vector 条件を充足**（全 entry draft / 各 rule ≥1 vector /
+  lint green / source 全廃 — VERSIONING.md の 4 条件すべて成立）。
 - ~~vc_resolver 領域の rule file~~ — **2026-06-11 解決**: drafts/v1_002 vc_resolver 節
   から rules/resolver.yaml へ転記（6 rules: address.form / immutability / states /
   states.no-demotion / batch.shape / body.encoding）。

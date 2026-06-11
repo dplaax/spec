@@ -1,0 +1,11 @@
+{
+  "id": "resolver-004",
+  "rule": "resolver.states",
+  "description": "Unavailable（現在保持していないが不存在は主張しない）→ indeterminate",
+  "input": {
+    "resolver_state": "Unavailable"
+  },
+  "expect": {
+    "confidence": "indeterminate"
+  }
+}

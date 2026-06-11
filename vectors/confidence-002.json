@@ -1,0 +1,15 @@
+{
+  "id": "confidence-002",
+  "rule": "confidence.composition.weakest-link",
+  "description": "最弱リンク合成: indeterminate が 1 軸 → 全体 indeterminate",
+  "input": {
+    "axes": {
+      "signer-authenticity": "verified",
+      "chain-consistency": "indeterminate",
+      "data-integrity": "verified"
+    }
+  },
+  "expect": {
+    "confidence": "indeterminate"
+  }
+}

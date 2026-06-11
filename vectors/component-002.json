@@ -1,0 +1,39 @@
+{
+  "id": "component-002",
+  "rule": "component.filter-convert.stateless",
+  "description": "FilterConvert を名乗りながらクロスイベント window join（状態を要する処理）を実行",
+  "input": {
+    "component_type": "FilterConvert",
+    "behavior": "cross-event-window-join",
+    "credential": {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://poc.dplaax.io/vc/v1",
+        "https://poc.provin.io/vc/v1"
+      ],
+      "type": [
+        "VerifiableCredential",
+        "PipelinePassCredential"
+      ],
+      "issuer": "did:dplaax:poc.dplaax.io:org:acme:pipeline:p:process:fc",
+      "validFrom": "2026-06-10T00:00:00Z",
+      "credentialSubject": {
+        "pipelineId": "pl-agg",
+        "processId": "proc-a",
+        "transformationClaim": "provin:filter-convert",
+        "outputHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "inputHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "previousCredential": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+      },
+      "proof": {
+        "type": "DataIntegrityProof",
+        "cryptosuite": "eddsa-jcs-2022",
+        "created": "2026-06-10T00:00:01Z",
+        "verificationMethod": "did:dplaax:poc.dplaax.io:org:acme:pipeline:p:process:fc#key-1",
+        "proofPurpose": "assertionMethod",
+        "proofValue": "z5fixture0value0not0a0real0signature0fixture0value0not0real00"
+      }
+    }
+  },
+  "expect": "reject"
+}

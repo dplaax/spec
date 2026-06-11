@@ -1,0 +1,37 @@
+{
+  "id": "chain-004",
+  "rule": "chain.trigger.batch-of-one",
+  "description": "タイマー起動がたまたま pending 1 件を消費 → それでもチェーン起点（消費数の事後観察を判定根拠にしない）",
+  "input": {
+    "trigger": "timer",
+    "consumed_pending": 1,
+    "credential": {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://poc.dplaax.io/vc/v1",
+        "https://poc.provin.io/vc/v1"
+      ],
+      "type": [
+        "VerifiableCredential",
+        "PipelinePassCredential"
+      ],
+      "issuer": "did:dplaax:poc.dplaax.io:org:acme:pipeline:p:process:x",
+      "validFrom": "2026-06-10T00:00:00Z",
+      "credentialSubject": {
+        "pipelineId": "pl-acme",
+        "processId": "proc-x",
+        "transformationClaim": "provin:aggregate",
+        "outputHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "proof": {
+        "type": "DataIntegrityProof",
+        "cryptosuite": "eddsa-jcs-2022",
+        "created": "2026-06-10T00:00:01Z",
+        "verificationMethod": "did:dplaax:poc.dplaax.io:org:acme:pipeline:p:process:x#key-1",
+        "proofPurpose": "assertionMethod",
+        "proofValue": "z5fixture0value0not0a0real0signature0fixture0value0not0real00"
+      }
+    }
+  },
+  "expect": "accept"
+}

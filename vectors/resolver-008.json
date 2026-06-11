@@ -1,0 +1,13 @@
+{
+  "id": "resolver-008",
+  "rule": "resolver.body.encoding",
+  "description": "body は canonical JSON バイト列の base64url（padding なし）— decode 後に hash 再計算でキーと一致",
+  "input": {
+    "entry": {
+      "hash": "sha256:1f8b8307783ee2391a3cf9bb12623b057254eb290bb8fe2f48d25d3ec32d3299",
+      "state": "Resolved",
+      "body": "eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL3BvYy5kcGxhYXguaW8vdmMvdjEiLCJodHRwczovL3BvYy5wcm92aW4uaW8vdmMvdjEiXSwiY3JlZGVudGlhbFN1YmplY3QiOnsiaW5wdXRIYXNoIjoic2hhMjU2OjExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEiLCJvdXRwdXRIYXNoIjoic2hhMjU2OjU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTUiLCJwaXBlbGluZUlkIjoicGwtbWluZSIsInByb2Nlc3NJZCI6InByb2MtMSIsInRyYW5zZm9ybWF0aW9uQ2xhaW0iOiJwcm92aW46Y29udmVydCJ9LCJpc3N1ZXIiOiJkaWQ6ZHBsYWF4OnBvYy5kcGxhYXguaW86b3JnOm1pbmVBOnBpcGVsaW5lOm06cHJvY2VzczpzIiwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIlBpcGVsaW5lUGFzc0NyZWRlbnRpYWwiXSwidmFsaWRGcm9tIjoiMjAyNi0wNi0wMVQwMDowMDowMFoifQ"
+    }
+  },
+  "expect": "accept"
+}
