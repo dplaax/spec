@@ -77,6 +77,12 @@
   `signer.cryptosuite.no-op-rejected` として転記。allow-list（deployment 運用事項・
   出典未発見）と cutoff date（Sunset 遷移で表現可能・冗長）は不採用、
   理由は `confidence.cryptosuite-lifecycle` notes に記録。
+- claim token の文字集合が未 pin — `credential.claim.grammar` は「単一 `<namespace>:<label>`」
+  のみで、label/namespace 内に許す文字を規定していない（label 内 "+"、空白類・制御・
+  format 文字（zero-width / bidi 制御 = 表示偽装ベクタ）、大文字、非 ASCII 等）。
+  provin.oss は fail-closed の実装判断として space / control / format / "+" を拒否中
+  （vc/claim.go、2026-06-11 multi-agent review 指摘）が、spec が pin しない限り
+  実装ごとの受理差 = partition trap の種。charset を rule 化し vector を追加すべき。
 - `registry.append-only` の出典は旧 draft のみ — provin.oss に対応実装が現れた時点で要突合。
 - 監査用列挙 API（issuer / ingress set でのクエリ面）— サービス API 側、未設計。
   spec scope 外（wire profile / 実装 repo 側）の可能性が高い。
