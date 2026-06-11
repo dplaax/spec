@@ -1,68 +1,76 @@
 # yaml-language-server: $schema=../tools/rule.schema.json
-# dplaax rule catalog — chain (イベント連鎖の発行規則)
-# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+# dplaax rule catalog — chain (event-chain issuance rules)
+# File sharding is non-normative; an entry's identity is its id (see README.md).
 rules:
   - id: chain.trigger.retention
     status: draft
     class: core
     statement: >-
-      境界の出力が chain-preserving となる (previousCredential を引き継ぐ) のは、
-      その実行がちょうど 1 件のパイプライン適合な先行イベントの到着によって
-      トリガーされた場合に限らなければならない (MUST)。それ以外のトリガー
-      (タイマー、ウィンドウ満了、外部プッシュ、ポーリング、非適合イベントの到着)
-      による実行の出力は、チェーン起点として発行しなければならない (MUST)。
+      A boundary's output MUST be chain-preserving (carrying previousCredential)
+      exactly when the execution was triggered by the arrival of a single
+      pipeline-conformant predecessor event. Output of an execution with any
+      other trigger (timer, window expiry, external push, polling, arrival of a
+      non-conformant event) MUST be issued as a chain origin.
     uses: []
     schemas: []
     vectors: [chain-001, chain-002, chain-003]
     notes: >-
-      chain-preserving 判定は wire 上の previousCredential の有無と一致する。
-      非適合クレデンシャルの再署名 (boundary translation) は典型的なチェーン起点。
-      判定基準は実行時の起動原因であり、消費イベント数の事後観察ではない。
+      The chain-preserving judgment coincides with the presence of
+      previousCredential on the wire. Re-signing a non-conformant credential
+      (boundary translation) is a typical chain origin. The criterion is the
+      runtime cause of activation, not hindsight observation of how many
+      events were consumed.
 
   - id: chain.trigger.batch-of-one
     status: draft
     class: core
     statement: >-
-      イベント駆動でない実行がたまたま単一の保留入力を消費した場合でも、
-      発行者はその出力をチェーン起点として発行しなければならない (MUST)。
-      消費したイベント数の事後観察を chain-preserving 判定の根拠に
-      してはならない (MUST NOT)。
+      Even when a non-event-driven execution happens to consume a single
+      pending input, the issuer MUST issue its output as a chain origin.
+      Hindsight observation of the consumed event count MUST NOT be used as
+      the basis for the chain-preserving judgment.
     uses: [chain.trigger.retention]
     schemas: []
     vectors: [chain-004]
     notes: >-
-      「賢さより判定可能性」の設計方針の帰結 (→ concept.md)。
-      トリガー分類を実行時の起動原因に固定することで判定が決定可能になる。
+      A consequence of the "decidability over cleverness" design stance
+      (see concept.md). Pinning trigger classification to the runtime cause
+      of activation makes the judgment decidable.
 
   - id: chain.trigger.fan-out
     status: draft
     class: core
     statement: >-
-      発行者は、1 件の chain-preserving 先行イベントから複数の後続クレデンシャルを
-      発行してもよい (MAY)。線形制約が限定するのは各クレデンシャルの先行者数
-      (高々 1 件) であり、1 件の先行者からの前方分岐は制約しない。
+      An issuer MAY issue multiple successor credentials from one
+      chain-preserving predecessor event. The linearity constraint bounds each
+      credential's predecessor count (at most one); it does not constrain
+      forward branching from a single predecessor.
     uses: [chain.trigger.retention]
     schemas: []
     vectors: [chain-005]
     notes: >-
-      join (複数先行者を持つクレデンシャル) は chain.trigger.retention の定義により
-      成立しない。audit-reachable class の source commitment (→ rules/commitment.yaml) は
-      線形性と独立した監査属性として共存する。
+      A join (a credential with multiple predecessors) cannot arise by the
+      definition in chain.trigger.retention. The audit-reachable class's
+      source commitment (see rules/commitment.yaml) coexists as an audit
+      attribute independent of linearity.
 
   - id: chain.data-flow.continuity
     status: draft
     class: core
     statement: >-
-      後続クレデンシャルが previousCredential で先行クレデンシャルを参照する場合、
-      後続の inputHash は先行の outputHash と一致しなければならない (MUST)。
-      検証器はチェーン検証において不一致を failed としなければならない (MUST)。
+      When a successor credential references a predecessor via
+      previousCredential, the successor's inputHash MUST equal the
+      predecessor's outputHash. A verifier MUST treat a mismatch as failed
+      during chain verification.
     uses: [credential.subject.input-hash, credential.subject.previous-credential]
     schemas: []
     vectors: [chain-006, chain-007]
     notes: >-
-      データフロー連続性 (input-output binding): チェーンが同一データの加工系譜で
-      あることを hash で束縛する。チェーン起点は previousCredential を持たないため
-      本規則の適用外 (inputHash の有無は credential.subject.input-hash が規定)。
-      出典: drafts/v1_001 conformance 節 L2 検証規則 "Input-output binding"。
-      provin.oss vc (credential.go の chain invariant / VerifyChain) に
-      契約として焼き込み済み。STATUS 未決 (出典未特定) を 2026-06-11 に解消。
+      Data-flow continuity (input-output binding): the hashes bind the chain
+      to a processing lineage of the same data. Chain origins carry no
+      previousCredential and are outside this rule (inputHash presence is
+      governed by credential.subject.input-hash).
+      Source: drafts/v1_001 conformance section, L2 verification rule
+      "Input-output binding"; baked into provin.oss packages/vc as a contract
+      (the chain invariant in credential.go / VerifyChain). Resolved the
+      unsourced-normativization ledger item on 2026-06-11.
