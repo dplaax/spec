@@ -39,4 +39,4 @@ rules:
       fail-closed が拒否し、登録済み garbage は registry governance
       (append-only による帰責・Sunset 失効・proof.created キーの被害範囲計算)
       が担う。"" は zero value の fail-closed。
-      出典: provin.oss packages/vc/cryptosuite.go (登録時 + 検証時の両適用)。
+      出典: provin.oss vc/cryptosuite.go (登録時 + 検証時の両適用)。

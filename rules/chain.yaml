@@ -64,5 +64,5 @@ rules:
       あることを hash で束縛する。チェーン起点は previousCredential を持たないため
       本規則の適用外 (inputHash の有無は credential.subject.input-hash が規定)。
       出典: drafts/v1_001 conformance 節 L2 検証規則 "Input-output binding"。
-      provin.oss packages/vc (credential.go の chain invariant / VerifyChain) に
+      provin.oss vc (credential.go の chain invariant / VerifyChain) に
       契約として焼き込み済み。STATUS 未決 (出典未特定) を 2026-06-11 に解消。
