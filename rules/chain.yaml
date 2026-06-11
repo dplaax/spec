@@ -6,17 +6,17 @@ rules:
     status: draft
     class: core
     statement: >-
-      A boundary's output MUST be chain-preserving (carrying previousCredential)
-      exactly when the execution was triggered by the arrival of a single
-      pipeline-conformant predecessor event. Output of an execution with any
-      other trigger (timer, window expiry, external push, polling, arrival of a
-      non-conformant event) MUST be issued as a chain origin.
+      A boundary's output MUST be chain-preserving (carrying
+      previousCredential) exactly when the execution was triggered by arrival
+      of a single pipeline-conformant predecessor event. Output of an
+      execution under any other trigger MUST be a chain origin.
     uses: []
     schemas: []
     vectors: [chain-001, chain-002, chain-003]
     notes: >-
-      The chain-preserving judgment coincides with the presence of
-      previousCredential on the wire. Re-signing a non-conformant credential
+      "Any other trigger" includes timers, window expiry, external pushes,
+      polling, and the arrival of non-conformant events. The chain-preserving
+      judgment coincides with the presence of previousCredential on the wire. Re-signing a non-conformant credential
       (boundary translation) is a typical chain origin. The criterion is the
       runtime cause of activation, not hindsight observation of how many
       events were consumed.
