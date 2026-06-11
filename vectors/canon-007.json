@@ -1,0 +1,9 @@
+{
+  "id": "canon-007",
+  "rule": "canon.strict-decode",
+  "description": "ドキュメント末尾の余剰データの拒否",
+  "input": {
+    "document": "{\"a\":1} {}"
+  },
+  "expect": "reject"
+}

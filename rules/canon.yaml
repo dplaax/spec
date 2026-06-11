@@ -11,7 +11,7 @@ rules:
       本 catalog における唯一の意図的逸脱は canon.jcs.int64-verbatim である。
     uses: []
     schemas: []
-    vectors: []
+    vectors: [canon-001, canon-002, canon-003]
     notes: >-
       RFC 8785 準拠に含まれる落とし穴 (U+2028/U+2029 を raw UTF-8 で出力する、
       ES6 number 形式) は一般実装 (Go encoding/json 等) の既定挙動と異なるため、
@@ -27,7 +27,7 @@ rules:
       (ES6 Number::toString) に対する意図的逸脱であり、2^53 超の整数精度を保持する。
     uses: [canon.jcs.base]
     schemas: []
-    vectors: []
+    vectors: [canon-004]
     notes: >-
       2^53 超の整数は strict-ES6 な JCS 実装とは相互運用しない —
       発行者側の互換性留意点。decode 側の対称規則は canon.strict-decode の条件 (3)。
@@ -41,7 +41,7 @@ rules:
       処理を継続してはならない (MUST NOT)。
     uses: [canon.jcs.base]
     schemas: []
-    vectors: []
+    vectors: [canon-005]
     notes: >-
       raw 出力は非 Unicode バイト列への署名を生み、U+FFFD 置換は相異なる
       キーの衝突 (非決定的な正準形) を生むため、いずれも fail-closed で拒否する。
@@ -57,7 +57,7 @@ rules:
       の 4 条件をすべて満たさなければならない (MUST)。
     uses: []
     schemas: []
-    vectors: []
+    vectors: [canon-006, canon-007, canon-008]
     notes: >-
       重複キー拒否の根拠は RFC 8785 §3.2.5。一般のデコーダは無効 UTF-8 と
       unpaired surrogate を U+FFFD へ無言置換するため、受信バイト列と正準 hash が

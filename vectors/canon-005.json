@@ -1,0 +1,9 @@
+{
+  "id": "canon-005",
+  "rule": "canon.jcs.reject-invalid-utf8",
+  "description": "文字列値に無効 UTF-8 バイト (0xFF) を含む入力は拒否（raw 出力も U+FFFD 置換も不可）",
+  "input": {
+    "document_b64": "eyJzIjoi/yJ9"
+  },
+  "expect": "reject"
+}

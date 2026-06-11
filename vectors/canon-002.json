@@ -1,0 +1,11 @@
+{
+  "id": "canon-002",
+  "rule": "canon.jcs.base",
+  "description": "U+2028 / U+2029 は escape せず raw UTF-8 で出力する（RFC 8785 準拠の落とし穴 — JS 系実装は escape しがち）。本ファイルの expect.canonical 内の \\u2028\\u2029 は JSON ファイル表現としての escape であり、decode 後の正準テキストは生の U+2028/U+2029 を含む",
+  "input": {
+    "document": "{\"s\":\"\\u2028\\u2029\"}"
+  },
+  "expect": {
+    "canonical": "{\"s\":\"\u2028\u2029\"}"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "canon-003",
+  "rule": "canon.jcs.base",
+  "description": "文字列 escape の最小化: \\u0041 → literal A、制御文字は短形式 escape、二重引用符は escape 維持",
+  "input": {
+    "document": "{\"s\":\"\\u0041\\n\\\"\"}"
+  },
+  "expect": {
+    "canonical": "{\"s\":\"A\\n\\\"\"}"
+  }
+}
