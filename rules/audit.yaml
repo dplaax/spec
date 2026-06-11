@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — audit (responsibility attribution rules)
+# File sharding is non-normative; an entry's identity is its id (see README.md).
+rules:
+  - id: audit.attribution.segment
+    status: draft
+    class: core
+    statement: >-
+      Attribution computation MUST attribute responsibility for the
+      transformation a credential represents to the Owner DID reached from
+      the credential's issuer through the controller chain.
+    uses: [credential.field.issuer]
+    schemas: []
+    vectors: [audit-001]
+    notes: >-
+      The signing party is a Process DID; the responsible party is an
+      organization (Owner). Reconstructability from Process to Owner is
+      already required of verifiers by credential.field.issuer; this rule
+      pins the destination of that reconstruction as the responsibility
+      target.
+      "Attribution computation" is the audit-side actor (see GLOSSARY):
+      a deterministic function of chain topology that reads no payload
+      content. These rules extend Paper 01's attestation scope ("who
+      signed" / organizational attribution); the responsibility semantics
+      are anchored in Paper 04.
+
+  - id: audit.attribution.origin-default
+    status: draft
+    class: core
+    statement: >-
+      Attribution computation MUST attribute responsibility for all
+      provenance preceding a chain origin to the Owner DID reached from the
+      chain origin's issuer.
+    uses: [chain.trigger.retention, commitment.class.definition]
+    schemas: []
+    vectors: [audit-002, audit-003]
+    notes: >-
+      The default rule: whoever cuts the chain answers for what lies
+      beyond the cut. A chain origin attests only to who emitted which
+      bytes under which schema, claiming nothing about the world before
+      ingestion — but claiming nothing is not an exemption. An issuer that
+      wants upstream responsibility to stay upstream keeps the chain
+      (chain.trigger.retention) or emits a source commitment under the
+      audit-reachable class (commitment.class.definition); choosing
+      neither leaves the default in place. Boundary translation is an
+      application of this rule, not an exception: responsibility for
+      external input terminates at the ingesting Owner (audit-003).
+      Deliberate extension beyond Paper 01 §4.8's attestation scope ("what
+      happened from the aggregation point onward, not what preceded");
+      anchored in Paper 04.

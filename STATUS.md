@@ -43,6 +43,19 @@
   **generate の incubation draft は転記完了・削除** — claim 再構成により profile 層で
   完結（protocol 変更不要）、「常時 FirstDrop」問題は位相非拘束により解消。
 
+- **2026-06-11: L2 監査モデルの仕分けを確定、audit domain を新設**（rules/audit.yaml、
+  57 rules に）。仕分け: 帰責デフォルト規則 = protocol（`audit.attribution.segment` /
+  `origin-default`、主体は「帰責計算 (attribution computation)」= GLOSSARY に定義。
+  解釈規範を監査ツールの行為規範として規範化）。記録義務（emission stream / 購読記録 /
+  ingress 保持の運用義務）= provin profile 側 — publisher/subscriber 語彙の protocol
+  輸入を回避するため。第二実装出現時に「転送関係」抽象を設計して 0.x minor で昇格可。
+  wireauth / RPC shape / 監査用列挙 API = provin サービス API 側。
+  Paper 01 とは無衝突を原文突合で確認（論文は attestation scope に自己限定しており、
+  帰責は意図的な拡張）。**典拠アンカーは Paper 04 に明文化する（未了 — Paper 04 は
+  draft のため自由に変更可。notes が Paper 04 を参照しており、出版前に節の追加必須）。**
+  dplaas.oss の provenance.md 突合は帰責規則の目的では不要と user 判断（典拠ラインは
+  Paper 01 + Paper 04 に一本化）。
+
 ## 転記元の概観
 
 - **provin.oss (branch poc)** — wire invariant の現行 SoT。コードコメント / README に契約として
@@ -84,8 +97,9 @@
   （vc/claim.go、2026-06-11 multi-agent review 指摘）が、spec が pin しない限り
   実装ごとの受理差 = partition trap の種。charset を rule 化し vector を追加すべき。
 - `registry.append-only` の出典は旧 draft のみ — provin.oss に対応実装が現れた時点で要突合。
-- 監査用列挙 API（issuer / ingress set でのクエリ面）— サービス API 側、未設計。
-  spec scope 外（wire profile / 実装 repo 側）の可能性が高い。
+- ~~監査用列挙 API（issuer / ingress set でのクエリ面）~~ — **2026-06-11 解決**:
+  L2 監査モデルの仕分けにより provin 側（provin.oss docs/protocol、サービス API spec の
+  指定席）と確定。spec scope 外。
 - **federation 層のスコープ判断** — 旧 draft conformance L3 の機構群（相互 allow-list /
   購読登録 / downstream receipt / append-only 発行ストリーム / control plane 署名検証）は
   現 catalog に対応 rule が無い。一方、audit-reachable class の申告漏れ検出は

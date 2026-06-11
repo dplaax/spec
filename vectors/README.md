@@ -46,6 +46,7 @@ objects. Shapes are fixed per family as follows:
 | `component.*` | `{"component_type", "credential"?, "behavior"?, "sequence"?}` (issuance and verification behavior conformance) | `"accept"` / `"reject"` |
 | `resolver.*` | format-type `{"key", "body"}`; state-type `{"resolver_state"}` → confidence; behavior-type `{"sequence": [...]}`; batch `{"request", "response"}`; encoding `{"entry"}` | `"accept"` / `"reject"` / `{"confidence"}` / `{"state"}` |
 | persistence / append-only (`commitment.store.*` / `registry.*`) | `{"sequence": [{"op": ...}, ...]}` | `"reject"` or expected-state object |
+| `audit.*` | `{"chain": [<credential>, ...]}` (chain origin first) | `{"attribution": {"segments": [{"index": <n>, "owner": <DID>}, ...], "pre_chain": <DID>}}` |
 
 - Id numbering: `<family>-<3-digit sequence>`, file name: `<id>.json`
 - `description` states in one sentence what normative behavior is being fixed
