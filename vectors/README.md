@@ -43,7 +43,7 @@ objects. Shapes are fixed per family as follows:
 | `commitment.source-root.*` (construction-type) | `{"sources": [<credential>, ...], "source_root_canonical": <id>}` | expected output object with `{"derived_from", "source_root", "source_root_canonical"}` |
 | `signer.*` | `{"credential": <object>}` or registry operation `{"registry_op": {...}}` | `"accept"` / `"reject"` |
 | `confidence.*` | synthesis-type `{"axes": {<axis>: <state>}}`; lifecycle-type `{"registry": [...], "cryptosuite", "proof_created"}` | `{"confidence": <state>}` |
-| `component.*` | `{"component_type", "credential"?, "behavior"?, "sequence"?}` (issuance and verification behavior conformance) | `"accept"` / `"reject"` |
+| `process.*` | `{"process_type", "credential"?, "behavior"?, "sequence"?}` (issuance and verification behavior conformance) | `"accept"` / `"reject"` |
 | `resolver.*` | format-type `{"key", "body"}`; state-type `{"resolver_state"}` → confidence; behavior-type `{"sequence": [...]}`; batch `{"request", "response"}`; encoding `{"entry"}` | `"accept"` / `"reject"` / `{"confidence"}` / `{"state"}` |
 | persistence / append-only (`commitment.store.*` / `registry.*`) | `{"sequence": [{"op": ...}, ...]}` | `"reject"` or expected-state object |
 | `audit.*` | `{"chain": [<credential>, ...], "controllers": {<DID>: <controller DID>, ...}}` (chain origin first; `controllers` is the controller-binding fixture — a DID absent from its keys is terminal, i.e. an Owner. Attribution traverses these bindings, never lexical DID truncation) | `{"attribution": {"segments": [{"index": <n>, "owner": <DID>}, ...], "pre_chain": <DID>}}` |

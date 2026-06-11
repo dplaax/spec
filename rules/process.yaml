@@ -1,0 +1,123 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — process (process type catalog)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+rules:
+  - id: process.catalog
+    status: draft
+    class: core
+    statement: >-
+      An implementation that issues PipelinePassCredentials MUST conform to
+      one of the four catalog types: Chained Process, Source Process, Sink
+      Process, or Custom Process. A process claiming a catalog type MUST
+      conform to the contract of that type.
+    uses: []
+    schemas: []
+    vectors: [process-001]
+    notes: >-
+      The four types are peers; no type is privileged. A process's type is
+      determined by its wire signing behavior (whether it issues a chain-origin
+      credential or carries previousCredential), not by its deployment name or
+      placement. Extensions go through Custom Process. Renamed from the
+      component vocabulary (component.catalog; FilterConvert / Origin Source /
+      External Sink / Custom) on 2026-06-12 — every pipeline participant holds
+      a Process DID, so the catalog classifies processes; type names follow
+      the classification criterion itself (start / continue / end the chain).
+
+  - id: process.chained.stateless
+    status: draft
+    class: core
+    statement: >-
+      A Chained Process MUST be a stateless 1:1 transformation. Aggregation,
+      join, window, or other chain-stateful processing MUST NOT be executed as
+      a Chained Process.
+    uses: [process.catalog, chain.trigger.retention]
+    schemas: []
+    vectors: [process-002]
+    notes: >-
+      Chain behavior is governed by trigger rules, not type (confirmed
+      2026-06-11) — the old-draft type-based rule "FilterConvert is prohibited
+      from issuing chain-origin credentials" (old-draft vocabulary) is not
+      adopted. Output from non-event-triggered execution becomes a chain origin
+      per trigger rules, and its signing behavior is classified as a Source
+      Process. The Filter / Converter step role is an internal mechanism and
+      does not appear on the wire. On filter drop, no output credential is
+      emitted (or a credential with no outputHash per profile selection).
+      Typical transformationClaim values: provin:filter / provin:convert /
+      provin:filter-convert (composite defined as a single label by the
+      profile — claim labels name transformations, not process types, and are
+      unaffected by the 2026-06-12 type rename). Side-fetch enrichment bound to
+      a trigger event uses provin:enrich and retains the chain.
+
+  - id: process.source.firstdrop
+    status: draft
+    class: core
+    statement: >-
+      A Source Process MUST issue chain-origin credentials. Its defining
+      property is solely the issuance of chain-origin credentials; it MAY
+      accept zero or more conformant input streams.
+    uses: [process.catalog, chain.trigger.retention]
+    schemas: []
+    vectors: [process-003]
+    notes: >-
+      External ingestion (N=0, typical provin:convert), aggregation
+      (N>=1, provin:aggregate), and boundary translation (re-signing
+      non-conformant credentials) are all Source Process behaviors. The
+      old-draft exclusive rule "the only type that may issue chain-origin
+      credentials" is replaced by trigger-based classification (confirmed
+      2026-06-11). Source commitments for the audit-reachable class are
+      specified in rules/commitment.yaml.
+
+  - id: process.sink.verify
+    status: draft
+    class: core
+    statement: >-
+      A Sink Process MUST verify the received credential chain regardless of
+      whether it issues a receipt credential.
+    uses: [process.catalog, confidence.composition.weakest-link]
+    schemas: []
+    vectors: [process-004]
+    notes: >-
+      The conformance obligation for a Sink Process is on the input side
+      only — its output goes to an external system and is not a pipeline
+      conformance obligation. Its role is delivery, not proof of
+      transformation.
+
+  - id: process.sink.receipt
+    status: draft
+    class: core
+    statement: >-
+      A wire profile MAY permit a Sink Process to issue a delivery receipt
+      credential. Any issued receipt MUST conform to the PipelinePassCredential
+      schema and MUST reference the last upstream credential via
+      previousCredential.
+    uses: [process.sink.verify, credential.subject.previous-credential]
+    schemas: []
+    vectors: [process-005]
+    notes: >-
+      By default a Sink Process does not issue credentials; the chain
+      terminates at the last upstream credential. Example transformationClaim
+      for a receipt: provin:sink-receipt (renamed from
+      provin:external-sink-receipt with the process-type vocabulary,
+      2026-06-12 — the type-derived label was the single wire-visible carrier
+      of the old vocabulary; the old-draft value
+      custom:dplaas:external-sink-receipt was already superseded by the
+      two-segment rule and the provin namespace, confirmed 2026-06-11).
+
+  - id: process.custom.interop
+    status: draft
+    class: core
+    statement: >-
+      A Custom Process MUST NOT carry previousCredential when issuing a
+      chain-origin credential, MUST retain previousCredential when continuing
+      a chain, and MUST verify the received chain before terminating it.
+    uses: [process.catalog, chain.trigger.retention, credential.subject.previous-credential, credential.claim.grammar]
+    schemas: []
+    vectors: [process-006]
+    notes: >-
+      Prerequisite is conformance to the Pipeline Contract (at least one I/O
+      side performs pipeline-conformant signing and VC wrapping). Custom
+      subject fields must be documented in the schema registry entry for the
+      profile. The verifier's treatment of unknown transformationClaim values
+      is governed by the open-world rules (credential.claim.open-world-accept /
+      credential.claim.bare-rejected); the old-draft informational treatment
+      (weak rule) is not adopted.

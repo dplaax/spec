@@ -37,7 +37,7 @@ vector ファイル自体が JSON のため、バイト精度が要る入力（�
 | `commitment.source-root.*`（構築系） | `{"sources": [<credential>, ...], "source_root_canonical": <id>}` | `{"derived_from", "source_root", "source_root_canonical"}` の期待出力 |
 | `signer.*` | `{"credential": <object>}` または registry 操作 `{"registry_op": {...}}` | `"accept"` / `"reject"` |
 | `confidence.*` | 合成系 `{"axes": {<軸>: <state>}}`、lifecycle 系 `{"registry": [...], "cryptosuite", "proof_created"}` | `{"confidence": <state>}` |
-| `component.*` | `{"component_type", "credential"?, "behavior"?, "sequence"?}`（発行・検証挙動の適合性） | `"accept"` / `"reject"` |
+| `process.*` | `{"process_type", "credential"?, "behavior"?, "sequence"?}`（発行・検証挙動の適合性） | `"accept"` / `"reject"` |
 | `resolver.*` | 形式系 `{"key", "body"}`、状態系 `{"resolver_state"}` → confidence、挙動系 `{"sequence": [...]}`、batch `{"request", "response"}`、encoding `{"entry"}` | `"accept"` / `"reject"` / `{"confidence"}` / `{"state"}` |
 | 永続化・append-only 系（`commitment.store.*` / `registry.*`） | `{"sequence": [{"op": ...}, ...]}` | `"reject"` または期待状態 object |
 

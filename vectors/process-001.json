@@ -1,10 +1,9 @@
 {
-  "id": "component-002",
-  "rule": "component.filter-convert.stateless",
-  "description": "Claiming FilterConvert while performing a cross-event window join (stateful processing)",
+  "id": "process-001",
+  "rule": "process.catalog",
+  "description": "Claiming a type outside the catalog (conforms to none of the four)",
   "input": {
-    "component_type": "FilterConvert",
-    "behavior": "cross-event-window-join",
+    "process_type": "MagicProxy",
     "credential": {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",

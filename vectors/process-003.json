@@ -1,9 +1,9 @@
 {
-  "id": "component-003",
-  "rule": "component.origin-source.firstdrop",
-  "description": "An Origin Source issues a chain origin (taking three conformant input streams while emitting a FirstDrop)",
+  "id": "process-003",
+  "rule": "process.source.firstdrop",
+  "description": "A Source Process issues a chain origin (taking three conformant input streams while emitting a FirstDrop)",
   "input": {
-    "component_type": "OriginSource",
+    "process_type": "SourceProcess",
     "conformant_inputs": 3,
     "credential": {
       "@context": [

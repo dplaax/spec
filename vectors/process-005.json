@@ -1,9 +1,9 @@
 {
-  "id": "component-005",
-  "rule": "component.external-sink.receipt",
+  "id": "process-005",
+  "rule": "process.sink.receipt",
   "description": "A delivery receipt conforms to the PipelinePassCredential schema and references the last upstream credential via previousCredential",
   "input": {
-    "component_type": "ExternalSink",
+    "process_type": "SinkProcess",
     "credential": {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
@@ -19,7 +19,7 @@
       "credentialSubject": {
         "pipelineId": "pl-agg",
         "processId": "proc-a",
-        "transformationClaim": "provin:external-sink-receipt",
+        "transformationClaim": "provin:sink-receipt",
         "outputHash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "inputHash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         "previousCredential": "sha256:1f8b8307783ee2391a3cf9bb12623b057254eb290bb8fe2f48d25d3ec32d3299"

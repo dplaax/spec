@@ -39,7 +39,7 @@ Each entry in `rules/*.yaml`:
 
 | field | convention |
 | --- | --- |
-| `id` | `<domain>.<topic>[.<name>]`. Provisional while `status: todo`; frozen on promotion to `draft` |
+| `id` | `<domain>.<topic>[.<name>]`. Provisional while `status: todo`; frozen on promotion to `draft`. Until the first consumed release, a tagged-and-re-cut rename remains possible as a deliberate, ledgered act (see VERSIONING.md and the STATUS ledger) — from the first consumed release onward, draft promotion is the hard freeze point |
 | `status` | `todo` (stub before transcription) / `draft` / `stable` |
 | `class` | `core` (default) / `audit-reachable`. Conformance class membership |
 | `statement` | The normative statement. A hard requirement for `draft` and above; at most 256 characters; contains at least one RFC 2119 normative keyword. One rule, one expression — re-expressing elsewhere is prohibited |

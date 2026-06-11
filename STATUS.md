@@ -57,6 +57,33 @@
   dplaas.oss の provenance.md 突合は帰責規則の目的では不要と user 判断（典拠ラインは
   Paper 01 + Paper 04 に一本化）。
 
+## Ledger: process type rename（2026-06-12）
+
+component 語彙を process 語彙へ全面 rename（user 承認済み。全参加者が Process DID を
+持つため catalog の分類対象は process、型名は分類基準 = chain への署名挙動に従う）。
+rule ID の対応表:
+
+| 旧 ID | 新 ID |
+| --- | --- |
+| component.catalog | process.catalog |
+| component.filter-convert.stateless | process.chained.stateless |
+| component.origin-source.firstdrop | process.source.firstdrop |
+| component.external-sink.verify | process.sink.verify |
+| component.external-sink.receipt | process.sink.receipt |
+| component.custom.interop | process.custom.interop |
+
+- 型名: FilterConvert → Chained Process / Origin Source → Source Process /
+  External Sink → Sink Process / Custom → Custom Process。傘: Pipeline Component →
+  Pipeline Process。
+- vectors: component-001..006 → process-001..006、fixture キー component_type →
+  process_type。
+- **wire 変更は 1 件のみ**: transformationClaim `provin:external-sink-receipt` →
+  `provin:sink-receipt`（process-005 の期待値更新。型名由来の label は wire 上これが
+  唯一だった）。他の claim 語彙（provin:filter / convert / filter-convert / enrich /
+  aggregate）は transformation 名であり不変。
+- v0.1 タグは本 rename を載せた commit に切り直し（consumer ゼロの間、タグは
+  milestone marker — VERSIONING.md 冒頭参照）。
+
 ## 転記元の概観
 
 - **provin.oss (branch poc)** — wire invariant の現行 SoT。コードコメント / README に契約として
