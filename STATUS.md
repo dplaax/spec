@@ -59,8 +59,9 @@
 - conformance vector の実体 — provin.oss のテストを seed にしつつ、実装の癖を encode せず
   spec 起点で書き直す（vectors/README.md の規律）。
 - vc_resolver 領域の rule file — drafts に下敷きあり、未 stub 化。
-- 隣接クレデンシャル間の hash 連続性（outputHash と次の inputHash の一致）の規範化 —
-  抽出時に言及はあったが出典の規範文が未特定。特定のうえ転記する。
+- ~~隣接クレデンシャル間の hash 連続性の規範化~~ — **2026-06-11 解決**: 出典は
+  drafts/v1_001 conformance 節の L2 検証規則 "Input-output binding"。
+  `chain.data-flow.continuity` として転記済み。
 - schema 参照の subject 内配置 — W3C VC Data Model の top-level credentialSchema 慣行からの
   意図的逸脱として rationale の明記が未了（`credential.schema-ref` の notes 参照）。
 - cryptosuite lifecycle の補完候補（検証器ごとの allow-list / no-op identifier 禁止 /

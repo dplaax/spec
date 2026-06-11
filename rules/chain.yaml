@@ -48,3 +48,21 @@ rules:
       join (複数先行者を持つクレデンシャル) は chain.trigger.retention の定義により
       成立しない。audit-reachable class の source commitment (→ rules/commitment.yaml) は
       線形性と独立した監査属性として共存する。
+
+  - id: chain.data-flow.continuity
+    status: draft
+    class: core
+    statement: >-
+      後続クレデンシャルが previousCredential で先行クレデンシャルを参照する場合、
+      後続の inputHash は先行の outputHash と一致しなければならない (MUST)。
+      検証器はチェーン検証において不一致を failed としなければならない (MUST)。
+    uses: [credential.subject.input-hash, credential.subject.previous-credential]
+    schemas: []
+    vectors: []
+    notes: >-
+      データフロー連続性 (input-output binding): チェーンが同一データの加工系譜で
+      あることを hash で束縛する。チェーン起点は previousCredential を持たないため
+      本規則の適用外 (inputHash の有無は credential.subject.input-hash が規定)。
+      出典: drafts/v1_001 conformance 節 L2 検証規則 "Input-output binding"。
+      provin.oss packages/vc (credential.go の chain invariant / VerifyChain) に
+      契約として焼き込み済み。STATUS 未決 (出典未特定) を 2026-06-11 に解消。
