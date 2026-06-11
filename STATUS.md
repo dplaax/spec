@@ -68,8 +68,10 @@
 - `registry.append-only` の出典は旧 draft のみ — provin.oss に対応実装が現れた時点で要突合。
 - 監査用列挙 API（issuer / ingress set でのクエリ面）— サービス API 側、未設計。
   spec scope 外（wire profile / 実装 repo 側）の可能性が高い。
-- JSON-LD context 文書の実体（`https://poc.dplaax.io/vc/v1`）— provin.oss
-  `packages/vc/contexts/` も空。spec とどちらが先に持つか未決。
+- ~~JSON-LD context 文書の実体~~ — **2026-06-11 解決**: 所有は二層（Model A）。
+  protocol context の正規は本 repo `contexts/v1.jsonld`（byte 単位）、provin.oss は
+  byte-exact vendoring + sha256 固定テスト。詳細は contexts/README.md と
+  `credential.field.context`。
 - `generate` のベース語彙昇格パス — `credential.transformation.base-vocabulary` の
   notes に移行済み（本台帳からは削除）。
 - profile 識別の MUST 化 — ppc の MAY（`@context` への profile URI 追加）を provin
