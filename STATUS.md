@@ -51,8 +51,9 @@
   輸入を回避するため。第二実装出現時に「転送関係」抽象を設計して 0.x minor で昇格可。
   wireauth / RPC shape / 監査用列挙 API = provin サービス API 側。
   Paper 01 とは無衝突を原文突合で確認（論文は attestation scope に自己限定しており、
-  帰責は意図的な拡張）。**典拠アンカーは Paper 04 に明文化する（未了 — Paper 04 は
-  draft のため自由に変更可。notes が Paper 04 を参照しており、出版前に節の追加必須）。**
+  帰責は意図的な拡張）。~~典拠アンカーは Paper 04 に明文化する~~ — **2026-06-11 解決**:
+  Paper 04 ch3 §3.4「Responsibility attribution (default rule)」段落として明文化済み
+  （en/ja、commitment-does-not-move-default を含む）。
   dplaas.oss の provenance.md 突合は帰責規則の目的では不要と user 判断（典拠ラインは
   Paper 01 + Paper 04 に一本化）。
 
@@ -83,19 +84,21 @@
 - ~~隣接クレデンシャル間の hash 連続性の規範化~~ — **2026-06-11 解決**: 出典は
   drafts/v1_001 conformance 節の L2 検証規則 "Input-output binding"。
   `chain.data-flow.continuity` として転記済み。
-- schema 参照の subject 内配置 — W3C VC Data Model の top-level credentialSchema 慣行からの
-  意図的逸脱として rationale の明記が未了（`credential.schema-ref` の notes 参照）。
+- ~~schema 参照の subject 内配置~~ — **2026-06-11 解決**: rationale を
+  `credential.schema-ref` notes に明記。W3C credentialSchema は credential 自体の
+  schema（VC tooling への処理指示）、本 object は subject が attest する**データ**の
+  schema であり署名スコープ内の主張の一部。W3C 語の流用は VC processor に envelope を
+  データ schema で検証させる誤動作を招くため、subject 配置が正。
 - ~~cryptosuite lifecycle の補完候補 3 点~~ — **2026-06-11 解決**: no-op 禁止は
   provin.oss に実装済み（「対応なし」は stale だった）と判明、
   `signer.cryptosuite.no-op-rejected` として転記。allow-list（deployment 運用事項・
   出典未発見）と cutoff date（Sunset 遷移で表現可能・冗長）は不採用、
   理由は `confidence.cryptosuite-lifecycle` notes に記録。
-- claim token の文字集合が未 pin — `credential.claim.grammar` は「単一 `<namespace>:<label>`」
-  のみで、label/namespace 内に許す文字を規定していない（label 内 "+"、空白類・制御・
-  format 文字（zero-width / bidi 制御 = 表示偽装ベクタ）、大文字、非 ASCII 等）。
-  provin.oss は fail-closed の実装判断として space / control / format / "+" を拒否中
-  （vc/claim.go、2026-06-11 multi-agent review 指摘）が、spec が pin しない限り
-  実装ごとの受理差 = partition trap の種。charset を rule 化し vector を追加すべき。
+- ~~claim token の文字集合が未 pin~~ — **2026-06-11 解決**: `credential.claim.charset`
+  として rule 化（White_Space / Cc / Cf / "+" を MUST NOT、違反 credential は reject）。
+  vector cred-028（zero-width = 表示偽装）/ cred-029（"+" join 復活阻止）。大文字・
+  非 ASCII は意図的に profile の裁量に残す — claim 同一性は (接地 URL, label) の
+  byte 比較なので、それ以上の受理差は発行可能 token を分けるだけで解釈は割らない。
 - `registry.append-only` の出典は旧 draft のみ — provin.oss に対応実装が現れた時点で要突合。
 - ~~監査用列挙 API（issuer / ingress set でのクエリ面）~~ — **2026-06-11 解決**:
   L2 監査モデルの仕分けにより provin 側（provin.oss docs/protocol、サービス API spec の
