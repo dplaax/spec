@@ -54,7 +54,7 @@ rules:
       translation (非適合 credential の再署名) はいずれも Origin Source の挙動。
       旧 draft の「チェーン起点を発行できる唯一の type」という排他規定は
       trigger ベースの分類に置換 (2026-06-11 確定)。audit-reachable class の
-      origin commitment は rules/origin.yaml が規定する。
+      source commitment は rules/commitment.yaml が規定する。
 
   - id: component.external-sink.verify
     status: draft

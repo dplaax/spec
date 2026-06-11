@@ -15,6 +15,15 @@
   （type ベースの旧規定は置換、各 rule の notes 参照）。全 draft rule は vector 0 本（0.1 条件未達）。
 - 名称: 本 repo は dplaax のみを定義する。旧 protocol 名・旧実装名の語彙は spec 本文に
   持ち込まない（実装側の「FirstDrop」は spec では「チェーン起点」と表記）。
+- **2026-06-11: origin commitment → source commitment 改組を実施**。旧名がチェーン起点
+  専用の概念化を生み、chain-preserving 境界の消費ソース集合を監査不可視にしていた
+  （previous-XOR-origin invariant は verifier の MUST にも焼き込まれていた）。
+  commitment を previousCredential と直交化し、commit 対象は**全消費分**（trigger
+  先行イベント含む）で確定（→ `commitment.scope.all-consumed`、新規 rule）。
+  spec 側: rules/origin.yaml → rules/commitment.yaml（id `origin.*` → `commitment.*`、
+  7 rule 改名 + 1 rule 新設）。provin.oss 側: OriginCommitment → SourceCommitment、
+  Builder/Verifier の XOR 解体、BuildChainPreserving に commitment 引数追加
+  （lock-step 変更、build / vet / test green）。wire キー 3 種は中立語彙のため不変。
 
 ## 転記元の概観
 
@@ -48,6 +57,12 @@
   `packages/vc/contexts/` も空。spec とどちらが先に持つか未決。
 - `generate` のベース語彙昇格パス — `credential.transformation.base-vocabulary` の
   notes に移行済み（本台帳からは削除）。
+- transformationType draft の「生成器は常時 FirstDrop」判断（draft 決定事項 3）—
+  SourceCommitment 改組（下記 現状宣言 2026-06-11）により論拠の片方（位相反転で
+  commitment が使えなくなる）が消滅し、**未決に戻した**。常時 FirstDrop
+  （Origin Source 分類を trigger 規則に優先）か、trigger 規則に従い
+  chain-preserving + SourceCommitment の位相を許容するか。
+  → `docs/draft/dplaax-transformationType.md`（scope 側）の ⚠ 注記参照。
 
 ## trust model（L1/L2/L3）の行き先
 

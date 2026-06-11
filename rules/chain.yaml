@@ -46,5 +46,5 @@ rules:
     vectors: []
     notes: >-
       join (複数先行者を持つクレデンシャル) は chain.trigger.retention の定義により
-      成立しない。audit-reachable class の origin commitment (→ rules/origin.yaml) は
+      成立しない。audit-reachable class の source commitment (→ rules/commitment.yaml) は
       線形性と独立した監査属性として共存する。

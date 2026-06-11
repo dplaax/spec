@@ -11,4 +11,4 @@ non-normative。用語は表の 1 行で定義し、説明文を書き足さな�
 | conformance class | rule の適用範囲を区切る単位。rule entry の `class` field で表現される |
 | チェーン起点 | previousCredential を持たず、新しいチェーンを開始するクレデンシャル |
 | component type | 境界の振る舞いの分類（FilterConvert / Origin Source / External Sink / Custom）。判別は署名挙動による |
-| audit-reachable | 集約境界をまたぐ監査到達性を提供する optional な conformance class（→ rules/origin.yaml） |
+| audit-reachable | 集約境界をまたぐ監査到達性を提供する optional な conformance class（→ rules/commitment.yaml） |

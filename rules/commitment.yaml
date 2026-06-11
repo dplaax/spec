@@ -1,41 +1,68 @@
 # yaml-language-server: $schema=../tools/rule.schema.json
-# dplaax rule catalog — origin (audit-reachable conformance class)
+# dplaax rule catalog — commitment (source commitment / audit-reachable conformance class)
 # ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
 rules:
-  - id: origin.class.definition
+  - id: commitment.class.definition
     status: draft
     class: audit-reachable
     statement: >-
-      チェーン起点の発行者は、audit-reachable class において
-      derived_from・source_root・source_root_canonical の 3 属性からなる
-      origin commitment を付与してもよい (MAY)。commitment は監査属性であり
-      親リンクではない。emit の有無は deployment 設定で決まり、
-      deployment profile は本 class を必須として要求してよい (MAY)。
+      発行者は audit-reachable class において derived_from・source_root・
+      source_root_canonical からなる source commitment を任意のクレデンシャルに
+      付与してもよい (MAY)。commitment は previousCredential と直交する監査属性で
+      あり親リンクではない。emit の有無は deployment 設定で決まり、deployment
+      profile は本 class を必須化してよい (MAY)。
     uses: [chain.trigger.retention]
     schemas: []
     vectors: []
     notes: >-
+      「任意のクレデンシャル」= チェーン起点・chain-preserving のいずれも付与できる。
       wire profile 自体は commitment を要求しない — 要求するのは deployment profile
       (例: 規制ドメイン)。commitment が保証するのは発行時点の source 集合への
       束縛のみで、申告の完全性は保証しない。申告漏れの検出は ingress store との
       突合という監査層の作業に残る (integrity と completeness の分離)。
+      旧名 origin commitment (チェーン起点専用の概念化) は 2026-06-11 に改組 —
+      名称が添付先を狭め、chain-preserving 境界の消費ソース集合を監査不可視に
+      していた (→ STATUS.md)。
 
-  - id: origin.commitment.derived-from
+  - id: commitment.scope.all-consumed
+    status: draft
+    class: audit-reachable
+    statement: >-
+      source commitment を付与する場合、その対象は当該実行が消費した全ての
+      適合ソース credential の集合でなければならない (MUST)。chain-preserving では
+      この集合は trigger となった先行イベントを含み、derived_from は先行
+      credential の issuer を含まなければならない (MUST)。空集合が合法なのは
+      チェーン起点のみ。
+    uses: [commitment.class.definition, chain.trigger.retention]
+    schemas: []
+    vectors: []
+    notes: >-
+      監査パリティ原則の帰結: 適合ソースを消費する限り、trigger の種類
+      (= previousCredential の有無) は監査義務を変えない。trigger 分は
+      previousCredential の hash でも束縛されるが、重複は無害であり、むしろ
+      「derived_from が先行 issuer を含む」ことがチェーン検証時の O(1)
+      整合チェックとして働く。trigger 除外案 (情報最小) ではなく全消費分を
+      採るのは、定義が trigger 分類に依存せず一様で、判定可能性が高いため
+      (「賢さより判定可能性」→ concept.md)。出典: 2026-06-11 設計会話
+      (SourceCommitment 改組) で確定。
+
+  - id: commitment.derived-from
     status: draft
     class: audit-reachable
     statement: >-
       derived_from は重複のない issuer DID の集合であり、発行者は辞書順昇順で
       直列化しなければならない (MUST)。空集合は合法であり、適合 upstream が
-      存在しないことの宣言として扱う。
-    uses: [origin.class.definition]
+      存在しないことの宣言として扱う (チェーン起点のみ —
+      commitment.scope.all-consumed)。
+    uses: [commitment.class.definition, commitment.scope.all-consumed]
     schemas: []
     vectors: []
     notes: >-
       同一 issuer からの複数 source VC は合法 — issuer 集合への重複排除は
       発行時に行われる。粒度が issuer であることの帰結は
-      origin.verify.equality-fail-closed の notes を参照。
+      commitment.verify.equality-fail-closed の notes を参照。
 
-  - id: origin.source-root.leaf
+  - id: commitment.source-root.leaf
     status: draft
     class: audit-reachable
     statement: >-
@@ -43,7 +70,7 @@ rules:
       ソース VC (proof を含む) を正規化したうえで SHA-256(0x00 ‖ canon(VC)) として
       計算しなければならない (MUST)。整列キーには SHA-256(canon(VC))
       (content hash) を用いなければならない (MUST)。
-    uses: [origin.class.definition, canon.jcs.base]
+    uses: [commitment.class.definition, canon.jcs.base]
     schemas: []
     vectors: []
     notes: >-
@@ -51,7 +78,7 @@ rules:
       計算すると検証器の再計算と一致しない。正規化仕様の宣言は
       source_root_canonical が担う。
 
-  - id: origin.source-root.tree
+  - id: commitment.source-root.tree
     status: draft
     class: audit-reachable
     statement: >-
@@ -59,14 +86,14 @@ rules:
       internal node を SHA-256(0x01 ‖ left ‖ right) で構成しなければならない (MUST)。
       奇数 leaf は複製せず昇格させなければならない (MUST)。ソース集合が空の場合、
       root は空文字列の SHA-256 とする。
-    uses: [origin.source-root.leaf]
+    uses: [commitment.source-root.leaf]
     schemas: []
     vectors: []
     notes: >-
       left subtree の区切りは「n 未満の最大の 2 冪」(RFC 6962 §2.1 の k)。
       この split 規則の明示が検証器との再計算一致の前提。
 
-  - id: origin.source-root.encode
+  - id: commitment.source-root.encode
     status: draft
     class: audit-reachable
     statement: >-
@@ -74,7 +101,7 @@ rules:
       lowercase hex (f prefix) で encode し、f1220 に続く 64 hex 文字の文字列として
       記録しなければならない (MUST)。検証器は multihash prefix で hash 関数を
       dispatch し、未知の prefix を拒否すべきである (SHOULD)。
-    uses: [origin.source-root.tree]
+    uses: [commitment.source-root.tree]
     schemas: []
     vectors: []
     notes: >-
@@ -83,25 +110,31 @@ rules:
       encode が異なれば不一致になる。未知 prefix の拒否強度を fail-closed の
       必須要件へ引き上げるかは出典に明示がなく未決。
 
-  - id: origin.verify.equality-fail-closed
+  - id: commitment.verify.equality-fail-closed
     status: draft
     class: audit-reachable
     statement: >-
       検証器は、derived_from に重複がある場合、source_root_canonical が未知の場合、
-      または chain-preserving VC に commitment が共存する場合、failed と
-      しなければならない (MUST)。再計算した root が source_root と一致しない場合も
-      failed としなければならない (MUST)。提供された issuer 集合が申告集合の
-      真部分集合にとどまる場合は indeterminate を返す。
-    uses: [origin.source-root.tree, origin.commitment.derived-from, chain.trigger.retention]
+      または chain-preserving VC の derived_from が先行 issuer を欠く場合、
+      failed としなければならない (MUST)。再計算した root が source_root と
+      一致しない場合も failed としなければならない (MUST)。提供された issuer
+      集合が申告集合の真部分集合にとどまる場合は indeterminate を返す。
+    uses: [commitment.source-root.tree, commitment.derived-from, commitment.scope.all-consumed]
     schemas: []
     vectors: []
     notes: >-
       この検証は per-event 検証経路の外 (on-demand の監査チェック)。
+      先行イベントの照合は issuer 粒度より強く実施できる — 検証器は
+      previousCredential の content hash を保持しているため、申告集合の解決完了後、
+      収集済みソースのいずれかがその hash に一致することを要求する
+      (一致なし = 先行イベントの申告漏れ → failed)。先行 issuer の包含チェックのみ、
+      隣接 credential が手元にあるチェーン検証でも O(1) で実施できる
+      (commitment.scope.all-consumed)。
       不完全性の検出は issuer 粒度のみ — 同一 issuer の別 credential の欠落は
       申告 issuer 集合が一致したまま root 不一致となるため、indeterminate ではなく
       failed として表面化する (commitment 文法の既知の限界)。
 
-  - id: origin.store.persistence
+  - id: commitment.store.persistence
     status: draft
     class: audit-reachable
     statement: >-
@@ -109,7 +142,7 @@ rules:
       なければならない (MUST)。commitment が運ぶのは Merkle root と issuer DID
       集合のみであり、ソース VC の所在特定は wire 外 (発行者の VC ストアおよび
       相手方の ingress VC ストア経由) とする。
-    uses: [origin.class.definition]
+    uses: [commitment.class.definition]
     schemas: []
     vectors: []
     notes: >-
