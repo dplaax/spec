@@ -1,7 +1,7 @@
 {
   "id": "commitment-003",
   "rule": "commitment.derived-from",
-  "description": "derived_from が辞書順昇順でない",
+  "description": "derived_from is not sorted lexicographically ascending",
   "input": {
     "credential": {
       "@context": [

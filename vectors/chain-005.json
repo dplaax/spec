@@ -1,7 +1,7 @@
 {
   "id": "chain-005",
   "rule": "chain.trigger.fan-out",
-  "description": "1 件の先行イベントからの前方分岐（複数後続）は許容 — 線形制約は先行者数のみ",
+  "description": "Forward fan-out from one predecessor is allowed — linearity constrains predecessor count only",
   "input": {
     "trigger": "single-conformant-event",
     "credentials": [

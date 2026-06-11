@@ -1,54 +1,64 @@
 # dPLaaX Specification (draft)
 
-dPLaaX（"data PipeLine as a X"）は、データが組織やシステムの境界を越えるとき、
-「誰が、何を受け取り、何を行い、何を渡したか」を境界ごとに改ざん検出可能な形で
-記録し、その連なりを第三者が独立に確かめられるようにするプロトコルである
-（→ [concept.md](concept.md)）。
+dPLaaX ("data PipeLine as a X") is a protocol that, whenever data crosses an
+organizational or system boundary, records — in a tamper-detectable form at each
+boundary — who received what, performed what action, and passed on what, so that
+the resulting chain can be independently verified by third parties
+(→ [concept.md](concept.md)).
 
-> **Status: v0.1 (draft)。** すべての rule は `draft` であり、実装からの
-> フィードバックで変わり続ける（→ [VERSIONING.md](VERSIONING.md)）。
-> **Public review とコントリビューションを歓迎する** —
-> [CONTRIBUTING.md](CONTRIBUTING.md) を参照。ガバナンスはコントリビュータの
-> 増加に応じて段階的に整備する（現状: maintainer 裁量、議論は Issue で公開）。
+> **Status: v0.1 (draft).** All rules are in `draft` state and will continue to
+> evolve based on implementation feedback (→ [VERSIONING.md](VERSIONING.md)).
+> **Public review and contributions are welcome** —
+> see [CONTRIBUTING.md](CONTRIBUTING.md). Governance will be formalized
+> incrementally as the contributor base grows (current state: maintainer
+> discretion; discussions are public in Issues).
 
-dPLaaX の normative spec。**規範の SoT は次の 3 artifact のみ**であり、散文は規範を持たない。
+The normative spec for dPLaaX. **The source of truth for all normative content
+is exactly the following three artifacts**; prose is non-normative.
 
-| artifact | 担う規範 | 形式 |
+| artifact | normative scope | format |
 | --- | --- | --- |
-| `rules/` | 挙動・判定の規範（rule catalog） | YAML |
-| `schemas/` | wire shape の規範 | JSON Schema 2020-12 |
-| `vectors/` | 挙動規範の実体化（conformance vector） | JSON |
+| `rules/` | behavioral and judgment norms (rule catalog) | YAML |
+| `schemas/` | wire shape norms | JSON Schema 2020-12 |
+| `vectors/` | materialization of behavioral norms (conformance vectors) | JSON |
 
-markdown（本書、concept.md、GLOSSARY.md 等）はすべて non-normative。規範を再表現せず、rule id を参照する。この分離は `tools/lint.py` が機械的に強制する。
+All markdown (this document, concept.md, GLOSSARY.md, etc.) is non-normative.
+It references rule ids rather than re-expressing normative content. This
+separation is mechanically enforced by `tools/lint.py`.
 
-## 読み順
+## Reading order
 
-1. [concept.md](concept.md) — なぜ dPLaaX が存在するか（非技術・non-normative）
-2. [rules/](rules/) — 規範本体
-3. [schemas/](schemas/) / [vectors/](vectors/) — shape と vector
-4. [STATUS.md](STATUS.md) — 起草の現状（一時文書、安定後に削除）
+1. [concept.md](concept.md) — why dPLaaX exists (non-technical, non-normative)
+2. [rules/](rules/) — the normative body
+3. [schemas/](schemas/) / [vectors/](vectors/) — wire shapes and conformance vectors
+4. [STATUS.md](STATUS.md) — current drafting state (temporary document, removed when stable)
 
-## rule catalog の形式
+## rule catalog format
 
-`rules/*.yaml` の各 entry:
+Each entry in `rules/*.yaml`:
 
-| field | 規約 |
+| field | convention |
 | --- | --- |
-| `id` | `<domain>.<topic>[.<name>]`。`status: todo` の間は仮 id、`draft` 昇格で凍結 |
-| `status` | `todo`（転記前 stub）/ `draft` / `stable` |
-| `class` | `core`（既定）/ `audit-reachable`。conformance class の所属 |
-| `statement` | 規範文。`draft` 以上で必須、256 文字以内、RFC 2119 の規範語を 1 つ以上含む。1 rule = 1 表現で、他所での再表現は禁止 |
-| `uses` | 依存する rule id の列。規範の再掲の代わりに参照する |
-| `schemas` / `vectors` | 対応する artifact ファイルへの参照 |
-| `notes` | non-normative の補足。規範語の使用は lint が拒否する |
-| `source` | 転記元の所在を記す一時 field。転記完了で削除する |
+| `id` | `<domain>.<topic>[.<name>]`. Provisional while `status: todo`; frozen on promotion to `draft` |
+| `status` | `todo` (stub before transcription) / `draft` / `stable` |
+| `class` | `core` (default) / `audit-reachable`. Conformance class membership |
+| `statement` | The normative statement. A hard requirement for `draft` and above; at most 256 characters; contains at least one RFC 2119 normative keyword. One rule, one expression — re-expressing elsewhere is prohibited |
+| `uses` | List of rule ids this rule depends on. Use cross-references instead of repeating normative text |
+| `schemas` / `vectors` | References to corresponding artifact files |
+| `notes` | Non-normative supplementary notes. Normative keywords in this field fail the lint |
+| `source` | Temporary field recording the origin of a transcribed rule. Deleted upon transcription completion |
 
-## 横断関心の扱い
+## Cross-cutting concerns
 
-- **依存型**（例: credential が canonicalization に依存）— `uses` で参照する。本文を再掲しない。
-- **原則型**（fail-closed 等の設計思想）— 規範化しない。vector 化可能な個別規則のみが規範。思想は concept.md / `notes` に non-normative で置く。
-- **タクソノミー型**（conformance class 等）— `class` field で表現する。
-- **ファイル分割は non-normative** — entry の identity は `id` が担う。entry をファイル間で動かしても規範は不変であり、再シャーディングは pure refactor。
+- **Dependency-type** (e.g., a credential depending on canonicalization) — reference
+  via `uses`; do not repeat the text inline.
+- **Principle-type** (design intent such as fail-closed) — not normative. Only
+  individual rules that can be expressed as conformance vectors are normative.
+  Design intent belongs in concept.md or `notes` as non-normative content.
+- **Taxonomy-type** (conformance classes, etc.) — expressed via the `class` field.
+- **File partitioning is non-normative** — the identity of an entry is carried by
+  its `id`. Moving an entry between files leaves its normative meaning unchanged;
+  resharding is a pure refactor.
 
 ## lint
 
@@ -56,10 +66,17 @@ markdown（本書、concept.md、GLOSSARY.md 等）はすべて non-normative。
 python3 tools/lint.py
 ```
 
-強制内容: 規範語が `rules/*.yaml` の `statement` 以外（markdown 全文・`notes`）に出現したら fail / id の全ファイル横断 uniqueness / `uses`・`schemas`・`vectors` 参照の解決 / `status`・`class` の enum / `statement` の長さ・規範語包含。STATUS.md は一時的な作業台帳のため走査対象外。
+What is enforced: normative keywords outside rule statements fail the lint
+(this covers the full markdown text and `notes` fields) / cross-file id
+uniqueness / resolution of `uses`, `schemas`, and `vectors` references /
+`status` and `class` enum values / statement length and normative keyword
+presence. `STATUS.md` is excluded from scanning as it is a temporary working
+document.
 
-rule entry の構造（shape）は `tools/rule.schema.json` が定義し、各 `rules/*.yaml` 先頭の modeline で IDE 検証に束縛されている。内容規律は lint、構造は schema、と分担する。
+The structure (shape) of rule entries is defined by `tools/rule.schema.json`
+and is bound to IDE validation via a modeline at the top of each `rules/*.yaml`
+file. Content discipline is handled by lint; structural discipline by the schema.
 
-## バージョニング
+## Versioning
 
 → [VERSIONING.md](VERSIONING.md)

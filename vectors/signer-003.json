@@ -1,7 +1,7 @@
 {
   "id": "signer-003",
   "rule": "signer.cryptosuite.no-op-rejected",
-  "description": "no-op 識別子の lifecycle registry への登録は不可",
+  "description": "Registering a no-op identifier in the lifecycle registry is rejected",
   "input": {
     "registry_op": {
       "op": "register",

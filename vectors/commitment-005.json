@@ -1,7 +1,7 @@
 {
   "id": "commitment-005",
   "rule": "commitment.source-root.leaf",
-  "description": "3 ソース（同一 issuer 2 + 別 issuer 1、奇数 leaf）からの構築 — leaf は as-received 署名済み wire 形式（proof 含む）を hash",
+  "description": "Construction over three sources (two from one issuer plus one other; odd leaf count) — leaves hash the as-received signed wire form including proof",
   "input": {
     "sources": [
       {

@@ -1,7 +1,7 @@
 {
   "id": "canon-004",
   "rule": "canon.jcs.int64-verbatim",
-  "description": "2^53+1 を IEEE double ラウンドトリップなしで verbatim 出力（strict-ES6 JCS は 9007199254740992 に丸める — 意図的逸脱）",
+  "description": "2^53+1 emitted verbatim without an IEEE double round-trip (strict-ES6 JCS would round to 9007199254740992 — a deliberate divergence)",
   "input": {
     "document": "{\"n\":9007199254740993}"
   },

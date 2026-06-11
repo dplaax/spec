@@ -1,65 +1,70 @@
 # yaml-language-server: $schema=../tools/rule.schema.json
 # dplaax rule catalog — canonicalization / decoding
-# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+# File split is non-normative. Entry identity is carried by id (→ README.md).
 rules:
   - id: canon.jcs.base
     status: draft
     class: core
     statement: >-
-      署名スコープおよび content hash の算出に用いる正規化は、RFC 8785 (JCS) に
-      byte-for-byte 準拠したバイト列を生成しなければならない (MUST)。
-      本 catalog における唯一の意図的逸脱は canon.jcs.int64-verbatim である。
+      The canonicalization used to compute signature scopes and content hashes
+      MUST produce a byte sequence that conforms byte-for-byte to RFC 8785
+      (JCS). The sole intentional deviation in this catalog is
+      canon.jcs.int64-verbatim.
     uses: []
     schemas: []
     vectors: [canon-001, canon-002, canon-003]
     notes: >-
-      RFC 8785 準拠に含まれる落とし穴 (U+2028/U+2029 を raw UTF-8 で出力する、
-      ES6 number 形式) は一般実装 (Go encoding/json 等) の既定挙動と異なるため、
-      独立 rule ではなく本 rule の vector として固定する。
+      RFC 8785 compliance has pitfalls (U+2028/U+2029 emitted as raw UTF-8,
+      ES6 number format) that differ from common implementation defaults
+      (e.g. Go encoding/json); these are pinned as vectors of this rule rather
+      than separate rules.
 
   - id: canon.jcs.int64-verbatim
     status: draft
     class: core
     statement: >-
-      正規化器は、64bit 符号付きまたは符号なし整数として表現可能な整数リテラルを、
-      IEEE double へのラウンドトリップを経ずに 10 進正準形 verbatim で
-      出力しなければならない (MUST)。これは RFC 8785 の数値直列化規則
-      (ES6 Number::toString) に対する意図的逸脱であり、2^53 超の整数精度を保持する。
+      The canonicalizer MUST emit 64-bit-range integer literals in verbatim
+      decimal form, without round-tripping through an IEEE double. This
+      intentionally deviates from RFC 8785 ES6 Number::toString and preserves
+      integer precision beyond 2^53.
     uses: [canon.jcs.base]
     schemas: []
     vectors: [canon-004]
     notes: >-
-      2^53 超の整数は strict-ES6 な JCS 実装とは相互運用しない —
-      発行者側の互換性留意点。decode 側の対称規則は canon.strict-decode の条件 (3)。
+      Integers beyond 2^53 are not interoperable with strict-ES6 JCS
+      implementations — an issuer-side compatibility concern. The symmetric
+      decode-side rule is condition (3) of canon.strict-decode.
 
   - id: canon.jcs.reject-invalid-utf8
     status: draft
     class: core
     statement: >-
-      正規化器は、文字列値またはオブジェクトキーが有効な UTF-8 でない入力に対して
-      エラーを返さなければならず (MUST)、raw 出力や U+FFFD 置換によって
-      処理を継続してはならない (MUST NOT)。
+      The canonicalizer MUST return an error for any input whose string values
+      or object keys are not valid UTF-8, and MUST NOT continue processing via
+      raw output or U+FFFD substitution.
     uses: [canon.jcs.base]
     schemas: []
     vectors: [canon-005]
     notes: >-
-      raw 出力は非 Unicode バイト列への署名を生み、U+FFFD 置換は相異なる
-      キーの衝突 (非決定的な正準形) を生むため、いずれも fail-closed で拒否する。
-      RFC 8785 は valid Unicode を前提としており、この拒否は準拠の範囲内。
+      Raw output signs non-Unicode byte sequences; U+FFFD substitution causes
+      distinct-key collisions (non-deterministic canonical form). Both are
+      rejected fail-closed. RFC 8785 presupposes valid Unicode; this rejection
+      is within the scope of compliance.
 
   - id: canon.strict-decode
     status: draft
     class: core
     statement: >-
-      プロトコル境界上の JSON デコードは、(1) 重複キーの拒否、(2) ドキュメント
-      末尾の余剰データの拒否、(3) 2^53 超の整数精度を保持する数値表現、
-      (4) 無効 UTF-8 バイト列および unpaired surrogate escape の拒否、
-      の 4 条件をすべて満たさなければならない (MUST)。
+      JSON decoding at protocol boundaries MUST satisfy all four conditions:
+      (1) reject duplicate keys, (2) reject trailing data, (3) preserve
+      integer precision beyond 2^53, and (4) reject invalid UTF-8 byte
+      sequences and unpaired surrogate escapes.
     uses: []
     schemas: []
     vectors: [canon-006, canon-007, canon-008]
     notes: >-
-      重複キー拒否の根拠は RFC 8785 §3.2.5。一般のデコーダは無効 UTF-8 と
-      unpaired surrogate を U+FFFD へ無言置換するため、受信バイト列と正準 hash が
-      乖離する — fail-closed で拒否する。条件 (3) は canon.jcs.int64-verbatim の
-      decode 側対称。
+      Rationale for rejecting duplicate keys: RFC 8785 §3.2.5. Common decoders
+      silently replace invalid UTF-8 and unpaired surrogates with U+FFFD,
+      causing the received byte sequence to diverge from the canonical hash —
+      rejected fail-closed. Condition (3) is the decode-side symmetric
+      counterpart of canon.jcs.int64-verbatim.

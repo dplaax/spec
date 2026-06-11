@@ -1,10 +1,13 @@
-# schemas/ — wire shape の SoT
+# schemas/ — source of truth for wire shapes
 
-JSON Schema 2020-12。wire 上の構造（field の有無・型・形式）の規範はここだけが持つ。
-挙動・判定の規範は持たない（→ rules/）。
+JSON Schema 2020-12. This is the sole location of norms for wire-level structure
+(field presence, types, and formats). Behavioral and judgment norms are not held
+here (→ `rules/`).
 
-- ファイル名: `<topic>.json`（例: `pipeline-pass-credential.json`）
-- 各 schema は対応する rule entry の `schemas` field から参照される
-- schema の意図的な permissive / strict 箇所は、schema 内の `$comment` に記す
+- File naming: `<topic>.json` (example: `pipeline-pass-credential.json`)
+- Each schema is referenced from the `schemas` field of the corresponding rule entry
+- Intentionally permissive or strict areas of a schema are documented in
+  `$comment` fields within the schema
 
-現状: 空。転記台帳は rules/ の `source` field（`status: todo` の entry）を参照。
+Current state: empty. The transcription backlog is tracked via the `source` field
+in `rules/` (`status: todo` entries).

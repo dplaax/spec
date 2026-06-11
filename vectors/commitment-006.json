@@ -1,7 +1,7 @@
 {
   "id": "commitment-006",
   "rule": "commitment.source-root.tree",
-  "description": "空集合の root は空文字列の SHA-256（RFC 6962 §2.1）",
+  "description": "The empty set commits to the SHA-256 of the empty string (RFC 6962 §2.1)",
   "input": {
     "sources": [],
     "source_root_canonical": "jcs-rfc8785"

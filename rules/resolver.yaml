@@ -1,100 +1,110 @@
 # yaml-language-server: $schema=../tools/rule.schema.json
 # dplaax rule catalog — resolver (VC resolver: hash-keyed content-addressed store)
-# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+# File split is non-normative. Entry identity is carried by id (→ README.md).
 rules:
   - id: resolver.address.form
     status: draft
     class: core
     statement: >-
-      VC resolver のキーは sha256:<lowercase-hex> 形式の content hash であり、
-      proof を除く credential body の正規化バイト列に対して計算しなければ
-      ならない (MUST)。正規化はチェーンリンク (previousCredential) と同一で
-      なければならない (MUST)。
+      The key for a VC resolver is a content hash of the form
+      sha256:<lowercase-hex>, computed over the canonicalized byte sequence of
+      the credential body excluding the proof, and MUST use the same
+      canonicalization as chain links (previousCredential).
     uses: [canon.jcs.base, credential.prev.content-hash]
     schemas: []
     vectors: [resolver-001, resolver-002]
     notes: >-
-      resolver キー = 受信 credential から検証器が再計算するチェーンリンク hash、
-      が要点 — 同一の正規化を共有しないと resolve 不能になる。
-      出典: drafts/v1_002 vc_resolver 節 (Address form)。
+      The key point is that the resolver key equals the chain-link hash that
+      the verifier recomputes from the received credential — if the same
+      canonicalization is not shared, resolution fails.
+      Source: drafts/v1_002 vc_resolver section (Address form).
 
   - id: resolver.immutability
     status: draft
     class: core
     statement: >-
-      同一の hash キーは一意で不変のバイト列に解決されなければならない (MUST)。
-      resolver は同一キーに対して異なる body を返してはならない (MUST NOT)。
-      検証器は返却バイト列の hash を再計算し、キーと一致しない応答を拒否
-      しなければならない (MUST)。
+      The same hash key MUST resolve to a unique, immutable byte sequence. A
+      resolver MUST NOT return different bodies for the same key. A verifier
+      MUST recompute the hash of the returned bytes and MUST reject any
+      response whose hash does not match the key.
     uses: [resolver.address.form]
     schemas: []
     vectors: [resolver-003]
     notes: >-
-      不変性は暗号学的に強制される — resolver 運用者は信頼主体ではなく、
-      内容を偽造できない (可用性のみが運用者の裁量)。expiration / migration /
-      operator override による別 body の返却も不変性違反。
-      出典: drafts/v1_002 vc_resolver 節 (Immutability invariant / Trust model)。
+      Immutability is cryptographically enforced — the resolver operator is
+      not a trust principal and cannot forge content (availability is the only
+      operator discretion). Returning a different body via expiration /
+      migration / operator override also violates immutability.
+      Source: drafts/v1_002 vc_resolver section (Immutability invariant /
+      Trust model).
 
   - id: resolver.states
     status: draft
     class: core
     statement: >-
-      lookup の結果状態は Resolved・Unavailable・NotFound の 3 値である。
-      Unavailable は「現在保持していないが不存在は主張しない」、NotFound は
-      「不存在の確定的主張」を意味する。検証器は Unavailable を indeterminate、
-      NotFound を failed に対応付けなければならない (MUST)。
+      A lookup MUST yield one of: Resolved, Unavailable, or NotFound.
+      Unavailable means no data is held but non-existence is not asserted;
+      NotFound is a definitive non-existence assertion. A verifier MUST map
+      Unavailable to indeterminate and NotFound to failed.
     uses: [confidence.axes.three-state]
     schemas: []
     vectors: [resolver-004, resolver-005]
     notes: >-
-      Unavailable / NotFound の区別が confidence 軸評価の決定論性を支える —
-      再試行で解決し得るものと、し得ないものの分離。
-      出典: drafts/v1_002 vc_resolver 節 (Lookup interface)。
+      The distinction between Unavailable and NotFound underpins the
+      determinism of confidence-axis evaluation — it separates what may be
+      resolved on retry from what cannot.
+      Source: drafts/v1_002 vc_resolver section (Lookup interface).
 
   - id: resolver.states.no-demotion
     status: draft
     class: core
     statement: >-
-      resolver は、一度 Resolved を返した hash を NotFound に遷移させては
-      ならない (MUST NOT)。eviction を実装する場合、退避済み body の hash は
-      Unavailable に遷移しなければならない (MUST)。
+      A resolver MUST NOT transition a hash that has previously returned
+      Resolved to NotFound. If eviction is implemented, an evicted hash MUST
+      transition to Unavailable.
     uses: [resolver.states, resolver.immutability]
     schemas: []
     vectors: [resolver-006]
     notes: >-
-      一度解決可能と観測された body は検証可能な履歴の一部 — NotFound への降格は
-      「存在しなかった」という偽の確定主張になる。恒久削除 (規制対応等) は
-      protocol 外の文書化事項であり、protocol は removed 状態を提供しない。
-      出典: drafts/v1_002 vc_resolver 節 (Pool semantics)。
+      A body that was once observed as resolvable is part of verifiable
+      history — demotion to NotFound would be a false definitive claim of
+      non-existence. Permanent deletion (e.g. for regulatory compliance) is a
+      documented out-of-protocol matter; the protocol provides no removed
+      state.
+      Source: drafts/v1_002 vc_resolver section (Pool semantics).
 
   - id: resolver.batch.shape
     status: draft
     class: core
     statement: >-
-      batch lookup の応答は要求と同数・同順の entry 列でなければならない (MUST)。
-      各 entry の状態は独立であり、部分可用 (Resolved / Unavailable / NotFound の
-      混在) は定義された非エラー状態である。wire profile が一括取得の最適化を
-      追加する場合も hash ごとの状態意味論を保存しなければならない (MUST)。
+      A batch response MUST have the same entry count and order as the
+      request. Each entry state is independent; partial availability is a
+      defined non-error state. A wire profile adding bulk-fetch optimizations
+      MUST preserve per-hash state semantics.
     uses: [resolver.states]
     schemas: []
     vectors: [resolver-007]
     notes: >-
-      部分可用は分散 resolver (peer cache / CDN) の自然状態であり、エラーとして
-      表面化させると confidence 評価の indeterminate 意味論が壊れる。
-      出典: drafts/v1_002 vc_resolver 節 (Batch lookup / Partial availability)。
+      Partial availability is the natural state of a distributed resolver
+      (peer cache / CDN); surfacing it as an error would break the
+      indeterminate semantics of confidence evaluation.
+      Source: drafts/v1_002 vc_resolver section (Batch lookup / Partial
+      availability).
 
   - id: resolver.body.encoding
     status: draft
     class: core
     statement: >-
-      応答の body は proof を除く credential body の正規化 JSON バイト列であり、
-      dplaax 層の wire 既定は base64url (padding なし) とする。wire profile は
-      transport 固有のバイト列表現に置換してよい (MAY) が、意味論的等価を
-      保たなければならない (MUST)。
+      A response body is the canonicalized JSON byte sequence of the
+      credential body excluding the proof; the dplaax wire default encoding is
+      base64url (no padding). A wire profile MAY substitute a transport
+      encoding but MUST preserve semantic equivalence.
     uses: [resolver.address.form]
     schemas: []
     vectors: [resolver-008]
     notes: >-
-      バイト列が canonical form そのものであることが要点 — 受領側は
-      resolver.immutability の hash 再計算をそのまま適用できる。
-      出典: drafts/v1_002 vc_resolver 節 (Partial availability encoding)。
+      The key point is that the byte sequence is the canonical form itself —
+      the receiver can apply the resolver.immutability hash recomputation
+      directly.
+      Source: drafts/v1_002 vc_resolver section (Partial availability
+      encoding).

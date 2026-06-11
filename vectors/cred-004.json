@@ -1,7 +1,7 @@
 {
   "id": "cred-004",
   "rule": "credential.field.id",
-  "description": "id 不在の credential を id 不在を理由に拒否してはならない",
+  "description": "A credential without id is not rejected for the absence of id",
   "input": {
     "credential": {
       "@context": [

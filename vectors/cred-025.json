@@ -1,7 +1,7 @@
 {
   "id": "cred-025",
   "rule": "credential.claim.open-world-accept",
-  "description": "未知 namespace の claim は opaque な準拠宣言として受理（構造検証は継続、閉世界推論は禁止）",
+  "description": "An unknown-namespace claim is accepted as an opaque conformance declaration (structural verification continues; closed-world inference is forbidden)",
   "input": {
     "credential": {
       "@context": [

@@ -1,7 +1,7 @@
 {
   "id": "cred-003",
   "rule": "credential.field.type",
-  "description": "type 配列に PipelinePassCredential が無い",
+  "description": "type array lacks PipelinePassCredential",
   "input": {
     "credential": {
       "@context": [

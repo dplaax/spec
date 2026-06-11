@@ -1,7 +1,7 @@
 {
   "id": "chain-001",
   "rule": "chain.trigger.retention",
-  "description": "ちょうど 1 件の適合イベント到着がトリガー → chain-preserving 発行",
+  "description": "Triggered by the arrival of exactly one conformant event → chain-preserving issuance",
   "input": {
     "trigger": "single-conformant-event",
     "credential": {

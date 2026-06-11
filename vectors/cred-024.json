@@ -1,7 +1,7 @@
 {
   "id": "cred-024",
   "rule": "credential.claim.bare-rejected",
-  "description": "namespace prefix を持たない無印 claim 値の拒否",
+  "description": "A bare claim value without a namespace prefix is rejected",
   "input": {
     "credential": {
       "@context": [

@@ -1,7 +1,7 @@
 {
   "id": "cred-012",
   "rule": "credential.subject.transformation-claim",
-  "description": "transformationClaim の欠落",
+  "description": "Missing transformationClaim",
   "input": {
     "credential": {
       "@context": [

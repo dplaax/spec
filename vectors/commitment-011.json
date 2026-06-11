@@ -1,7 +1,7 @@
 {
   "id": "commitment-011",
   "rule": "commitment.verify.equality-fail-closed",
-  "description": "chain-preserving: 申告集合は解決済みだが、どのソースも previousCredential に hash 一致しない（先行イベントの申告漏れ）→ failed",
+  "description": "Chain-preserving: the claimed set is fully resolved but no source hashes to previousCredential (the predecessor was omitted from the commitment) → failed",
   "input": {
     "credential": {
       "@context": [

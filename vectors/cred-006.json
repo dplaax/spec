@@ -1,7 +1,7 @@
 {
   "id": "cred-006",
   "rule": "credential.field.valid-from",
-  "description": "validFrom が RFC 3339 でない",
+  "description": "validFrom is not RFC 3339",
   "input": {
     "credential": {
       "@context": [

@@ -1,7 +1,7 @@
 {
   "id": "cred-018",
   "rule": "credential.prev.content-hash",
-  "description": "previousCredential の名前ベース参照（URN）は不可 — content hash のみ",
+  "description": "Name-based previousCredential reference (URN) is rejected — content hash only",
   "input": {
     "credential": {
       "@context": [

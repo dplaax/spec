@@ -1,7 +1,7 @@
 {
   "id": "chain-002",
   "rule": "chain.trigger.retention",
-  "description": "適合イベントがトリガーなのにチェーン起点として発行（previousCredential 欠落）",
+  "description": "Event-triggered execution issued a chain origin (previousCredential missing)",
   "input": {
     "trigger": "single-conformant-event",
     "credential": {

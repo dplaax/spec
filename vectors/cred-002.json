@@ -1,7 +1,7 @@
 {
   "id": "cred-002",
   "rule": "credential.field.context",
-  "description": "dplaax protocol context URI の欠落",
+  "description": "Missing dplaax protocol context URI",
   "input": {
     "credential": {
       "@context": [

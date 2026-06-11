@@ -1,7 +1,7 @@
 {
   "id": "canon-001",
   "rule": "canon.jcs.base",
-  "description": "キーの辞書順整列と ES6 数値正規化（2.50 → 2.5、1.0 → 1）",
+  "description": "Lexicographic key ordering and ES6 number normalization (2.50 → 2.5, 1.0 → 1)",
   "input": {
     "document": "{\"b\":2.50,\"a\":1.0}"
   },

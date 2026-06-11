@@ -1,7 +1,7 @@
 {
   "id": "component-006",
   "rule": "component.custom.interop",
-  "description": "Custom がチェーン起点発行時に previousCredential を保持（チェーン起点は prev を持たない）",
+  "description": "A Custom component carries previousCredential when issuing at chain origin (a chain origin has no predecessor)",
   "input": {
     "component_type": "Custom",
     "chain_role": "origin",

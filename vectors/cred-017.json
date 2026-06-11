@@ -1,7 +1,7 @@
 {
   "id": "cred-017",
   "rule": "credential.body-sot",
-  "description": "未知の signed-scope field は受理し、ラウンドトリップで保持する（将来語彙の参加余地）",
+  "description": "Unknown signed-scope fields are accepted and survive the unmarshal-to-marshal round-trip (room for future vocabulary)",
   "input": {
     "credential": {
       "@context": [

@@ -1,7 +1,7 @@
 {
   "id": "canon-007",
   "rule": "canon.strict-decode",
-  "description": "ドキュメント末尾の余剰データの拒否",
+  "description": "Trailing data after the document is rejected",
   "input": {
     "document": "{\"a\":1} {}"
   },

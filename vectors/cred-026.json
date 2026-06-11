@@ -1,7 +1,7 @@
 {
   "id": "cred-026",
   "rule": "credential.claim.grounding",
-  "description": "provin: claim を emit しながら @context に接地 context が無い",
+  "description": "A provin: claim emitted while @context carries no grounding context",
   "input": {
     "credential": {
       "@context": [

@@ -1,7 +1,7 @@
 {
   "id": "cred-015",
   "rule": "credential.subject.output-hash",
-  "description": "outputHash が sha256: prefix を欠く",
+  "description": "outputHash lacks the sha256: prefix",
   "input": {
     "credential": {
       "@context": [

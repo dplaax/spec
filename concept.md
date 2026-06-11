@@ -1,70 +1,70 @@
-# dPLaaX — コンセプト
+# dPLaaX — Concept
 
-> 本書は non-normative。dPLaaX の規範は rules/・schemas/・vectors/ のみが定める（→ [README.md](README.md)）。
-> 本書は「なぜ dPLaaX が存在するか」だけを述べ、その実現方法には踏み込まない。
+> This document is non-normative. The normative specification of dPLaaX is defined solely by rules/, schemas/, and vectors/ (→ [README.md](README.md)).
+> This document addresses only *why* dPLaaX exists; it does not cover how it is implemented.
 
-## dPLaaX とは
+## What dPLaaX is
 
-dPLaaX（"data PipeLine as a X" / "decentralized PipeLine as a X"）は、境界の約束事である。データが組織やシステムの境界を越えて受け渡されるとき、「誰が、何を受け取り、何を行い、何を渡したか」を、あとから改ざんすれば検出される形で境界ごとに記録し、その記録の連なりを第三者が独立に確かめられるようにする。"X" は Service / Substrate / Standard など、位置づけの自由度を残すための未確定の枠である。
+dPLaaX ("data PipeLine as a X" / "decentralized PipeLine as a X") is a protocol of boundary commitments. When data crosses the boundaries of organizations or systems, dPLaaX records at each boundary — in a tamper-evident form — who received what, what was done to it, and what was passed on, and makes that chain of records independently verifiable by third parties. The "X" is deliberately left open — Service, Substrate, Standard, and similar framings are all possible — to preserve flexibility in how the protocol is positioned.
 
-ここでいう「データパイプライン」は広義である。意図的に設計されたパイプライン製品の中の流れに限らず、サプライチェーン記録、フェデレーションされた属性情報、監査ログ、ファイル連携など、データが境界を越えて受け渡される現象全般を含む。約束事は境界ごとに一様に適用され、組織内・組織間のいずれでも同じ形の記録の連なりを生み出す。dPLaaX が定めるのは境界における記録の約束事であり、データを運ぶ基盤そのものではない。
+"Data pipeline" is used here in a broad sense. It encompasses not only flows inside purpose-built pipeline products, but any phenomenon in which data crosses a boundary: supply-chain records, federated attribute information, audit logs, file handoffs, and more. The same protocol applies uniformly at every boundary, producing a consistent chain of records whether the boundaries fall within a single organization or span multiple organizations. dPLaaX defines the commitment protocol at each boundary; it does not define the transport layer that carries data.
 
-dPLaaX があれば、データの提供者と事前の契約関係を持たない第三者でも、約束事に従って受け渡されたデータについて、それが一連の境界を通過するなかで受けた取り扱いの記録を独立に確かめられる。
+With dPLaaX, a third party who has no prior contractual relationship with a data provider can still independently verify, for data that was conveyed under the protocol, the record of how that data was handled as it passed through a chain of boundaries.
 
-dPLaaX が与えるのは記録の真正性と連続性であって、それ以上ではない。内容の真実性は保証しない — 発生源が誤った値を記録すれば、来歴が完全でも値は誤ったままである。記録の網羅性も単独では保証しない — 記録されなかった境界があったことを、残された記録だけから証明することはできない。そして「独立に確かめられる」は無条件ではなく、記録者の身元と権限をどう信頼するかという、確かめ手側の拠り所の選択の上に成り立つ。dPLaaX が変えるのは、どこに信頼の重みを置くかの判断を、推測ではなく確かめられた来歴に基づいて行えるようになることである。
+What dPLaaX provides is authenticity and continuity of the record — nothing more. It does not guarantee the truth of the content: if the origin records an incorrect value, that value remains incorrect even when the provenance chain is complete. It does not, on its own, guarantee completeness: the existence of an unrecorded boundary cannot be proven from the records that remain. And "independently verifiable" is not unconditional — it rests on the verifier's choice of anchor of trust, namely how to trust the identity and authority of the recording parties. What dPLaaX changes is the basis for deciding where to place trust: that judgment can now rest on verified provenance rather than inference.
 
-## 課題
+## The problem
 
-データが境界を越えて受け渡されるとき、その来歴は受け渡しのたびに失われていく。
+When data crosses boundaries, its provenance erodes with each handoff.
 
-同じ「価格: ¥150,000」というデータでも、信頼できる発生源が起点で記録したものなのか、複数の仲介者を経由した派生データなのかで、置くべき信頼の重みはまったく異なる。しかしデータの受け手 — 監査人、下流システム、取引先、そして AI Agent — には、この違いを構造的に判別する手段がない。
+The same value — say, "price: ¥150,000" — carries very different weight depending on whether it was recorded by a trusted origin at the source, or whether it is derived data that passed through multiple intermediaries. Yet the data's recipients — auditors, downstream systems, counterparties, and AI agents — have no structural means to distinguish between these cases.
 
-### 点の監査、線の現実
+### Audits are points; reality is a line
 
-現実世界のワークフローは切れ目なく連続している。一方、規制や監査はその一部を点で切り取って確かめる。そしてシステムはすべての流れを記録し続けることができず、点と点のあいだの来歴は忘却される。
+Real-world workflows are continuous and unbroken. Regulations and audits, however, sample that continuity by checking discrete points. Systems cannot retain a complete record of every flow, and the provenance between those points is forgotten.
 
-今日の支配的なアプローチは、規制が求める場所に「監査のための点を作る」ことである。しかし点は本来、連続した線の上に浮かび上がるものであり、点を個別に作っても線は復元できない。データの流れが連続している以上、来歴もまた連続した線として残るべきだ。
+The dominant approach today is to create "audit points" wherever regulations demand them. But points are only meaningful as cross-sections of a continuous line; creating points individually cannot reconstruct the line. Because data flows are continuous, provenance records should be continuous too.
 
-dPLaaX のデータパイプライン・アプローチは、「データの連続性」の上に「来歴証明の連続性」を重ねる。dPLaaX の記録も境界ごとに生まれる点ではあるが、監査のために個別に作られる孤立した点とは異なり、前後の記録と連結されて線を成す断面である。連続した来歴が残っていれば、監査が求める証跡のうち来歴に関わるものは、この線の上のどの点についても断面として導出できる。来歴の連なりを部分的に備える仕組みは存在するが、ドメインを問わず、プロセス境界の連続性そのものを一次の対象とする層はまだ空白である。
+dPLaaX's data-pipeline approach layers "provenance continuity" on top of "data continuity." The records dPLaaX produces are also points — one per boundary — but unlike isolated audit points created after the fact, each record is a cross-section that is connected to the records before and after it, forming a line. When a continuous provenance record exists, any provenance-related evidence that an audit demands can be derived as a cross-section at any point along that line. Mechanisms that preserve partial provenance chains exist, but the layer that treats the continuity of process boundaries as its primary concern — across all domains — remains vacant.
 
-線が点に優るのは、監査の便宜だけではない。尤もらしい点の成果物 — 整った書類、辻褄の合う数値、本物らしく見える記録 — を作ること自体は元来安価であり、生成技術の進展はそのコストをさらに押し下げていく。これに対し、連結された来歴の線を後から偽装するには、通過した各境界の署名鍵と、下流がすでに受け取った記録との整合とが要る。この難しさは成果物の出来栄えとは独立しており、見分けのつかないほど精巧な点を作れることは、確かめられる線を作れることを意味しない。だから dPLaaX は信頼の重みを「成果物が本物らしく見えるか」から「来歴の線が確かめられるか」へ移す。これは内容が偽りえないということではない — 鍵を握る発生源は依然として誤った値に署名できる（→ 「dPLaaX とは」）。外部から成果物を捏造する手間と、検証可能な来歴の線を捏造する手間との桁違いの隔たりこそが、線を点より頼れるものにする。
+Lines are preferable to points for reasons beyond audit convenience. Creating plausible point artifacts — polished documents, internally consistent figures, records that look authentic — has always been cheap, and advances in generative technology are driving that cost further down. Fabricating a connected provenance line, by contrast, requires the signing keys of every boundary traversed and consistency with records already received downstream. That difficulty is independent of how convincing the artifact looks; the ability to produce indistinguishable points does not imply the ability to produce a verifiable line. dPLaaX therefore shifts the weight of trust from "does the artifact look genuine?" to "can the provenance line be verified?" This is not a claim that content cannot be falsified — a dishonest origin still holds its signing key and can sign an incorrect value (→ "What dPLaaX is"). The orders-of-magnitude difference in cost between fabricating an artifact and fabricating a verifiable provenance line is what makes lines more trustworthy than points.
 
-この約束事が引き受ける信頼には三つの層がある。第一に、個々の記録がそれ自体として整合していること（誰が署名したか、改ざんされていないか）。第二に、記録が「何から作られたか」という申告まで遡って確かめられること。dPLaaX が引き受けるのはこの二層までである。第三の層 — 申告された材料から出力が*正しく*導かれたか、という意味の正しさ — は約束事の外に置く。署名は身元を証明するが真実は証明できず、加工の中身の正しさは加工の意味を知る者にしか判定できないからだ。境界を引き受けすぎないことが、引き受けた範囲の確かさを保つ。
+There are three layers of trust that this protocol takes on. The first is that each individual record is internally consistent — who signed it, and whether it has been tampered with. The second is that a record can be traced back to a declared account of what it was made from. dPLaaX covers these two layers. The third layer — whether the output was *correctly* derived from the declared inputs, in the sense of semantic correctness — is deliberately outside the protocol. Signatures prove identity, not truth, and whether a transformation is correct can only be judged by someone who understands what the transformation means. Not over-committing at the boundary is what preserves the reliability of the commitment that is made.
 
-### 組織間における来歴証明の問題
+### Cross-organizational provenance
 
-記録が連続して残っていても、それを誰が確かめられるかは別の問題である。組織の中だけで完結する流れであれば、信頼の拠り所が明確なことが多く、既存の単純な仕組みでまかなえる場合も多い。未解決なのは、**共有の信頼の拠り所を持たない**複数の組織にまたがる流れにおいて、境界ごとのデータ来歴をいかに確かめられる形で残すか、という領域である。なおデータは組織内に留まり続けるとは限らない。組織内の記録にも同じ約束事を適用する価値は、その記録がいずれ境界を越えたときに線が途切れないことにある。
+Even when records are preserved continuously, who can verify them is a separate question. Within a single organization, the anchor of trust is usually clear, and existing simple mechanisms often suffice. The unsolved problem is how to preserve boundary-by-boundary data provenance in a verifiable form across flows that span **multiple organizations with no shared anchor of trust**. Note that data does not always stay within a single organization. The value of applying the same protocol to intra-organizational records lies in ensuring that the line does not break when those records eventually cross a boundary.
 
-### 来歴証明需要の急速な拡大
+### Rapid growth in provenance demand
 
-来歴証明への需要は複数のドメインで急速に広がっている。ソフトウェアサプライチェーン、物理サプライチェーン（製品パスポート）、コンテンツ真正性、セキュリティ・コンプライアンス報告、AI 学習データのガバナンス — それぞれの領域で、来歴の標準化が業界規模で進行中である。
+Demand for provenance attestation is expanding rapidly across multiple domains: software supply chains, physical supply chains (product passports), content authenticity, security and compliance reporting, and AI training-data governance. In each of these domains, industry-scale standardization of provenance is underway.
 
-これらの先行エコシステムは互いに排他ではなく、対象とする**境界の単位**が異なるものとして並存する — ビルド成果物単位、製品ライフサイクル単位、コンテンツ単位など。連なりや系譜を備えるものもあるが、いずれもそれは自らの対象単位・ドメインの内側に閉じている。dPLaaX が取り組むのは、ドメインを問わず、広義データパイプラインの**プロセス境界の連続性そのものを一次の対象とする**層という空白である。先行エコシステムとの相互運用は前提とするが、その実現方法は本書では扱わない。
+These existing ecosystems are not mutually exclusive; they coexist as efforts targeting different **units of boundary** — build artifact, product lifecycle, content unit, and so on. Some have lineage or ancestry features, but each is scoped to its own unit and domain. The layer that dPLaaX addresses — treating the **continuity of process boundaries in data pipelines broadly construed as its primary subject, regardless of domain** — is still vacant. Interoperability with existing ecosystems is a premise, but how that is achieved is outside the scope of this document.
 
-### データ消費者としての AI
+### AI as a data consumer
 
-来歴の問題は AI 以前から存在するが、AI の普及はそれを先鋭化させる。LLM は入力データの事実としての正確さを内部では検証できないため、来歴が確かめられていないデータを参照させることは、AI の判断品質を構造的に下げるリスクにつながる（Unverified In, Hallucination Out）。dPLaaX の記録の約束事は人間・機械のどちらの確かめ手も等しく前提としており、AI Agent が参照データの来歴を機械的に確かめる用途にもそのまま対応する。
+The provenance problem predates AI, but the spread of AI sharpens it. Because LLMs cannot internally verify the factual accuracy of their input data, providing them with data whose provenance has not been verified creates a structural risk of degraded judgment quality (Unverified In, Hallucination Out). The commitment protocol of dPLaaX treats both human and machine verifiers on equal footing, and directly supports use cases in which AI agents verify the provenance of reference data mechanically.
 
-## 規制の追い風
+## Regulatory tailwinds
 
-来歴証明を必要とする、あるいは構造的に親和性の高い規制が、複数ドメインで広がっている。これらの規制が求める証跡のうち来歴に関わるものは、連続した来歴が残っていれば、規制ごとに点を作り込むまでもなく線の断面として導出できる。
+Regulations that require provenance attestation — or that are structurally well-suited to it — are spreading across multiple domains. For the provenance-related portions of the evidence those regulations demand, a continuous provenance record makes it unnecessary to instrument each regulation individually; the required evidence can be derived as a cross-section of the line.
 
-| ドメイン | 規制（例） |
+| Domain | Regulation (examples) |
 | --- | --- |
-| サプライチェーン・製品 | ESPR / Digital Product Passport / EU バッテリー規則 / EU Data Act / IRA・FEOC ルール |
-| サステナビリティ | CSRD（Scope 3・第三者 assurance）/ CBAM |
-| 食品・医薬品 | DSCSA（処方薬の単位レベル追跡）/ FSMA 204 |
-| 金融 ICT・データ保護 | DORA（ICT リスク・監査証跡）/ GDPR Art.5(2)・Art.30（説明責任・処理活動記録） |
-| デジタルアイデンティティ | eIDAS 2.0（EUDI Wallet・属性の電子的証明） |
-| AI ガバナンス | EU AI Act（Arts.10–12: データガバナンス・文書化・ログ）/ California AB-2013（学習データの出所公開）/ California SB-942（生成コンテンツの開示） |
-| 国防・機微情報 | US DoD CMMC 2.0 / CUI 要件 |
+| Supply chain / product | ESPR / Digital Product Passport / EU Battery Regulation / EU Data Act / IRA-FEOC rules |
+| Sustainability | CSRD (Scope 3, third-party assurance) / CBAM |
+| Food / pharmaceuticals | DSCSA (unit-level prescription drug tracing) / FSMA 204 |
+| Financial ICT / data protection | DORA (ICT risk, audit trail) / GDPR Art. 5(2) and Art. 30 (accountability, records of processing) |
+| Digital identity | eIDAS 2.0 (EUDI Wallet, electronic attestation of attributes) |
+| AI governance | EU AI Act (Arts. 10–12: data governance, documentation, logging) / California AB-2013 (training data disclosure) / California SB-942 (generated-content disclosure) |
+| Defense / sensitive information | US DoD CMMC 2.0 / CUI requirements |
 
-なお、dPLaaX は規制準拠そのものを成立させるものではない。各規制はドメイン固有の記録・統制・報告・法解釈を個別に要求しており、連続した来歴が担えるのは、そのうち来歴に関わる証跡の基盤である。
+dPLaaX does not by itself achieve regulatory compliance. Each regulation imposes domain-specific recording, control, reporting, and legal interpretation requirements. What continuous provenance can provide is the foundation for the provenance-related portion of that evidence.
 
 ## References
 
-以下の論文は AI 時代の文脈から本領域に到達した経緯を示すものであり、dPLaaX の適用範囲を AI に限定するものではない。
+The papers below document the path to this subject from the context of the AI era; they do not limit the scope of dPLaaX to AI applications.
 
-- 「速く運ぶ」から「信頼して運ぶ」へ / *Toward Trustworthy Data Pipelines in the AI Era: Provenance, Sovereignty, and Agent Access* — [doi.org/10.5281/zenodo.19554296](https://doi.org/10.5281/zenodo.19554296) (2026-04-13)
-- データパイプラインにおける暗号的来歴証明 / *Cryptographic Provenance Attestation in Data Pipelines: Structural Guarantees for Data Trustworthiness via W3C VC/DID* — [doi.org/10.5281/zenodo.20042030](https://doi.org/10.5281/zenodo.20042030) (2026-05-05)
-- AI 時代におけるデータ主権 / *Data Sovereignty in the AI Era: Federated Pipeline Networks (v2)* — [doi.org/10.5281/zenodo.20124910](https://doi.org/10.5281/zenodo.20124910) (2026-05-12)
+- From "move fast" to "move with trust" / *Toward Trustworthy Data Pipelines in the AI Era: Provenance, Sovereignty, and Agent Access* — [doi.org/10.5281/zenodo.19554296](https://doi.org/10.5281/zenodo.19554296) (2026-04-13)
+- Cryptographic provenance in data pipelines / *Cryptographic Provenance Attestation in Data Pipelines: Structural Guarantees for Data Trustworthiness via W3C VC/DID* — [doi.org/10.5281/zenodo.20042030](https://doi.org/10.5281/zenodo.20042030) (2026-05-05)
+- Data sovereignty in the AI era / *Data Sovereignty in the AI Era: Federated Pipeline Networks (v2)* — [doi.org/10.5281/zenodo.20124910](https://doi.org/10.5281/zenodo.20124910) (2026-05-12)

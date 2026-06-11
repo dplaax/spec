@@ -1,7 +1,7 @@
 {
   "id": "component-001",
   "rule": "component.catalog",
-  "description": "catalog 外の type 名乗り（4 type のいずれにも適合しない）",
+  "description": "Claiming a type outside the catalog (conforms to none of the four)",
   "input": {
     "component_type": "MagicProxy",
     "credential": {

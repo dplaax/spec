@@ -1,7 +1,7 @@
 {
   "id": "commitment-004",
   "rule": "commitment.derived-from",
-  "description": "derived_from に重複（unique set 違反）",
+  "description": "derived_from contains duplicates (unique-set violation)",
   "input": {
     "credential": {
       "@context": [

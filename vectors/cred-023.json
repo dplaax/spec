@@ -1,7 +1,7 @@
 {
   "id": "cred-023",
   "rule": "credential.claim.grammar",
-  "description": "\"+\" 結合は文法違反（複合は profile が単一 label で定義する）",
+  "description": "A \"+\"-joined value violates the claim grammar (composites are single profile labels)",
   "input": {
     "credential": {
       "@context": [

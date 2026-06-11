@@ -1,7 +1,7 @@
 {
   "id": "signer-001",
   "rule": "signer.proof.structure",
-  "description": "proof が cryptosuite を欠く（5 必須メンバーの欠落）",
+  "description": "proof lacks cryptosuite (one of the five mandatory members)",
   "input": {
     "credential": {
       "@context": [

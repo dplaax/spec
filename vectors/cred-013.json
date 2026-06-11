@@ -1,7 +1,7 @@
 {
   "id": "cred-013",
   "rule": "credential.subject.input-hash",
-  "description": "集約によるチェーン起点では inputHash を省略してよい",
+  "description": "A chain origin produced by aggregation omits inputHash — accepted",
   "input": {
     "credential": {
       "@context": [

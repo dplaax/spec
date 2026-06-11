@@ -1,7 +1,7 @@
 {
   "id": "chain-006",
   "rule": "chain.data-flow.continuity",
-  "description": "隣接リンクの outputHash[n] == inputHash[n+1] が成立",
+  "description": "Adjacent links satisfy outputHash[n] == inputHash[n+1]",
   "input": {
     "chain": [
       {

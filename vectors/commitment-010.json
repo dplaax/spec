@@ -1,7 +1,7 @@
 {
   "id": "commitment-010",
   "rule": "commitment.verify.equality-fail-closed",
-  "description": "申告集合外の issuer のソースが提供された → failed",
+  "description": "A source from an issuer outside the claimed set was provided → failed",
   "input": {
     "credential": {
       "@context": [

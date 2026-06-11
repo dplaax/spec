@@ -1,8 +1,8 @@
-# バージョニング
+# Versioning
 
-- 現在: **pre-0.1**。すべて不安定であり、予告なく変わる。
-- **0.1 タグの条件**: rules/ の全 entry が `draft` 以上 / 各 `draft` rule に 1 本以上の vector / lint green / `source` field の全廃（転記完了）。
-- **1.0 の条件**: 全機能の実装と実用検証期間を経て、破壊の余地を 0.x で消化しきってから。
-- 互換性の単位は **rule の `id` と `statement` の意味**。ファイル配置は規範外（→ [README.md](README.md)）。
-- rule の削除・意味変更は 0.x では minor で許容する。1.0 以降は major の唯一の正当理由となる。
-- vector・schema の追加は常に minor 以下。既存 vector の期待値変更は rule の意味変更とみなす。
+- Current state: **pre-0.1**. Everything is unstable and subject to change without notice.
+- **Conditions for the 0.1 tag**: all entries in `rules/` are at `draft` or above / each `draft` rule has at least one conformance vector / lint green / all `source` fields removed (transcription complete).
+- **Conditions for 1.0**: after full feature implementation, a period of real-world validation, and exhausting all breaking changes within 0.x.
+- The unit of compatibility is the **`id` of a rule and the meaning of its `statement`**. File layout is outside the normative scope (→ [README.md](README.md)).
+- Rule deletion and semantic changes are permitted within a minor release in 0.x. From 1.0 onward they are the sole justification for a major version increment.
+- Adding vectors or schemas is always a minor change or smaller. Changing the expected value of an existing vector is treated as a semantic change to the corresponding rule.

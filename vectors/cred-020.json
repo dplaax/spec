@@ -1,7 +1,7 @@
 {
   "id": "cred-020",
   "rule": "credential.proof.as-received",
-  "description": "未知の proof メンバーを持つ proof は as-received で受理・保持する",
+  "description": "A proof carrying an unknown member is accepted as-received and preserved",
   "input": {
     "credential": {
       "@context": [

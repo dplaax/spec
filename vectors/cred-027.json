@@ -1,7 +1,7 @@
 {
   "id": "cred-027",
   "rule": "credential.claim.grounding",
-  "description": "claim namespace が profile context で接地されている適合形",
+  "description": "Conformant form: the claim namespace is grounded by the profile context",
   "input": {
     "credential": {
       "@context": [

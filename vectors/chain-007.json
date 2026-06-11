@@ -1,7 +1,7 @@
 {
   "id": "chain-007",
   "rule": "chain.data-flow.continuity",
-  "description": "隣接リンクの hash 連続性の破れ（先行 outputHash ≠ 後続 inputHash）",
+  "description": "Broken data-flow continuity (predecessor outputHash differs from successor inputHash)",
   "input": {
     "chain": [
       {

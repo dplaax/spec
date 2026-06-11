@@ -1,7 +1,7 @@
 {
   "id": "cred-001",
   "rule": "credential.field.context",
-  "description": "適合 credential（3 要素 @context、第 1 要素 credentials/v2 + dplaax protocol context + provin profile context）",
+  "description": "Conformant credential (three-element @context: credentials/v2 first, then the dplaax protocol context and the provin profile context)",
   "input": {
     "credential": {
       "@context": [

@@ -1,7 +1,7 @@
 {
   "id": "cred-016",
   "rule": "credential.subject.previous-credential",
-  "description": "チェーン起点の previousCredential: null は省略と等価に受理",
+  "description": "previousCredential: null on a chain origin is accepted as equivalent to omission",
   "input": {
     "credential": {
       "@context": [

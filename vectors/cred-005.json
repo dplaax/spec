@@ -1,7 +1,7 @@
 {
   "id": "cred-005",
   "rule": "credential.field.issuer",
-  "description": "issuer の欠落（Process DID への帰責が不能）",
+  "description": "Missing issuer (no Process DID to attribute to)",
   "input": {
     "credential": {
       "@context": [

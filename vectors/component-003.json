@@ -1,7 +1,7 @@
 {
   "id": "component-003",
   "rule": "component.origin-source.firstdrop",
-  "description": "Origin Source はチェーン起点を発行する（N≥1 の適合入力を取りつつ FirstDrop）",
+  "description": "An Origin Source issues a chain origin (taking three conformant input streams while emitting a FirstDrop)",
   "input": {
     "component_type": "OriginSource",
     "conformant_inputs": 3,

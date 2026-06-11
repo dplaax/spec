@@ -1,7 +1,7 @@
 {
   "id": "cred-021",
   "rule": "credential.schema-ref",
-  "description": "schema オブジェクトが contentHash を欠く（存在するなら 3 field 必須）",
+  "description": "schema object missing contentHash (all three fields are needed when the object is present)",
   "input": {
     "credential": {
       "@context": [

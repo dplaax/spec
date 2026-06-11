@@ -1,42 +1,47 @@
 # yaml-language-server: $schema=../tools/rule.schema.json
-# dplaax rule catalog — signer (proof 構造と署名義務)
-# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+# dplaax rule catalog — signer (proof structure and signing obligations)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
 rules:
   - id: signer.proof.structure
     status: draft
     class: core
     statement: >-
-      署名者は、W3C Data Integrity に準拠した proof オブジェクトをクレデンシャルに
-      付与しなければならない (MUST)。proof は type・cryptosuite・verificationMethod・
-      proofPurpose・proofValue を含まなければならず (MUST)、verificationMethod は
-      署名者の DID Document に解決可能でなければならない (MUST)。
+      A signer MUST attach a proof object conforming to W3C Data Integrity to
+      the credential. The proof MUST include type, cryptosuite,
+      verificationMethod, proofPurpose, and proofValue;
+      verificationMethod MUST be resolvable to the signer DID Document.
     uses: []
     schemas: []
     vectors: [signer-001]
     notes: >-
-      cryptosuite の選択は wire profile の宣言事項であり、本 catalog は固定しない。
-      proofPurpose は assertionMethod。created の存在は推奨にとどまるが、
-      欠落すると confidence.cryptosuite-lifecycle の判定キーが得られず
-      lifecycle 評価が成立しない (実質 fail-closed)。
+      Cryptosuite selection is declared by the wire profile; this catalog does
+      not fix it. proofPurpose is assertionMethod. The presence of created is
+      recommended but not required; however, if absent, the evaluation key for
+      confidence.cryptosuite-lifecycle is unavailable and lifecycle evaluation
+      cannot proceed (effectively fail-closed).
 
   - id: signer.cryptosuite.no-op-rejected
     status: draft
     class: core
     statement: >-
-      cryptosuite および正規化仕様の識別子として、no-op を意味する値
-      ("", "none", "null", "identity") を lifecycle registry に登録しては
-      ならない (MUST NOT)。検証器は、これらの識別子を registry の状態に
-      かかわらず拒否しなければならない (MUST)。
+      A no-op identifier ("", "none", "null", "identity") MUST NOT be
+      registered as a cryptosuite or canonicalization-spec identifier in the
+      lifecycle registry. A verifier MUST reject these identifiers regardless
+      of registry state.
     uses: [confidence.cryptosuite-lifecycle]
     schemas: []
     vectors: [signer-002, signer-003]
     notes: >-
-      JOSE alg:none 級 downgrade の構造的封鎖。歴史的事故の本質は none が
-      「正規に仕様化された合法値」だったこと — 本規則は no-op を自称する
-      識別子クラスの正規化経路 (登録) を恒久に塞ぎ、検証時の registry 非依存の
-      拒否は registry 汚染への多層防御。名前を偽った no-op (実体が検証スキップの任意識別子) は
-      本規則の対象外 — 未登録なら confidence.cryptosuite-lifecycle の
-      fail-closed が拒否し、登録済み garbage は registry governance
-      (append-only による帰責・Sunset 失効・proof.created キーの被害範囲計算)
-      が担う。"" は zero value の fail-closed。
-      出典: provin.oss vc/cryptosuite.go (登録時 + 検証時の両適用)。
+      This is a structural closure against JOSE alg:none-class downgrades. The
+      essence of that historical vulnerability was that "none" was a legitimate
+      specified value — this rule permanently blocks the registration pathway
+      (the normative path) for identifiers that claim to be no-ops, and the
+      registry-independent rejection at verification time is a defense-in-depth
+      layer against registry poisoning. A renamed no-op (an arbitrary
+      identifier whose implementation skips verification) is outside the scope
+      of this rule: if unregistered, confidence.cryptosuite-lifecycle rejects
+      it fail-closed; if registered garbage, registry governance (append-only
+      accountability, Sunset expiry, proof.created-keyed blast-radius
+      calculation) applies. "" is the fail-closed case for zero values.
+      Source: provin.oss vc/cryptosuite.go (applied at both registration and
+      verification time).

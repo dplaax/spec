@@ -1,7 +1,7 @@
 {
   "id": "confidence-005",
   "rule": "confidence.cryptosuite-lifecycle",
-  "description": "proof.created 時点で Active → verified（判定キーは proof.created であり validFrom ではない）",
+  "description": "Active at proof.created → verified (the evaluation key is proof.created, not validFrom)",
   "input": {
     "registry": [
       {

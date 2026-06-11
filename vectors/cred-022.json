@@ -1,7 +1,7 @@
 {
   "id": "cred-022",
   "rule": "credential.schema-ref",
-  "description": "schema 参照の不在は許容",
+  "description": "Absent schema reference is acceptable",
   "input": {
     "credential": {
       "@context": [

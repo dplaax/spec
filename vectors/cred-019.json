@@ -1,7 +1,7 @@
 {
   "id": "cred-019",
   "rule": "credential.prev.content-hash",
-  "description": "previousCredential の digest 長不正（32 hex、sha256 は 64 hex）",
+  "description": "previousCredential digest length is wrong (32 hex; sha256 is 64 hex)",
   "input": {
     "credential": {
       "@context": [

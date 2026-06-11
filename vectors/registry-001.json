@@ -1,7 +1,7 @@
 {
   "id": "registry-001",
   "rule": "registry.append-only",
-  "description": "コミット済みエントリの同一版識別子での再コミット（内容差し替え）は不可",
+  "description": "Re-committing an existing version identifier with different content is rejected",
   "input": {
     "sequence": [
       {

@@ -1,7 +1,7 @@
 {
   "id": "chain-003",
   "rule": "chain.trigger.retention",
-  "description": "タイマートリガーの実行が previousCredential を引き継いだ（非イベント起動はチェーン起点 MUST）",
+  "description": "A timer-triggered run carried previousCredential (non-event triggers start a chain origin)",
   "input": {
     "trigger": "timer",
     "credential": {

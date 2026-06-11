@@ -1,7 +1,7 @@
 {
   "id": "commitment-012",
   "rule": "commitment.store.persistence",
-  "description": "audit-reachable deployment の VC ストアはプロセス再起動を跨いで解決可能",
+  "description": "An audit-reachable deployment's VC store remains resolvable across a process restart",
   "input": {
     "sequence": [
       {

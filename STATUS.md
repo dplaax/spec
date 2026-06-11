@@ -2,6 +2,9 @@
 
 > 本ファイルは作業台帳であり spec の一部ではない。spec 安定後に削除する。
 > tools/lint.py の走査対象外（規範語の引用が許される唯一の markdown）。
+> (English) This file is the drafting ledger, kept in Japanese only. It is
+> temporary — not part of the spec — and will be deleted once the spec
+> stabilizes. The spec itself is English-primary.
 
 ## 現状宣言（2026-06-10）
 

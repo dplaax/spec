@@ -1,7 +1,7 @@
 {
   "id": "resolver-007",
   "rule": "resolver.batch.shape",
-  "description": "batch 応答が要求と同数・同順でない（3 要求に 2 entry）",
+  "description": "Batch response is not same-length and same-order (two entries for three requests)",
   "input": {
     "request": [
       "sha256:1f8b8307783ee2391a3cf9bb12623b057254eb290bb8fe2f48d25d3ec32d3299",

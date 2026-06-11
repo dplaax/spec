@@ -1,7 +1,7 @@
 {
   "id": "commitment-009",
   "rule": "commitment.verify.equality-fail-closed",
-  "description": "申告 issuer 集合の真部分集合しか解決できていない → indeterminate（後で解決し得る）",
+  "description": "Only a proper subset of the claimed issuer set is resolved → indeterminate (may resolve later)",
   "input": {
     "credential": {
       "@context": [

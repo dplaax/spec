@@ -1,7 +1,7 @@
 {
   "id": "confidence-003",
   "rule": "confidence.composition.weakest-link",
-  "description": "最弱リンク合成: failed は他が verified でも全体 failed",
+  "description": "Weakest-link composition: failed dominates even when other axes are verified",
   "input": {
     "axes": {
       "signer-authenticity": "failed",

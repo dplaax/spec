@@ -1,7 +1,7 @@
 {
   "id": "cred-010",
   "rule": "credential.subject.pipeline-id",
-  "description": "pipelineId の欠落",
+  "description": "Missing pipelineId",
   "input": {
     "credential": {
       "@context": [

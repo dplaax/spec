@@ -1,7 +1,7 @@
 {
   "id": "resolver-003",
   "rule": "resolver.immutability",
-  "description": "同一キーが異なるバイト列に解決された（不変性違反 — 検証器は hash 再計算で拒否）",
+  "description": "The same key resolved to different bytes (immutability violation — the verifier rejects on hash recomputation)",
   "input": {
     "sequence": [
       {

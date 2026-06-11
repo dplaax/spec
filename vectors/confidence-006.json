@@ -1,7 +1,7 @@
 {
   "id": "confidence-006",
   "rule": "confidence.cryptosuite-lifecycle",
-  "description": "未登録 cryptosuite → failed（fail-closed）",
+  "description": "Unregistered cryptosuite → failed (fail-closed)",
   "input": {
     "registry": [
       {

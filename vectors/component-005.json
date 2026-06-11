@@ -1,7 +1,7 @@
 {
   "id": "component-005",
   "rule": "component.external-sink.receipt",
-  "description": "配送 receipt は PipelinePassCredential schema に適合し最後の上流を previousCredential で参照",
+  "description": "A delivery receipt conforms to the PipelinePassCredential schema and references the last upstream credential via previousCredential",
   "input": {
     "component_type": "ExternalSink",
     "credential": {

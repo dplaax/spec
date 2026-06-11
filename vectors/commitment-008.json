@@ -1,7 +1,7 @@
 {
   "id": "commitment-008",
   "rule": "commitment.verify.equality-fail-closed",
-  "description": "再計算 root と source_root の不一致 → failed",
+  "description": "Recomputed root differs from the claimed source_root → failed",
   "input": {
     "credential": {
       "@context": [

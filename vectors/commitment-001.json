@@ -1,7 +1,7 @@
 {
   "id": "commitment-001",
   "rule": "commitment.class.definition",
-  "description": "chain-preserving credential が source commitment 3 属性を運ぶ — previousCredential と直交（位相を問わず付与可）",
+  "description": "A chain-preserving credential carries the three source-commitment attributes — orthogonal to previousCredential (attachable regardless of topology)",
   "input": {
     "credential": {
       "@context": [

@@ -1,7 +1,7 @@
 {
   "id": "cred-011",
   "rule": "credential.subject.process-id",
-  "description": "processId の欠落",
+  "description": "Missing processId",
   "input": {
     "credential": {
       "@context": [

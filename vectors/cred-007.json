@@ -1,7 +1,7 @@
 {
   "id": "cred-007",
   "rule": "credential.field.valid-from",
-  "description": "validFrom 不在は許容（SHOULD であり MUST ではない）",
+  "description": "Absent validFrom is acceptable (recommended, not mandatory)",
   "input": {
     "credential": {
       "@context": [

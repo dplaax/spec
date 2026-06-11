@@ -1,7 +1,7 @@
 {
   "id": "resolver-006",
   "rule": "resolver.states.no-demotion",
-  "description": "Resolved から NotFound への降格は不可（eviction は Unavailable へ）",
+  "description": "Demoting Resolved to NotFound is forbidden (eviction transitions to Unavailable)",
   "input": {
     "sequence": [
       {

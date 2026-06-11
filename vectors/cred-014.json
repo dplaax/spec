@@ -1,7 +1,7 @@
 {
   "id": "cred-014",
   "rule": "credential.subject.input-hash",
-  "description": "inputHash が sha256:<hex> 形式でない（hex でない文字を含む）",
+  "description": "inputHash is not sha256:<hex> (non-hex characters)",
   "input": {
     "credential": {
       "@context": [

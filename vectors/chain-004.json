@@ -1,7 +1,7 @@
 {
   "id": "chain-004",
   "rule": "chain.trigger.batch-of-one",
-  "description": "タイマー起動がたまたま pending 1 件を消費 → それでもチェーン起点（消費数の事後観察を判定根拠にしない）",
+  "description": "A timer-triggered run that happened to consume one pending input still starts a chain origin (consumed-count hindsight is not the criterion)",
   "input": {
     "trigger": "timer",
     "consumed_pending": 1,

@@ -1,7 +1,7 @@
 {
   "id": "confidence-004",
   "rule": "confidence.cryptosuite-lifecycle",
-  "description": "proof.created 時点で Sunset → failed",
+  "description": "Sunset at proof.created → failed",
   "input": {
     "registry": [
       {

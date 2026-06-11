@@ -1,34 +1,34 @@
 # yaml-language-server: $schema=../tools/rule.schema.json
-# dplaax rule catalog — confidence (検証判定の合成)
-# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+# dplaax rule catalog — confidence (verification result composition)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
 rules:
   - id: confidence.axes.three-state
     status: draft
     class: core
     statement: >-
-      検証器は、各クレデンシャルを署名者真正性 (signer authenticity)・チェーン整合性
-      (chain consistency)・データ完全性 (data integrity) の 3 つの規範軸で独立に
-      評価し、各軸の結果を failed ⊏ indeterminate ⊏ verified の 3 状態で
-      表現しなければならない (MUST)。状態を数値スコアへ変換する計算式は
-      規範外であり、profile / アプリケーション側の選択とする。
+      A verifier MUST evaluate each credential on three normative axes —
+      signer authenticity, chain consistency, and data integrity — expressing
+      each result as one of three states: failed ⊏ indeterminate ⊏ verified.
+      Score formulas are non-normative.
     uses: []
     schemas: []
     vectors: [confidence-001]
     notes: >-
-      indeterminate は「現在の入力では検証を完了できない (後に解決しうる)」の意味
-      であり、条件付き成功の意味ではない。旧 draft 系の分類
-      (signature / DID resolution / schema の 3 軸、Invalid / Limited / Verified の
-      3 状態) は上書きされた — 特に Limited (条件付き成功) と indeterminate は
-      別概念で、互換ではない。
+      indeterminate means "verification cannot be completed with current input
+      (may be resolved later)"; it does not mean conditional success. The
+      old-draft classification (three axes: signature / DID resolution /
+      schema; three states: Invalid / Limited / Verified) is superseded —
+      Limited (conditional success) and indeterminate are distinct concepts
+      and are not compatible.
 
   - id: confidence.composition.weakest-link
     status: draft
     class: core
     statement: >-
-      検証器は、チェーン内の全クレデンシャルに 3 軸評価を適用し、軸とクレデンシャルの
-      全体にわたる最小値 (最弱リンク) を全体結果としなければならない (MUST)。
-      いずれか 1 つでも failed があれば、他がすべて verified でも全体結果は
-      failed としなければならない (MUST)。
+      A verifier MUST apply three-axis evaluation to every credential in the
+      chain and MUST use the minimum (weakest link) across all axes and
+      credentials as the aggregate result. If any axis of any credential is
+      failed, the aggregate MUST be failed.
     uses: [confidence.axes.three-state]
     schemas: []
     vectors: [confidence-002, confidence-003]
@@ -38,18 +38,19 @@ rules:
     status: draft
     class: core
     statement: >-
-      検証器は、cryptosuite の lifecycle 段階 (Active / Deprecated / Sunset) を、
-      proof.created の時刻において lifecycle registry に照会して判定しなければ
-      ならない (MUST)。Sunset または未登録の cryptosuite は failed としなければ
-      ならず (MUST)、Deprecated は注記付き verified として扱う。registry は
-      追記のみの公開成果物でなければならない (MUST)。
+      A verifier MUST query the lifecycle registry at proof.created to
+      determine the cryptosuite stage (Active / Deprecated / Sunset). Sunset
+      or unregistered suites MUST yield failed. Deprecated is verified with
+      notation. The registry MUST be append-only.
     uses: [confidence.axes.three-state]
     schemas: []
     vectors: [confidence-004, confidence-005, confidence-006]
     notes: >-
-      判定キーは proof.created であり validFrom ではない。registry の背面は
-      transparency log (実装選択)。no-op identifier の禁止は
-      signer.cryptosuite.no-op-rejected として規範化 (2026-06-11)。補完候補の
-      残り 2 点は不採用 — 検証器ごとの cryptosuite allow-list は deployment の
-      運用事項 (出典となる規範文も未発見)、Deprecated の cutoff date は
-      Sunset 遷移エントリの EffectiveDate で表現可能なため独立規則は冗長。
+      The evaluation key is proof.created, not validFrom. The registry backend
+      is a transparency log (implementation choice). The prohibition on no-op
+      identifiers is normativized as signer.cryptosuite.no-op-rejected
+      (2026-06-11). The remaining two candidate supplements were not adopted:
+      per-verifier cryptosuite allow-lists are an operational matter (no
+      normative source text found), and Deprecated cutoff dates are expressible
+      via the EffectiveDate of the Sunset transition entry, making a separate
+      rule redundant.

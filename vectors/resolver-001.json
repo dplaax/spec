@@ -1,7 +1,7 @@
 {
   "id": "resolver-001",
   "rule": "resolver.address.form",
-  "description": "キー = proof を除く canonical body の sha256:<hex>（チェーンリンク hash と同一の正規化）",
+  "description": "Key = sha256:<hex> over the canonical body excluding proof (the same canonicalization as the chain link)",
   "input": {
     "key": "sha256:1f8b8307783ee2391a3cf9bb12623b057254eb290bb8fe2f48d25d3ec32d3299",
     "body": "{\"@context\":[\"https://www.w3.org/ns/credentials/v2\",\"https://poc.dplaax.io/vc/v1\",\"https://poc.provin.io/vc/v1\"],\"credentialSubject\":{\"inputHash\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"outputHash\":\"sha256:5555555555555555555555555555555555555555555555555555555555555555\",\"pipelineId\":\"pl-mine\",\"processId\":\"proc-1\",\"transformationClaim\":\"provin:convert\"},\"issuer\":\"did:dplaax:poc.dplaax.io:org:mineA:pipeline:m:process:s\",\"type\":[\"VerifiableCredential\",\"PipelinePassCredential\"],\"validFrom\":\"2026-06-01T00:00:00Z\"}"

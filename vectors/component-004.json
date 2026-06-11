@@ -1,7 +1,7 @@
 {
   "id": "component-004",
   "rule": "component.external-sink.verify",
-  "description": "External Sink が受信チェーンを検証せずに終端",
+  "description": "An External Sink terminates without verifying the received chain",
   "input": {
     "component_type": "ExternalSink",
     "sequence": [

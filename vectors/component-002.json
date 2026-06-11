@@ -1,7 +1,7 @@
 {
   "id": "component-002",
   "rule": "component.filter-convert.stateless",
-  "description": "FilterConvert を名乗りながらクロスイベント window join（状態を要する処理）を実行",
+  "description": "Claiming FilterConvert while performing a cross-event window join (stateful processing)",
   "input": {
     "component_type": "FilterConvert",
     "behavior": "cross-event-window-join",

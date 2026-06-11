@@ -1,7 +1,7 @@
 {
   "id": "commitment-002",
   "rule": "commitment.scope.all-consumed",
-  "description": "chain-preserving の commitment が trigger 先行イベントを含まない（derived_from に先行 issuer 不在）— 全消費分違反",
+  "description": "A chain-preserving commitment that excludes the triggering predecessor (its issuer is absent from derived_from) — an all-consumed violation",
   "input": {
     "credential": {
       "@context": [

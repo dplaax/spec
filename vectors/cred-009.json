@@ -1,7 +1,7 @@
 {
   "id": "cred-009",
   "rule": "credential.field.proof",
-  "description": "proof が配列（proof set）",
+  "description": "proof is an array (proof set)",
   "input": {
     "credential": {
       "@context": [

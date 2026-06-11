@@ -1,7 +1,7 @@
 {
   "id": "resolver-008",
   "rule": "resolver.body.encoding",
-  "description": "body は canonical JSON バイト列の base64url（padding なし）— decode 後に hash 再計算でキーと一致",
+  "description": "Body is base64url (unpadded) of the canonical JSON bytes — decodes and re-hashes to the key",
   "input": {
     "entry": {
       "hash": "sha256:1f8b8307783ee2391a3cf9bb12623b057254eb290bb8fe2f48d25d3ec32d3299",

@@ -1,155 +1,161 @@
 # yaml-language-server: $schema=../tools/rule.schema.json
 # dplaax rule catalog — commitment (source commitment / audit-reachable conformance class)
-# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+# File sharding is non-normative; an entry's identity is its id (see README.md).
 rules:
   - id: commitment.class.definition
     status: draft
     class: audit-reachable
     statement: >-
-      発行者は audit-reachable class において derived_from・source_root・
-      source_root_canonical からなる source commitment を任意のクレデンシャルに
-      付与してもよい (MAY)。commitment は previousCredential と直交する監査属性で
-      あり親リンクではない。emit の有無は deployment 設定で決まり、deployment
-      profile は本 class を必須化してよい (MAY)。
+      An issuer MAY attach a source commitment (derived_from, source_root,
+      source_root_canonical) to any credential (audit-reachable class). It
+      is an audit attribute orthogonal to previousCredential, not a parent
+      link. A deployment profile MAY require the class.
     uses: [chain.trigger.retention]
     schemas: []
     vectors: [commitment-001]
     notes: >-
-      「任意のクレデンシャル」= チェーン起点・chain-preserving のいずれも付与できる。
-      wire profile 自体は commitment を要求しない — 要求するのは deployment profile
-      (例: 規制ドメイン)。commitment が保証するのは発行時点の source 集合への
-      束縛のみで、申告の完全性は保証しない。申告漏れの検出は ingress store との
-      突合という監査層の作業に残る (integrity と completeness の分離)。
-      本 class は trust layering の L2 (監査到達性) を担う — L1 (per-credential
-      自己整合) は confidence 規則群、L3 (申告ソースから出力が正しく導出されたか
-      という意味的監査) は protocol の決定範囲外で adapter / 監査基盤の関心事
-      (→ GLOSSARY.md trust layering、転記元: dplaas.oss provenance.md)。
-      旧名 origin commitment (チェーン起点専用の概念化) は 2026-06-11 に改組 —
-      名称が添付先を狭め、chain-preserving 境界の消費ソース集合を監査不可視に
-      していた (→ STATUS.md)。
+      "Any credential" means chain origins and chain-preserving credentials
+      alike. Whether to emit is a deployment decision (config-driven). The
+      wire profile itself does not demand the commitment — a deployment
+      profile (e.g. a regulatory domain) does. The commitment guarantees
+      only the binding to the claimed source set at issuance time; it does
+      not guarantee completeness of the claim. Omission detection remains
+      audit-layer reconciliation against ingress stores (the separation of
+      integrity and completeness). The former name, origin commitment (a
+      chain-origin-only conception), was reworked on 2026-06-11 — the name
+      narrowed the attachment surface and made the consumed-source sets of
+      chain-preserving boundaries invisible to audit (see STATUS.md).
 
   - id: commitment.scope.all-consumed
     status: draft
     class: audit-reachable
     statement: >-
-      source commitment を付与する場合、その対象は当該実行が消費した全ての
-      適合ソース credential の集合でなければならない (MUST)。chain-preserving では
-      この集合は trigger となった先行イベントを含み、derived_from は先行
-      credential の issuer を含まなければならない (MUST)。空集合が合法なのは
-      チェーン起点のみ。
+      An attached source commitment MUST cover all conformant source
+      credentials the execution consumed. On a chain-preserving credential
+      the set includes the predecessor, and derived_from MUST contain its
+      issuer. An empty set is legal only at a chain origin.
     uses: [commitment.class.definition, chain.trigger.retention]
     schemas: []
     vectors: [commitment-002]
     notes: >-
-      監査パリティ原則の帰結: 適合ソースを消費する限り、trigger の種類
-      (= previousCredential の有無) は監査義務を変えない。trigger 分は
-      previousCredential の hash でも束縛されるが、重複は無害であり、むしろ
-      「derived_from が先行 issuer を含む」ことがチェーン検証時の O(1)
-      整合チェックとして働く。trigger 除外案 (情報最小) ではなく全消費分を
-      採るのは、定義が trigger 分類に依存せず一様で、判定可能性が高いため
-      (「賢さより判定可能性」→ concept.md)。出典: 2026-06-11 設計会話
-      (SourceCommitment 改組) で確定。
+      A consequence of the audit-parity principle: as long as conformant
+      sources are consumed, the trigger kind (the presence of
+      previousCredential) does not change audit obligations. The trigger
+      predecessor is also bound by the previousCredential hash; the overlap
+      is harmless, and "derived_from contains the predecessor's issuer" works
+      as an O(1) consistency check during chain verification. All-consumed is
+      chosen over a trigger-excluded alternative (informationally minimal)
+      because the definition is uniform and does not depend on trigger
+      classification — higher decidability ("decidability over cleverness",
+      see concept.md). Settled in the 2026-06-11 design discussion
+      (the SourceCommitment rework).
 
   - id: commitment.derived-from
     status: draft
     class: audit-reachable
     statement: >-
-      derived_from は重複のない issuer DID の集合であり、発行者は辞書順昇順で
-      直列化しなければならない (MUST)。空集合は合法であり、適合 upstream が
-      存在しないことの宣言として扱う (チェーン起点のみ —
-      commitment.scope.all-consumed)。
+      derived_from is a duplicate-free set of issuer DIDs; the issuer MUST
+      serialize it in ascending lexicographic order. An empty set is legal
+      and declares that no conformant upstream exists (chain origins only;
+      see commitment.scope.all-consumed).
     uses: [commitment.class.definition, commitment.scope.all-consumed]
     schemas: []
     vectors: [commitment-003, commitment-004]
     notes: >-
-      同一 issuer からの複数 source VC は合法 — issuer 集合への重複排除は
-      発行時に行われる。粒度が issuer であることの帰結は
-      commitment.verify.equality-fail-closed の notes を参照。
+      Multiple source credentials from the same issuer are legal —
+      deduplication into the issuer set happens at issuance. For the
+      consequences of issuer granularity, see the notes of
+      commitment.verify.equality-fail-closed.
 
   - id: commitment.source-root.leaf
     status: draft
     class: audit-reachable
     statement: >-
-      発行者は、source_root の各 leaf を、受領時のままの署名済み wire 形式の
-      ソース VC (proof を含む) を正規化したうえで SHA-256(0x00 ‖ canon(VC)) として
-      計算しなければならない (MUST)。整列キーには SHA-256(canon(VC))
-      (content hash) を用いなければならない (MUST)。
+      The issuer MUST compute each source_root leaf as
+      SHA-256(0x00 ‖ canon(VC)) over the as-received signed wire form of the
+      source credential, proof included, and MUST use SHA-256(canon(VC))
+      (the content hash) as the sort key.
     uses: [commitment.class.definition, canon.jcs.base]
     schemas: []
     vectors: [commitment-005]
     notes: >-
-      入力は as-received の署名済み文書であることが要点 — 署名前の内部表現から
-      計算すると検証器の再計算と一致しない。正規化仕様の宣言は
-      source_root_canonical が担う。
+      The point is that the input is the as-received signed document —
+      computing from a pre-signing in-memory representation will not match
+      the verifier's recomputation. The canonicalization spec is declared by
+      source_root_canonical.
 
   - id: commitment.source-root.tree
     status: draft
     class: audit-reachable
     statement: >-
-      発行者は leaf を content hash の昇順で整列し、RFC 6962 §2.1 の MTH に従って
-      internal node を SHA-256(0x01 ‖ left ‖ right) で構成しなければならない (MUST)。
-      奇数 leaf は複製せず昇格させなければならない (MUST)。ソース集合が空の場合、
-      root は空文字列の SHA-256 とする。
+      The issuer MUST sort leaves by content hash ascending and build internal
+      nodes as SHA-256(0x01 ‖ left ‖ right) per the RFC 6962 §2.1 MTH. An odd
+      leaf MUST be promoted, never duplicated. For an empty source set the
+      root is the SHA-256 of the empty string.
     uses: [commitment.source-root.leaf]
     schemas: []
     vectors: [commitment-006]
     notes: >-
-      left subtree の区切りは「n 未満の最大の 2 冪」(RFC 6962 §2.1 の k)。
-      この split 規則の明示が検証器との再計算一致の前提。
+      The left-subtree split is "the largest power of two smaller than n"
+      (the k of RFC 6962 §2.1). Making this split rule explicit is a
+      precondition for recomputation agreement with verifiers.
 
   - id: commitment.source-root.encode
     status: draft
     class: audit-reachable
     statement: >-
-      発行者は Merkle root を multihash sha2-256 (0x12 0x20) かつ multibase
-      lowercase hex (f prefix) で encode し、f1220 に続く 64 hex 文字の文字列として
-      記録しなければならない (MUST)。検証器は multihash prefix で hash 関数を
-      dispatch し、未知の prefix を拒否すべきである (SHOULD)。
+      The issuer MUST encode the Merkle root as multihash sha2-256 (0x12 0x20)
+      in multibase lowercase hex (f prefix), recording it as the string f1220
+      followed by 64 hex characters. Verifiers SHOULD dispatch on the
+      multihash prefix and reject unknown prefixes.
     uses: [commitment.source-root.tree]
     schemas: []
     vectors: [commitment-007]
     notes: >-
-      multihash/multibase 形式は cross-profile 互換のための釘付けであり、
-      他所の sha256:<hex> 形式の content address とは別物 — 同一 hash 値でも
-      encode が異なれば不一致になる。未知 prefix の拒否強度を fail-closed の
-      必須要件へ引き上げるかは出典に明示がなく未決。
+      The multihash/multibase form is pinned for cross-profile compatibility
+      and is distinct from the sha256:<hex> content addresses used elsewhere —
+      the same hash value in a different encoding will not match. Whether to
+      raise the unknown-prefix rejection to a hard fail-closed requirement is
+      undecided; the source texts are silent.
 
   - id: commitment.verify.equality-fail-closed
     status: draft
     class: audit-reachable
     statement: >-
-      検証器は、derived_from に重複がある場合、source_root_canonical が未知の場合、
-      または chain-preserving VC の derived_from が先行 issuer を欠く場合、
-      failed としなければならない (MUST)。再計算した root が source_root と
-      一致しない場合も failed としなければならない (MUST)。提供された issuer
-      集合が申告集合の真部分集合にとどまる場合は indeterminate を返す。
+      A verifier MUST return failed on duplicate derived_from entries,
+      unknown source_root_canonical, a chain-preserving VC whose derived_from
+      lacks its predecessor's issuer, or a recomputed-root mismatch. A proper
+      subset of claimed issuers yields indeterminate.
     uses: [commitment.source-root.tree, commitment.derived-from, commitment.scope.all-consumed]
     schemas: []
     vectors: [commitment-008, commitment-009, commitment-010, commitment-011]
     notes: >-
-      この検証は per-event 検証経路の外 (on-demand の監査チェック)。
-      先行イベントの照合は issuer 粒度より強く実施できる — 検証器は
-      previousCredential の content hash を保持しているため、申告集合の解決完了後、
-      収集済みソースのいずれかがその hash に一致することを要求する
-      (一致なし = 先行イベントの申告漏れ → failed)。先行 issuer の包含チェックのみ、
-      隣接 credential が手元にあるチェーン検証でも O(1) で実施できる
-      (commitment.scope.all-consumed)。
-      不完全性の検出は issuer 粒度のみ — 同一 issuer の別 credential の欠落は
-      申告 issuer 集合が一致したまま root 不一致となるため、indeterminate ではなく
-      failed として表面化する (commitment 文法の既知の限界)。
+      This verification sits outside the per-event path (an on-demand audit
+      check). The predecessor matching can be performed more strongly than at
+      issuer granularity — the verifier holds the previousCredential content
+      hash, so once the claimed set is fully resolved it demands that some
+      gathered source hashes to it (no match means the predecessor was
+      omitted from the claim, hence failed). Only the
+      predecessor-issuer-inclusion check is also an O(1) check during chain
+      verification when adjacent credentials are at hand
+      (commitment.scope.all-consumed). Incompleteness is detectable at issuer
+      granularity only — a missing credential whose issuer is already covered
+      by another provided source surfaces as a root mismatch (failed), not as
+      indeterminate (a known limit of the commitment grammar).
 
   - id: commitment.store.persistence
     status: draft
     class: audit-reachable
     statement: >-
-      audit-reachable class の deployment では、VC ストアは永続実装で
-      なければならない (MUST)。commitment が運ぶのは Merkle root と issuer DID
-      集合のみであり、ソース VC の所在特定は wire 外 (発行者の VC ストアおよび
-      相手方の ingress VC ストア経由) とする。
+      In an audit-reachable deployment, the VC store MUST be a durable
+      implementation. The commitment carries only the Merkle root and the
+      issuer DID set; locating the source VCs is off-wire (via the issuer's
+      VC store and the counterparties' ingress VC stores).
     uses: [commitment.class.definition]
     schemas: []
     vectors: [commitment-012]
     notes: >-
-      遡及監査は発行から長期間を経てソース VC を解決するため、揮発ストアでは
-      要件を満たせない。監査用の列挙クエリ面はサービス API 層に属し、
-      本 catalog の scope 外 (→ STATUS.md 未決)。
+      Retrospective audits resolve source VCs long after issuance, which a
+      volatile store cannot honor. The audit-facing enumeration query surface
+      belongs to the service API layer, outside this catalog's scope
+      (see STATUS.md).

@@ -1,21 +1,22 @@
 # yaml-language-server: $schema=../tools/rule.schema.json
-# dplaax rule catalog — registry (schema registry の不変項)
-# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+# dplaax rule catalog — registry (schema registry invariants)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
 rules:
   - id: registry.append-only
     status: draft
     class: core
     statement: >-
-      Schema Registry は、コミット済みエントリを変更または削除してはならない
-      (MUST NOT)。スキーマの更新は新しい版識別子を持つ新エントリの追加として行い、
-      既存エントリは元の版識別子で取得可能であり続けなければならない (MUST)。
-      版識別子は同一 registry key 内で一意でなければならず、再利用しては
-      ならない (MUST NOT)。
+      A Schema Registry MUST NOT modify or delete committed entries. Updates
+      MUST be new entries with new version identifiers; existing entries MUST
+      remain retrievable under their original identifiers. Version identifiers
+      within a key MUST NOT be reused.
     uses: []
     schemas: []
     vectors: [registry-001]
     notes: >-
-      版識別子の形式 (単調増加整数 / semver / content hash 等) と保持期間の下限は
-      profile / 運用選択。エントリの committedAt timestamp は wire-level の規定。
-      本 rule の出典は旧 draft のみで、provin.oss に対応実装が現れた時点で
-      要突合 (→ STATUS.md 未決)。
+      The format of version identifiers (monotonically increasing integer /
+      semver / content hash, etc.) and the minimum retention period are
+      profile / operational choices. The committedAt timestamp of an entry is
+      a wire-level concern. The source of this rule is the old draft only;
+      reconciliation is required once a corresponding implementation appears
+      in provin.oss (→ STATUS.md open item).

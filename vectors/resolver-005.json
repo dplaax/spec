@@ -1,7 +1,7 @@
 {
   "id": "resolver-005",
   "rule": "resolver.states",
-  "description": "NotFound（不存在の確定的主張）→ failed",
+  "description": "NotFound (a definitive assertion of non-existence) → failed",
   "input": {
     "resolver_state": "NotFound"
   },

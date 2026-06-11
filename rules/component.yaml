@@ -1,107 +1,114 @@
 # yaml-language-server: $schema=../tools/rule.schema.json
 # dplaax rule catalog — component (component type catalog)
-# ファイル分割は non-normative。entry の identity は id が担う (→ README.md)。
+# File split is non-normative. Entry identity is carried by id (→ README.md).
 rules:
   - id: component.catalog
     status: draft
     class: core
     statement: >-
-      PipelinePassCredential を発行する実装は、FilterConvert・Origin Source・
-      External Sink・Custom の 4 つの catalog type のいずれかに適合しなければ
-      ならない (MUST)。catalog type 名を名乗るコンポーネントは、その type の
-      契約に適合しなければならない (MUST)。
+      An implementation that issues PipelinePassCredentials MUST conform to
+      one of the four catalog types: FilterConvert, Origin Source, External
+      Sink, or Custom. A component claiming a catalog type MUST conform to the
+      contract of that type.
     uses: []
     schemas: []
     vectors: [component-001]
     notes: >-
-      4 type は対等であり、特権的な type は存在しない。component type の判別は
-      wire 上の署名挙動 (チェーン起点の発行か previousCredential の保持か) に
-      よって決まり、deployment 上の名乗りや配置によらない。拡張は Custom 経由。
+      The four types are peers; no type is privileged. A component's type is
+      determined by its wire signing behavior (whether it issues a chain-origin
+      credential or carries previousCredential), not by its deployment name or
+      placement. Extensions go through Custom.
 
   - id: component.filter-convert.stateless
     status: draft
     class: core
     statement: >-
-      FilterConvert は状態を持たない 1:1 変換でなければならない (MUST)。
-      集約・join・window 等のチェーン状態を要する処理を FilterConvert として
-      実行してはならない (MUST NOT)。
+      FilterConvert MUST be a stateless 1:1 transformation. Aggregation,
+      join, window, or other chain-stateful processing MUST NOT be executed as
+      a FilterConvert.
     uses: [component.catalog, chain.trigger.retention]
     schemas: []
     vectors: [component-002]
     notes: >-
-      チェーン挙動は type ではなく trigger 規則が決める (2026-06-11 確定) —
-      旧 draft の「FilterConvert はチェーン起点発行の禁止」という type ベース
-      規則は採らない。イベント駆動でない実行の出力は trigger 規則により
-      チェーン起点となり、その署名挙動は Origin Source として分類される。
-      Filter / Converter の step 役割は内部機構であり wire に現れない。
-      filter による drop 時は出力 credential なし (または profile 選択で
-      outputHash 不在の credential)。典型の transformationClaim は
-      provin:filter / provin:convert / provin:filter-convert (複合は profile が
-      単一 label で定義)。トリガーイベントへの side-fetch 結合 (enrichment) は
-      provin:enrich でチェーンを保持する。
+      Chain behavior is governed by trigger rules, not type (confirmed
+      2026-06-11) — the old-draft type-based rule "FilterConvert is prohibited
+      from issuing chain-origin credentials" is not adopted. Output from
+      non-event-triggered execution becomes a chain origin per trigger rules,
+      and its signing behavior is classified as Origin Source. The Filter /
+      Converter step role is an internal mechanism and does not appear on the
+      wire. On filter drop, no output credential is emitted (or a credential
+      with no outputHash per profile selection). Typical transformationClaim
+      values: provin:filter / provin:convert / provin:filter-convert (composite
+      defined as a single label by the profile). Side-fetch enrichment bound to
+      a trigger event uses provin:enrich and retains the chain.
 
   - id: component.origin-source.firstdrop
     status: draft
     class: core
     statement: >-
-      Origin Source はチェーン起点クレデンシャルを発行しなければならない (MUST)。
-      その定義的性質はチェーン起点の発行のみであり、入力として適合ストリームを
-      N ≥ 0 本取ってよい (MAY)。
+      Origin Source MUST issue chain-origin credentials. Its defining property
+      is solely the issuance of chain-origin credentials; it MAY accept zero
+      or more conformant input streams.
     uses: [component.catalog, chain.trigger.retention]
     schemas: []
     vectors: [component-003]
     notes: >-
-      外部取り込み (N=0、典型 provin:convert)・集約 (N≥1、provin:aggregate)・
-      boundary translation (非適合 credential の再署名) はいずれも Origin Source の挙動。
-      旧 draft の「チェーン起点を発行できる唯一の type」という排他規定は
-      trigger ベースの分類に置換 (2026-06-11 確定)。audit-reachable class の
-      source commitment は rules/commitment.yaml が規定する。
+      External ingestion (N=0, typical provin:convert), aggregation
+      (N>=1, provin:aggregate), and boundary translation (re-signing
+      non-conformant credentials) are all Origin Source behaviors. The
+      old-draft exclusive rule "the only type that may issue chain-origin
+      credentials" is replaced by trigger-based classification (confirmed
+      2026-06-11). Source commitments for the audit-reachable class are
+      specified in rules/commitment.yaml.
 
   - id: component.external-sink.verify
     status: draft
     class: core
     statement: >-
-      External Sink は、receipt クレデンシャルの発行有無に関わらず、受信した
-      クレデンシャルチェーンを検証しなければならない (MUST)。
+      External Sink MUST verify the received credential chain regardless of
+      whether it issues a receipt credential.
     uses: [component.catalog, confidence.composition.weakest-link]
     schemas: []
     vectors: [component-004]
     notes: >-
-      External Sink の適合側は入力のみ — 出力は外部システムに向かい
-      パイプライン適合ではない。役割は配送であり、変換の証明ではない。
+      The conformance obligation for an External Sink is on the input side
+      only — its output goes to an external system and is not a pipeline
+      conformance obligation. Its role is delivery, not proof of
+      transformation.
 
   - id: component.external-sink.receipt
     status: draft
     class: core
     statement: >-
-      wire profile は、External Sink による配送 receipt クレデンシャルの発行を
-      許可してよい (MAY)。発行される receipt は PipelinePassCredential の schema に
-      適合し、最後の上流クレデンシャルを previousCredential で参照しなければ
-      ならない (MUST)。
+      A wire profile MAY permit an External Sink to issue a delivery receipt
+      credential. Any issued receipt MUST conform to the PipelinePassCredential
+      schema and MUST reference the last upstream credential via
+      previousCredential.
     uses: [component.external-sink.verify, credential.subject.previous-credential]
     schemas: []
     vectors: [component-005]
     notes: >-
-      既定では External Sink はクレデンシャルを発行せず、チェーンは最後の
-      上流クレデンシャルで終端する。receipt の transformationClaim の
-      例: provin:external-sink-receipt
-      (旧 draft の custom:dplaas:external-sink-receipt は 2 セグメント規則と
-      provin namespace に読み替え、2026-06-11 確定)。
+      By default an External Sink does not issue credentials; the chain
+      terminates at the last upstream credential. Example transformationClaim
+      for a receipt: provin:external-sink-receipt (the old-draft value
+      custom:dplaas:external-sink-receipt is superseded by the two-segment
+      rule and the provin namespace, confirmed 2026-06-11).
 
   - id: component.custom.interop
     status: draft
     class: core
     statement: >-
-      Custom コンポーネントは、チェーン起点の発行時には previousCredential を
-      持たず (MUST NOT)、チェーン継続時には previousCredential を保持し (MUST)、
-      チェーン終端時には終端の前に受信チェーンを検証しなければならない (MUST)。
+      A Custom component MUST NOT carry previousCredential when issuing a
+      chain-origin credential, MUST retain previousCredential when continuing
+      a chain, and MUST verify the received chain before terminating it.
     uses: [component.catalog, chain.trigger.retention, credential.subject.previous-credential, credential.claim.grammar]
     schemas: []
     vectors: [component-006]
     notes: >-
-      前提は Pipeline Contract への適合 (少なくとも 1 つの I/O 側が
-      パイプライン適合の署名と VC 包装を行う)。独自の subject field は profile の
-      schema registry entry で文書化する。検証器側の未知 transformationClaim の
-      扱いは open-world 規則 (credential.claim.open-world-accept /
-      credential.claim.bare-rejected) が規定しており、旧 draft の informational
-      扱い (弱い規定) は採らない。
+      Prerequisite is conformance to the Pipeline Contract (at least one I/O
+      side performs pipeline-conformant signing and VC wrapping). Custom
+      subject fields must be documented in the schema registry entry for the
+      profile. The verifier's treatment of unknown transformationClaim values
+      is governed by the open-world rules (credential.claim.open-world-accept /
+      credential.claim.bare-rejected); the old-draft informational treatment
+      (weak rule) is not adopted.

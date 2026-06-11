@@ -1,7 +1,7 @@
 {
   "id": "cred-008",
   "rule": "credential.field.subject",
-  "description": "credentialSubject が配列（単一オブジェクトでない）",
+  "description": "credentialSubject is an array, not a single object",
   "input": {
     "credential": {
       "@context": [

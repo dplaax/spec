@@ -1,7 +1,7 @@
 {
   "id": "commitment-007",
   "rule": "commitment.source-root.encode",
-  "description": "単一ソース: root = leaf hash、multihash sha2-256 + multibase lowercase hex（f1220 + 64 hex）",
+  "description": "Single source: the root equals the leaf hash, encoded as multihash sha2-256 + multibase lowercase hex (f1220 + 64 hex)",
   "input": {
     "sources": [
       {
