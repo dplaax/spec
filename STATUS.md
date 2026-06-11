@@ -77,6 +77,12 @@
 - `registry.append-only` の出典は旧 draft のみ — provin.oss に対応実装が現れた時点で要突合。
 - 監査用列挙 API（issuer / ingress set でのクエリ面）— サービス API 側、未設計。
   spec scope 外（wire profile / 実装 repo 側）の可能性が高い。
+- **federation 層のスコープ判断** — 旧 draft conformance L3 の機構群（相互 allow-list /
+  購読登録 / downstream receipt / append-only 発行ストリーム / control plane 署名検証）は
+  現 catalog に対応 rule が無い。一方、audit-reachable class の申告漏れ検出は
+  これらの記録を敵対的証拠として前提している（→ L2 の歯が依存）。本 catalog に
+  入れるか、Chain primitive spec として別立てか、未決。実装が network 層に到達した
+  時点で具体化する（2026-06-11 起票）。
 - ~~JSON-LD context 文書の実体~~ — **2026-06-11 解決**: 所有は二層（Model A）。
   protocol context の正規は本 repo `contexts/v1.jsonld`（byte 単位）、provin.oss は
   byte-exact vendoring + sha256 固定テスト。詳細は contexts/README.md と

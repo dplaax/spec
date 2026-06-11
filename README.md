@@ -1,5 +1,16 @@
 # dPLaaX Specification (draft)
 
+dPLaaX（"data PipeLine as a X"）は、データが組織やシステムの境界を越えるとき、
+「誰が、何を受け取り、何を行い、何を渡したか」を境界ごとに改ざん検出可能な形で
+記録し、その連なりを第三者が独立に確かめられるようにするプロトコルである
+（→ [concept.md](concept.md)）。
+
+> **Status: v0.1 (draft)。** すべての rule は `draft` であり、実装からの
+> フィードバックで変わり続ける（→ [VERSIONING.md](VERSIONING.md)）。
+> **Public review とコントリビューションを歓迎する** —
+> [CONTRIBUTING.md](CONTRIBUTING.md) を参照。ガバナンスはコントリビュータの
+> 増加に応じて段階的に整備する（現状: maintainer 裁量、議論は Issue で公開）。
+
 dPLaaX の normative spec。**規範の SoT は次の 3 artifact のみ**であり、散文は規範を持たない。
 
 | artifact | 担う規範 | 形式 |
