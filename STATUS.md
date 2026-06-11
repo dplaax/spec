@@ -24,6 +24,21 @@
   7 rule 改名 + 1 rule 新設）。provin.oss 側: OriginCommitment → SourceCommitment、
   Builder/Verifier の XOR 解体、BuildChainPreserving に commitment 引数追加
   （lock-step 変更、build / vet / test green）。wire キー 3 種は中立語彙のため不変。
+- **2026-06-11: transformationType → transformationClaim 再構成を実施**（base 語彙の
+  解体）。形状（prev × SourceCommitment）は wire パラメタで自明であり、フィールドの
+  非冗長な仕事は「情報源についての主張 (claim)」のみ、という 2 軸分離が論拠。
+  protocol に残るのは文法（単一 `<namespace>:<label>`、無印値全廃、"+" 結合削除 —
+  複合は profile が単一 label で定義）+ 開世界解釈デフォルト（未認識 claim から
+  閉世界推論 = 除外推論を引き出さない MUST NOT）のみ。claim の意味（閉/開）は
+  profile が釘付けし、**claim は位相を拘束しない**（aggregate-origin 規則は削除、
+  位相は chain.trigger.* が単独で決める）。spec 側: `credential.transformation.*`
+  4 rules → `credential.claim.*` 3 rules、subject rule 改名、component.yaml 4 箇所。
+  provin.oss 側: TransformationClaim 型 + provin claim registry
+  （provin:filter / convert / filter-convert / aggregate / enrich / **generate**）、
+  wire キー transformationClaim、GLOSSARY。Paper 01 §4.3（ベース語彙 + "+"）との
+  意図的乖離を `credential.claim.grammar` notes に記録。
+  **generate の incubation draft は転記完了・削除** — claim 再構成により profile 層で
+  完結（protocol 変更不要）、「常時 FirstDrop」問題は位相非拘束により解消。
 
 ## 転記元の概観
 
@@ -57,44 +72,9 @@
   `packages/vc/contexts/` も空。spec とどちらが先に持つか未決。
 - `generate` のベース語彙昇格パス — `credential.transformation.base-vocabulary` の
   notes に移行済み（本台帳からは削除）。
-- transformationType draft の「生成器は常時 FirstDrop」判断（draft 決定事項 3）—
-  SourceCommitment 改組（上記 現状宣言 2026-06-11）により論拠の片方（位相反転で
-  commitment が使えなくなる）が消滅し、**未決に戻した**。
-  → 次項 transformationClaim 再構成で protocol 側は解消見込み（protocol は位相を
-  claim に紐付けない。位相は trigger 規則が決める）。provin profile 側の表現は
-  `docs/draft/dplaax-transformationType.md`（scope 側）の ⚠ 注記参照。
-- **transformationType → transformationClaim 再構成（base 語彙の解体）** —
-  方向確定（2026-06-11 設計会話）、影響実査・実施は未着手。
-  **論拠（2 軸分離）**: 形状（prev × SourceCommitment）は改組後 wire パラメタで
-  自明であり、フィールドの非冗長な仕事は「情報源についての主張 (claim)」のみ。
-  型に位相を背負わせる `credential.transformation.aggregate-origin` は混同の名残。
-  **方向**:
-  (1) wire キー transformationType → transformationClaim 改名
-  （Paper 01 §4.3 の語彙と乖離 — 乖離の記録必須）。
-  (2) dplaax は claim の意味を固定しない。protocol に残すのは
-  フィールドの存在 + 文法（`+` 結合 / `<namespace>:<label>` 形式、無印値全廃 =
-  全 claim namespace 必須）+ **解釈デフォルト**:
-  「検証器・監査者は、認識しない claim から閉世界推論を引き出してはならない
-  (MUST NOT)。未知 claim = 開世界として扱う」。
-  **閉世界/開世界の定義（CWA/OWA）**: source_root に含まれない =
-  閉世界 claim では「寄与していない」と推論可（除外推論・クリアランスが可能、
-  申告漏れは嘘であり ingress 突合で検出・帰責対象）。開世界 claim では「不明」
-  （包含方向の束縛・改ざん検出は両者共通で保たれる。失われるのは除外推論のみ。
-  申告漏れは嘘ですらない — 完全性を主張していないため）。
-  未知 claim を閉として扱うと監査者が偽クリアランスを発行し得るため、
-  開がデフォルト = 強い結論（除外）には claim の意味の積極的認識を要求する
-  fail-closed 構造。
-  (3) `credential.transformation.base-vocabulary` の 3 値釘付けを解体、
-  `aggregate-origin` を protocol 規則から削除（provin profile 規則への降格判断含む）。
-  (4) provin profile が 5 claim（filter / convert / aggregate / enrich / generate）の
-  意味（閉/開、内容関係）を釘付け。generate のベース語彙昇格パスは消滅
-  （`credential.transformation.base-vocabulary` notes の昇格記述も削除対象）。
-  profile 内で意味と不整合な claim（畳み込みを convert と宣言等）は虚偽の主張として
-  検出・帰責対象 — 嘘の検出可能性は profile 層で保たれる。
-  **波及見込み（未実査）**: ppc draft（drafts/v1_00x）、provin.oss wire 定数 +
-  TransformationType 型 + GLOSSARY、JSON-LD context、transformationType
-  incubation draft の全面改訂、rules/credential.yaml の transformation 節改組。
-  実施手順は SourceCommitment 改組と同じ: 台帳化（本項）→ grep 実査 → lock-step 実施。
+- profile 識別の MUST 化 — ppc の MAY（`@context` への profile URI 追加）を provin
+  宣言で narrowing するか。旧 transformationType incubation draft（2026-06-11 に
+  転記完了・削除）の残置項目。JSON-LD context 実体の未決（上記）と相互作用。
 
 ## trust model（L1/L2/L3）の行き先
 

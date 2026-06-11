@@ -35,9 +35,10 @@ rules:
       チェーン起点となり、その署名挙動は Origin Source として分類される。
       Filter / Converter の step 役割は内部機構であり wire に現れない。
       filter による drop 時は出力 credential なし (または profile 選択で
-      outputHash 不在の credential)。典型の transformationType は
-      filter / convert / filter+convert。トリガーイベントへの side-fetch 結合
-      (enrichment) は profile 拡張値でチェーンを保持する。
+      outputHash 不在の credential)。典型の transformationClaim は
+      provin:filter / provin:convert / provin:filter-convert (複合は profile が
+      単一 label で定義)。トリガーイベントへの side-fetch 結合 (enrichment) は
+      provin:enrich でチェーンを保持する。
 
   - id: component.origin-source.firstdrop
     status: draft
@@ -50,8 +51,8 @@ rules:
     schemas: []
     vectors: []
     notes: >-
-      外部取り込み (N=0、典型 convert)・集約 (N≥1、aggregate)・boundary
-      translation (非適合 credential の再署名) はいずれも Origin Source の挙動。
+      外部取り込み (N=0、典型 provin:convert)・集約 (N≥1、provin:aggregate)・
+      boundary translation (非適合 credential の再署名) はいずれも Origin Source の挙動。
       旧 draft の「チェーン起点を発行できる唯一の type」という排他規定は
       trigger ベースの分類に置換 (2026-06-11 確定)。audit-reachable class の
       source commitment は rules/commitment.yaml が規定する。
@@ -82,8 +83,8 @@ rules:
     vectors: []
     notes: >-
       既定では External Sink はクレデンシャルを発行せず、チェーンは最後の
-      上流クレデンシャルで終端する。receipt の transformationType は
-      profile-namespaced 値とする — 例: provin:external-sink-receipt
+      上流クレデンシャルで終端する。receipt の transformationClaim の
+      例: provin:external-sink-receipt
       (旧 draft の custom:dplaas:external-sink-receipt は 2 セグメント規則と
       provin namespace に読み替え、2026-06-11 確定)。
 
@@ -94,13 +95,13 @@ rules:
       Custom コンポーネントは、チェーン起点の発行時には previousCredential を
       持たず (MUST NOT)、チェーン継続時には previousCredential を保持し (MUST)、
       チェーン終端時には終端の前に受信チェーンを検証しなければならない (MUST)。
-      transformationType には namespace-prefixed 値を用いるべきである (SHOULD)。
-    uses: [component.catalog, chain.trigger.retention, credential.subject.previous-credential, credential.transformation.base-vocabulary]
+    uses: [component.catalog, chain.trigger.retention, credential.subject.previous-credential, credential.claim.grammar]
     schemas: []
     vectors: []
     notes: >-
       前提は Pipeline Contract への適合 (少なくとも 1 つの I/O 側が
       パイプライン適合の署名と VC 包装を行う)。独自の subject field は profile の
-      schema registry entry で文書化する。検証器側の未知 transformationType の
-      扱いは open-world 規則 (credential.transformation.open-world-*) が規定
-      しており、旧 draft の informational 扱い (弱い規定) は採らない。
+      schema registry entry で文書化する。検証器側の未知 transformationClaim の
+      扱いは open-world 規則 (credential.claim.open-world-accept /
+      credential.claim.bare-rejected) が規定しており、旧 draft の informational
+      扱い (弱い規定) は採らない。
