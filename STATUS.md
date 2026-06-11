@@ -58,14 +58,19 @@
 
 - conformance vector の実体 — provin.oss のテストを seed にしつつ、実装の癖を encode せず
   spec 起点で書き直す（vectors/README.md の規律）。
-- vc_resolver 領域の rule file — drafts に下敷きあり、未 stub 化。
+- ~~vc_resolver 領域の rule file~~ — **2026-06-11 解決**: drafts/v1_002 vc_resolver 節
+  から rules/resolver.yaml へ転記（6 rules: address.form / immutability / states /
+  states.no-demotion / batch.shape / body.encoding）。
 - ~~隣接クレデンシャル間の hash 連続性の規範化~~ — **2026-06-11 解決**: 出典は
   drafts/v1_001 conformance 節の L2 検証規則 "Input-output binding"。
   `chain.data-flow.continuity` として転記済み。
 - schema 参照の subject 内配置 — W3C VC Data Model の top-level credentialSchema 慣行からの
   意図的逸脱として rationale の明記が未了（`credential.schema-ref` の notes 参照）。
-- cryptosuite lifecycle の補完候補（検証器ごとの allow-list / no-op identifier 禁止 /
-  Deprecated の cutoff date 規則）— 旧 draft 由来、provin.oss に対応なし。取り込み判断未了。
+- ~~cryptosuite lifecycle の補完候補 3 点~~ — **2026-06-11 解決**: no-op 禁止は
+  provin.oss に実装済み（「対応なし」は stale だった）と判明、
+  `signer.cryptosuite.no-op-rejected` として転記。allow-list（deployment 運用事項・
+  出典未発見）と cutoff date（Sunset 遷移で表現可能・冗長）は不採用、
+  理由は `confidence.cryptosuite-lifecycle` notes に記録。
 - `registry.append-only` の出典は旧 draft のみ — provin.oss に対応実装が現れた時点で要突合。
 - 監査用列挙 API（issuer / ingress set でのクエリ面）— サービス API 側、未設計。
   spec scope 外（wire profile / 実装 repo 側）の可能性が高い。

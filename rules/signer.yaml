@@ -18,3 +18,25 @@ rules:
       proofPurpose は assertionMethod。created の存在は推奨にとどまるが、
       欠落すると confidence.cryptosuite-lifecycle の判定キーが得られず
       lifecycle 評価が成立しない (実質 fail-closed)。
+
+  - id: signer.cryptosuite.no-op-rejected
+    status: draft
+    class: core
+    statement: >-
+      cryptosuite および正規化仕様の識別子として、no-op を意味する値
+      ("", "none", "null", "identity") を lifecycle registry に登録しては
+      ならない (MUST NOT)。検証器は、これらの識別子を registry の状態に
+      かかわらず拒否しなければならない (MUST)。
+    uses: [confidence.cryptosuite-lifecycle]
+    schemas: []
+    vectors: []
+    notes: >-
+      JOSE alg:none 級 downgrade の構造的封鎖。歴史的事故の本質は none が
+      「正規に仕様化された合法値」だったこと — 本規則は no-op を自称する
+      識別子クラスの正規化経路 (登録) を恒久に塞ぎ、検証時の registry 非依存の
+      拒否は registry 汚染への多層防御。名前を偽った no-op (実体が検証スキップの任意識別子) は
+      本規則の対象外 — 未登録なら confidence.cryptosuite-lifecycle の
+      fail-closed が拒否し、登録済み garbage は registry governance
+      (append-only による帰責・Sunset 失効・proof.created キーの被害範囲計算)
+      が担う。"" は zero value の fail-closed。
+      出典: provin.oss packages/vc/cryptosuite.go (登録時 + 検証時の両適用)。

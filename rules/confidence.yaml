@@ -48,6 +48,8 @@ rules:
     vectors: []
     notes: >-
       判定キーは proof.created であり validFrom ではない。registry の背面は
-      transparency log (実装選択)。旧 draft にあった追加規範の候補 —
-      検証器ごとの cryptosuite allow-list、no-op identifier ("none" 等) の禁止、
-      Deprecated の cutoff date 規則 — は未取り込み (→ STATUS.md 未決)。
+      transparency log (実装選択)。no-op identifier の禁止は
+      signer.cryptosuite.no-op-rejected として規範化 (2026-06-11)。補完候補の
+      残り 2 点は不採用 — 検証器ごとの cryptosuite allow-list は deployment の
+      運用事項 (出典となる規範文も未発見)、Deprecated の cutoff date は
+      Sunset 遷移エントリの EffectiveDate で表現可能なため独立規則は冗長。
