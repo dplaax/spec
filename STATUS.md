@@ -115,8 +115,8 @@
   **namespace 接地の MUST**（`credential.claim.grounding`）として再構成。claim の
   同一性 = (接地 URL, label)、裸 prefix の衝突を署名スコープ内で排除。provin profile
   context（接地担体）の正規は provin.oss 側。
-  ⚠ **provin.io ドメインの所有確認が未了** — poc.provin.io/vc/v1 が署名バイトに
-  入るため、外部 deployment 前に取得・確認必須。
+  **2026-06-11 ドメイン確定**: provin = `provin-line.io`、protocol = `dplaax.io`。
+  profile context URI は `poc.provin-line.io/vc/v1`（vectors / provin.oss とも反映済み）。
 
 ## trust model（L1/L2/L3）の行き先
 
