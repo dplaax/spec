@@ -56,6 +56,14 @@
   （en/ja、commitment-does-not-move-default を含む）。
   dplaas.oss の provenance.md 突合は帰責規則の目的では不要と user 判断（典拠ラインは
   Paper 01 + Paper 04 に一本化）。
+  **2026-06-16 訂正 — Paper 04 を SoT から外す**: Paper 04 は旧 dplaas 設計を継承した
+  in-progress 論文であり SoT としない。attribution 規則の典拠は catalog 自身の
+  first-principles に再 grounding 済み（`rules/audit.yaml` の notes — owner-whitelist
+  trust + did:dplaax の構造的 Owner 導出 + accountability-follows-the-last-cryptographic-link）。
+  `attribution.segment` / `attribution.origin-default` から「anchored in Paper 04」を除去。
+  origin-default は 2026-06-16 の独立 FCoT で sound 確認済み。Paper 04 §3.4/§4.7 は設計を
+  追従して書き換える対象（別 task）。delegation も同様に Paper 04 由来の
+  pipelineId/delegatedRole を捨て、構造的最小形へ（`rules/delegation.yaml`）。
 
 ## Ledger: process type rename（2026-06-12）
 

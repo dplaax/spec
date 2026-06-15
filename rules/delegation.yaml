@@ -1,0 +1,75 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — delegation (owner-signed authority delegation)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+rules:
+  - id: delegation.shape
+    status: draft
+    class: core
+    statement: >-
+      A delegation credential MUST include type DelegationCredential, an
+      issuer, validFrom, a credentialSubject whose id is the delegated DID and
+      whose delegatedBy equals the issuer, and a Data Integrity proof. A scope
+      array MAY be present.
+    uses: []
+    schemas: []
+    vectors: [delegation-001]
+    notes: >-
+      The delegated identity's pipeline is part of the subject DID under the
+      did:dplaax structural hierarchy, so no separate pipelineId field is
+      carried; a catalog role is the delegated process's own type, declared in
+      the credentials it issues, not granted here. delegatedBy restates the
+      issuer for subject-local checking and the two are compared equal.
+      Earlier drafts (Paper 04 ch3 §3.4, derived from the dplaas-era Paper 01
+      §4.7) carried pipelineId and delegatedRole; those are redundant under the
+      structural hierarchy and are dropped (see STATUS.md).
+
+  - id: delegation.binding
+    status: draft
+    class: core
+    statement: >-
+      The issuer MUST be an Owner DID and the delegated subject MUST be a
+      Pipeline or Process DID whose Owner equals the issuer; an issuer MUST NOT
+      delegate over an identity outside its own Owner.
+    uses: []
+    schemas: []
+    vectors: [delegation-002, delegation-003]
+    notes: >-
+      On the did:dplaax issuance plane the Owner is obtained by parsing the
+      subject DID (truncating its resource path), so the binding is structural
+      and needs no resolution. The whitelist trust model has no cross-Owner
+      delegation: a verifier trusts an Owner, which vouches only for its own
+      pipelines and processes.
+
+  - id: delegation.proof
+    status: draft
+    class: core
+    statement: >-
+      A delegation proof MUST be a DataIntegrityProof with proofPurpose
+      assertionMethod and a verificationMethod naming the issuer DID; a verifier
+      MUST reject any other proofPurpose or a verificationMethod naming a
+      different DID.
+    uses: [signer.proof.structure]
+    schemas: []
+    vectors: [delegation-004]
+    notes: >-
+      The cryptosuite is the wire profile's assertion suite (provin uses
+      eddsa-jcs-2022). The proof-verification primitive trusts a resolved key
+      and does not check proof policy, so the delegation verifier enforces
+      type, purpose, and issuer-naming itself before accepting the credential.
+
+  - id: delegation.scope
+    status: draft
+    class: core
+    statement: >-
+      When present, scope MUST be a non-empty array of byte-explicit string
+      tokens and MUST NOT contain a wildcard. The scope token vocabulary is
+      fixed by the wire profile, not this catalog.
+    uses: []
+    schemas: []
+    vectors: [delegation-005]
+    notes: >-
+      scope is optional; its absence means the delegated identity holds the
+      full authority of its structural level (a Process signs its provenance
+      credentials, a Pipeline contains processes). A profile that needs to
+      restrict authority below the level default populates scope against its
+      own token registry; the provin profile does not use scope.

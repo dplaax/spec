@@ -21,8 +21,13 @@ rules:
       "Attribution computation" is the audit-side actor (see GLOSSARY):
       a deterministic function of chain topology that reads no payload
       content. These rules extend Paper 01's attestation scope ("who
-      signed" / organizational attribution); the responsibility semantics
-      are anchored in Paper 04.
+      signed" / organizational attribution) to responsibility attribution;
+      the destination (Owner) follows from credential.field.issuer's
+      reconstructability requirement and the owner-whitelist trust model —
+      grounded in this catalog, not an external paper. On the did:dplaax
+      issuance plane the reconstruction is structural — the Owner is a prefix of
+      the issuer DID, so it needs no resolution; methods outside that plane walk
+      a controller chain.
 
   - id: audit.attribution.origin-default
     status: draft
@@ -33,7 +38,7 @@ rules:
       chain origin's issuer.
     uses: [chain.trigger.retention, commitment.class.definition]
     schemas: []
-    vectors: [audit-002, audit-003]
+    vectors: [audit-002, audit-003, audit-004]
     notes: >-
       The default rule: whoever cuts the chain answers for what lies
       beyond the cut, unconditionally. A chain origin attests only to who
@@ -52,4 +57,6 @@ rules:
       exception: responsibility for external input terminates at the
       ingesting Owner (audit-003). Deliberate extension beyond Paper 01
       §4.8's attestation scope ("what happened from the aggregation point
-      onward, not what preceded"); anchored in Paper 04.
+      onward, not what preceded"): the extension is grounded in the
+      accountability-follows-the-last-cryptographic-link reasoning above,
+      not an external paper.

@@ -42,6 +42,7 @@ objects. Shapes are fixed per family as follows:
 | `commitment.scope.*` | `{"credential": <object>, "predecessor": <object>}` | `"accept"` / `"reject"` |
 | `commitment.source-root.*` (construction-type) | `{"sources": [<credential>, ...], "source_root_canonical": <id>}` | expected output object with `{"derived_from", "source_root", "source_root_canonical"}` |
 | `signer.*` | `{"credential": <object>}` or registry operation `{"registry_op": {...}}` | `"accept"` / `"reject"` |
+| `delegation.*` | `{"credential": <delegation credential JSON>}` | `"accept"` / `"reject"` (owner-signed authority delegation; the issuer is an Owner DID and the subject is structurally under it) |
 | `confidence.*` | synthesis-type `{"axes": {<axis>: <state>}}`; lifecycle-type `{"registry": [...], "cryptosuite", "proof_created"}` | `{"confidence": <state>}` |
 | `process.*` | `{"process_type", "credential"?, "behavior"?, "sequence"?}` (issuance and verification behavior conformance) | `"accept"` / `"reject"` |
 | `resolver.*` | format-type `{"key", "body"}`; state-type `{"resolver_state"}` → confidence; behavior-type `{"sequence": [...]}`; batch `{"request", "response"}`; encoding `{"entry"}` | `"accept"` / `"reject"` / `{"confidence"}` / `{"state"}` |
