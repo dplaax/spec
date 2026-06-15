@@ -149,6 +149,23 @@ rule ID の対応表:
   context（接地担体）の正規は provin.oss 側。
   **2026-06-11 ドメイン確定**: provin = `provin-line.io`、protocol = `dplaax.io`。
   profile context URI は `poc.provin-line.io/vc/v1`（vectors / provin.oss とも反映済み）。
+- **delegation credential の正規地位（controller chain の確立・証明機構）** — 2026-06-03 に
+  deferred（retired memo `temp/technical_concerns/delegation_credential.ja.md`）のまま、
+  「採用 / deliberately out of scope」どちらの結論も記録されず restructure に流れた。現 catalog に
+  delegation rule は無いが、`rules/audit.yaml` / `credential.yaml` は attribution を「controller
+  chain」で記述し（fixture は vectors/audit-* の `controllers` map）、その**確立・証明機構を
+  指定していない**: (a) DID-Document `controller` field（DID-Core 級・補完的だが proof として
+  弱い）/ (b) owner 署名 DelegationCredential VC（旧 spec Part II `PipelineDelegationCredential`、
+  Paper 01 §4.7 / ch4 core 要素 / ch6 `RESOLVE_OWNER_VIA_DELEGATION`）/ (c) 両方（VC が field の
+  主張を証明）。現状 provin.oss は (b) を de-facto 採用（`delegation` package + docs/GLOSSARY
+  「reconstruct the controller chain」）だが旧 spec の half-migration: `delegatedRole`・`pipelineId`
+  を落とし、pipeline 単位 scoping を owner 単位束縛（`subj.OwnerDID()==issuer`）に置換、
+  `scope []string` は残すが grammar/registry 無し・`Verify()` 未検査。決定すべき: (1) (a)/(b)/(c)
+  を選び `audit.yaml`/`credential.yaml` に機構を明示、(2) VC を正規とするなら shape を pin
+  （scope grammar/registry / delegatedRole / pipeline-vs-owner scoping）して rule 化し provin.oss と
+  reconcile、(3) 不採用なら "deliberately out of scope" を rationale 付きで確定し delegation 検証
+  要件の代替を明記。確定まで provin.oss の delegation 公開 API は churn しない（API responsibility
+  review の T3-1 = ungrounded scope / typed-struct vs body-as-SoT は本決定の下流）。（2026-06-15 起票）
 
 ## trust model（L1/L2/L3）の行き先
 
