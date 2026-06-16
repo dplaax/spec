@@ -27,7 +27,7 @@ claim registry (→ `credential.claim.*` in rules/credential.yaml).
 
 | file | URI | sha256 |
 |---|---|---|
-| `v1.jsonld` | `https://poc.dplaax.io/vc/v1` | `4f79e1f18e257de0a822668b63b625831c37788e1e45441a01b48c53f4c5e6b2` |
+| `v1.jsonld` | `https://poc.dplaax.io/vc/v1` | `1938cbc1682da9842c56d57d03c2b9ace7ec62c04607d792e7e482bcaa95807d` |
 
 - The `poc.` in the URI is a tier marker — the poc tier explicitly allows
   byte-level evolution. At GA it will be promoted to `https://dplaax.io/vc/v1`
