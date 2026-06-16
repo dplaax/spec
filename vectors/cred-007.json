@@ -6,14 +6,14 @@
     "credential": {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
-        "https://poc.dplaax.io/vc/v1",
-        "https://poc.provin-line.io/vc/v1"
+        "https://poc.dplaax.dev/vc/v1",
+        "https://poc.provin.dev/vc/v1"
       ],
       "type": [
         "VerifiableCredential",
         "PipelinePassCredential"
       ],
-      "issuer": "did:dplaax:poc.dplaax.io:org:acme:pipeline:p:process:x",
+      "issuer": "did:dplaax:poc.dplaax.dev:org:acme:pipeline:p:process:x",
       "credentialSubject": {
         "pipelineId": "pl-acme",
         "processId": "proc-x",
@@ -26,7 +26,7 @@
         "type": "DataIntegrityProof",
         "cryptosuite": "eddsa-jcs-2022",
         "created": "2026-06-10T00:00:01Z",
-        "verificationMethod": "did:dplaax:poc.dplaax.io:org:acme:pipeline:p:process:x#key-1",
+        "verificationMethod": "did:dplaax:poc.dplaax.dev:org:acme:pipeline:p:process:x#key-1",
         "proofPurpose": "assertionMethod",
         "proofValue": "z5fixture0value0not0a0real0signature0fixture0value0not0real00"
       }

@@ -6,14 +6,14 @@
     "credential": {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
-        "https://poc.dplaax.io/vc/v1",
-        "https://poc.provin-line.io/vc/v1"
+        "https://poc.dplaax.dev/vc/v1",
+        "https://poc.provin.dev/vc/v1"
       ],
       "type": [
         "VerifiableCredential",
         "PipelinePassCredential"
       ],
-      "issuer": "did:dplaax:poc.dplaax.io:org:factory:pipeline:agg:process:a1",
+      "issuer": "did:dplaax:poc.dplaax.dev:org:factory:pipeline:agg:process:a1",
       "validFrom": "2026-06-10T00:00:00Z",
       "credentialSubject": {
         "pipelineId": "pl-agg",
@@ -23,8 +23,8 @@
         "inputHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
         "previousCredential": "sha256:03a4a3adb0d4da2eeb9caa27f777710367b5e639428d90294e30560455417878",
         "derived_from": [
-          "did:dplaax:poc.dplaax.io:org:mineA:pipeline:m:process:s",
-          "did:dplaax:poc.dplaax.io:org:mineB:pipeline:m:process:s"
+          "did:dplaax:poc.dplaax.dev:org:mineA:pipeline:m:process:s",
+          "did:dplaax:poc.dplaax.dev:org:mineB:pipeline:m:process:s"
         ],
         "source_root": "f1220f3ab23a6fe77e03c61f48c9e1b85fcd315fb13882f1132fc552264fda5c72acb",
         "source_root_canonical": "jcs-rfc8785"
@@ -33,7 +33,7 @@
         "type": "DataIntegrityProof",
         "cryptosuite": "eddsa-jcs-2022",
         "created": "2026-06-10T00:00:01Z",
-        "verificationMethod": "did:dplaax:poc.dplaax.io:org:factory:pipeline:agg:process:a1#key-1",
+        "verificationMethod": "did:dplaax:poc.dplaax.dev:org:factory:pipeline:agg:process:a1#key-1",
         "proofPurpose": "assertionMethod",
         "proofValue": "z5fixture0value0not0a0real0signature0fixture0value0not0real00"
       }
@@ -41,14 +41,14 @@
     "predecessor": {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
-        "https://poc.dplaax.io/vc/v1",
-        "https://poc.provin-line.io/vc/v1"
+        "https://poc.dplaax.dev/vc/v1",
+        "https://poc.provin.dev/vc/v1"
       ],
       "type": [
         "VerifiableCredential",
         "PipelinePassCredential"
       ],
-      "issuer": "did:dplaax:poc.dplaax.io:org:factory2:pipeline:f:process:z",
+      "issuer": "did:dplaax:poc.dplaax.dev:org:factory2:pipeline:f:process:z",
       "validFrom": "2026-06-10T00:00:00Z",
       "credentialSubject": {
         "pipelineId": "pl-agg",
@@ -61,7 +61,7 @@
         "type": "DataIntegrityProof",
         "cryptosuite": "eddsa-jcs-2022",
         "created": "2026-06-10T00:00:01Z",
-        "verificationMethod": "did:dplaax:poc.dplaax.io:org:factory2:pipeline:f:process:z#key-1",
+        "verificationMethod": "did:dplaax:poc.dplaax.dev:org:factory2:pipeline:f:process:z#key-1",
         "proofPurpose": "assertionMethod",
         "proofValue": "z5fixture0value0not0a0real0signature0fixture0value0not0real00"
       }
