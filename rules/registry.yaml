@@ -6,17 +6,30 @@ rules:
     status: draft
     class: core
     statement: >-
-      A Schema Registry MUST NOT modify or delete committed entries. Updates
-      MUST be new entries with new version identifiers; existing entries MUST
-      remain retrievable under their original identifiers. Version identifiers
-      within a key MUST NOT be reused.
+      A Schema Registry MUST NOT modify or delete a committed entry's
+      registered content (format, body, version binding). Updates MUST be new
+      entries; a version MUST NOT be reused within a key; entries MUST stay
+      retrievable under their original identifiers.
     uses: []
     schemas: []
-    vectors: [registry-001]
+    vectors: [registry-001, registry-002]
     notes: >-
-      The format of version identifiers (monotonically increasing integer /
-      semver / content hash, etc.) and the minimum retention period are
-      profile / operational choices. The committedAt timestamp of an entry is
-      a wire-level concern. The source of this rule is the old draft only;
-      reconciliation is required once a corresponding implementation appears
-      in provin.oss (→ STATUS.md open item).
+      Registered content means the schema format, the schema body bytes, and
+      the version→bytes binding — the inputs of the content hash that
+      credential.schema-ref compares. Lifecycle metadata outside that content
+      (e.g. a deprecation flag) is not covered by the prohibition, on two
+      conditions: it does not affect retrievability (a deprecated entry still
+      resolves byte-identical under its original key and version —
+      registry-002), and it does not participate in the content hash. The
+      protected invariant is the version→bytes binding; tamper evidence of
+      the stored bytes at rest is the transparency log's concern, not the
+      registry's. The format of version identifiers (monotonically increasing
+      integer / semver / content hash, etc.) and the minimum retention period
+      are profile / operational choices. The committedAt timestamp of an
+      entry is a wire-level concern. Reconciled 2026-07-02 against the
+      reference implementation's registry store (deprecation is an idempotent
+      flag flip retaining the body; full-review A-1) — the old-draft-only
+      sourcing note is resolved (STATUS.md). Reversal condition: if
+      deprecation status itself needs to be a signed, third-party-verifiable
+      fact, this carve-out flips to new-entry or transparency-log recording
+      (an implementation-side change).

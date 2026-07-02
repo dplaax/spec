@@ -149,7 +149,15 @@ rule ID の対応表:
   復活阻止）。大文字・非 ASCII は意図的に profile の裁量に残す — claim 同一性は
   (接地 URL, label) の byte 比較なので、それ以上の受理差は発行可能 token を分けるだけで
   解釈は割らない。
-- `registry.append-only` の出典は旧 draft のみ — provin.oss に対応実装が現れた時点で要突合。
+- ~~`registry.append-only` の出典は旧 draft のみ — provin.oss に対応実装が現れた時点で要突合~~ —
+  **2026-07-02 解決**（full-review A-1）: 実装（schemaregistry の deprecation = idempotent な
+  flag flip・body 保持・atomic rewrite・Get は deprecated を隠さない）と突合し、不変性スコープを
+  「登録コンテンツ（schema_format / schema_body / version 束縛）」に限定する契約解釈で statement を
+  精緻化。lifecycle メタデータは (a) 取得可能性に影響しない（deprecated でも `(key, version)` で
+  byte-identical 取得可能）(b) contentHash（`credential.schema-ref` の resolve-and-compare）に
+  参加しない、の 2 条件で対象外。vector registry-002（commit → deprecate → get で contentHash
+  不変 + flag 可視）を追加。覆す条件 = deprecation 状態自体を署名済み・第三者検証可能な事実として
+  扱う要件が出た場合（その際は新エントリ or tlog 方式へ反転 — 実装側修正）。
 - ~~監査用列挙 API（issuer / ingress set でのクエリ面）~~ — **2026-06-11 解決**:
   L2 監査モデルの仕分けにより provin 側（provin.oss docs/protocol、サービス API spec の
   指定席）と確定。spec scope 外。
