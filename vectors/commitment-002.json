@@ -20,8 +20,8 @@
         "processId": "proc-a",
         "transformationClaim": "provin:enrich",
         "outputHash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-        "inputHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-        "previousCredential": "sha256:03a4a3adb0d4da2eeb9caa27f777710367b5e639428d90294e30560455417878",
+        "inputHash": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+        "previousCredential": "sha256:927cfe2ace0d16cac1ce8b76067643e3077741e13d6bdad85be4751f65e71354",
         "derived_from": [
           "did:dplaax:poc.dplaax.dev:org:mineA:pipeline:m:process:s",
           "did:dplaax:poc.dplaax.dev:org:mineB:pipeline:m:process:s"
