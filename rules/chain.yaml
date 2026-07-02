@@ -60,16 +60,19 @@ rules:
     statement: >-
       When a successor credential references a predecessor via
       previousCredential, the successor's inputHash MUST equal the
-      predecessor's outputHash. A verifier MUST treat a mismatch as failed
-      during chain verification.
+      predecessor's outputHash. A verifier MUST treat a missing or
+      mismatching inputHash as failed during chain verification.
     uses: [credential.subject.input-hash, credential.subject.previous-credential]
     schemas: []
-    vectors: [chain-006, chain-007]
+    vectors: [chain-006, chain-007, chain-008]
     notes: >-
       Data-flow continuity (input-output binding): the hashes bind the chain
       to a processing lineage of the same data. Chain origins carry no
-      previousCredential and are outside this rule (inputHash presence is
-      governed by credential.subject.input-hash).
+      previousCredential and are outside this rule (origin-side inputHash
+      presence is issuance guidance in credential.subject.input-hash). On
+      chain-preserving credentials this check doubles as the effective
+      presence enforcement: an absent successor inputHash cannot satisfy the
+      equality (chain-008).
       Source: drafts/v1_001 conformance section, L2 verification rule
       "Input-output binding"; baked into provin.oss packages/vc as a contract
       (the chain invariant in credential.go / VerifyChain). Resolved the

@@ -1,7 +1,7 @@
 {
-  "id": "chain-006",
+  "id": "chain-008",
   "rule": "chain.data-flow.continuity",
-  "description": "Adjacent links satisfy outputHash[n] == inputHash[n+1]",
+  "description": "Chain-preserving successor omits inputHash — continuity cannot hold against an absent value (effective presence enforcement)",
   "input": {
     "chain": [
       {
@@ -48,7 +48,6 @@
           "processId": "proc-x",
           "transformationClaim": "provin:convert",
           "outputHash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-          "inputHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "previousCredential": "sha256:6cd573c99462e8c14cc1f8c2d7f18d47a75404f80044526312d7047c5f69dd50"
         },
         "proof": {
@@ -62,5 +61,5 @@
       }
     ]
   },
-  "expect": "accept"
+  "expect": "reject"
 }

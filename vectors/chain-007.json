@@ -49,7 +49,7 @@
           "transformationClaim": "provin:convert",
           "outputHash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
           "inputHash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-          "previousCredential": "sha256:3b1b1fc67bf7b812b2d339c396065ce698cc09ccb69d4fbf3ce3924bba0ad80e"
+          "previousCredential": "sha256:6cd573c99462e8c14cc1f8c2d7f18d47a75404f80044526312d7047c5f69dd50"
         },
         "proof": {
           "type": "DataIntegrityProof",
