@@ -23,18 +23,32 @@ rules:
     status: draft
     class: core
     statement: >-
-      The same hash key MUST resolve to a unique, immutable byte sequence. A
-      resolver MUST NOT return different bodies for the same key. A verifier
-      MUST recompute the hash of the returned bytes and MUST reject any
-      response whose hash does not match the key.
+      The same key MUST resolve to the same signed credential document. A
+      verifier MUST recompute the key content hash from the returned document
+      (proof excluded; resolver.address.form) and MUST reject any response
+      whose recomputed hash does not match the key.
     uses: [resolver.address.form]
     schemas: []
     vectors: [resolver-003]
     notes: >-
       Immutability is cryptographically enforced — the resolver operator is
       not a trust principal and cannot forge content (availability is the only
-      operator discretion). Returning a different body via expiration /
-      migration / operator override also violates immutability.
+      operator discretion). Returning a different document via expiration /
+      migration / operator override also violates immutability. The
+      resolver-side obligation is document-level: the same content signed
+      with a different proof is a different document, and swapping it under
+      an already-served key breaks source_root recomputation agreement
+      (commitment.source-root.leaf hashes the proof-included document) even
+      though the content hash still matches. The verifier-side check is the
+      strongest stateless one: parse the returned document, strip the proof,
+      canonicalize, hash, compare to the key — content substitution is always
+      caught; proof substitution is not statelessly detectable but can only
+      break recomputation closed (a mismatching root can never turn into a
+      false verified — that would need a second-preimage). Byte-level jitter
+      that canonicalizes to the identical document carries no authority.
+      Revised 2026-07-02 (full-review A-2 consequence): the earlier "hash of
+      the returned bytes" wording assumed a proof-excluded body and would
+      have a conformant verifier reject every proof-bearing response.
       Source: drafts/v1_002 vc_resolver section (Immutability invariant /
       Trust model).
 
@@ -95,16 +109,23 @@ rules:
     status: draft
     class: core
     statement: >-
-      A response body is the canonicalized JSON byte sequence of the
-      credential body excluding the proof; the dplaax wire default encoding is
-      base64url (no padding). A wire profile MAY substitute a transport
+      A response body is the canonical JSON byte sequence of the signed
+      credential document (body and proof); the dplaax wire default encoding
+      is base64url (no padding). A wire profile MAY substitute a transport
       encoding but MUST preserve semantic equivalence.
     uses: [resolver.address.form]
     schemas: []
     vectors: [resolver-008]
     notes: >-
-      The key point is that the byte sequence is the canonical form itself —
-      the receiver can apply the resolver.immutability hash recomputation
-      directly.
+      The body carries the signed document because the audit path needs the
+      proof: proof re-verification and source-root leaf recomputation
+      (commitment.source-root.leaf) are computed over the proof-included
+      canonical form. The resolver key is unchanged — it stays the
+      proof-excluded content hash of resolver.address.form — so key
+      verification is the parse-strip-recompute of resolver.immutability,
+      not a byte hash of the body. Revised 2026-07-02 (full-review A-2
+      consequence): the earlier "excluding the proof" text predated the
+      2026-06-11 source-commitment rework and contradicted the audit path;
+      the implementation serves the signed document.
       Source: drafts/v1_002 vc_resolver section (Partial availability
       encoding).

@@ -39,7 +39,7 @@
     "derived_from": [
       "did:dplaax:poc.dplaax.dev:org:mineA:pipeline:m:process:s"
     ],
-    "source_root": "f1220038810b9fa177c4df48c5b97ff884026ae9ee7d1b3bfd4fe0449e7be2c39553c",
+    "source_root": "f12205ebd215e502f30be68a2df071d7eaf56b7cce0508e780261a52a8846030c4082",
     "source_root_canonical": "jcs-rfc8785"
   }
 }

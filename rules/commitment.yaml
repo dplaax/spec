@@ -72,23 +72,32 @@ rules:
     class: audit-reachable
     statement: >-
       The issuer MUST compute each source_root leaf as
-      SHA-256(0x00 ‖ canon(VC)) over the as-received signed wire form of the
-      source credential, proof included, and MUST use SHA-256(canon(VC))
-      (the content hash) as the sort key.
+      SHA-256(0x00 ‖ canon(VC)), where canon(VC) is the canonical
+      re-serialization of the signed source credential (body and proof) per
+      source_root_canonical, and MUST sort leaves by SHA-256(canon(VC)).
     uses: [commitment.class.definition, canon.jcs.base]
     schemas: []
     vectors: [commitment-005]
     notes: >-
-      The point is that the input is the as-received signed document —
-      computing from a pre-signing in-memory representation will not match
-      the verifier's recomputation. The canonicalization spec is declared by
-      source_root_canonical.
+      canon(VC) is the re-canonicalized signed document: a verifier gathers
+      each source (typically via a VC resolver, which serves canonical bytes
+      — resolver.immutability) and re-serializes it with the canonicalization
+      declared by source_root_canonical before hashing, so byte equality with
+      what once travelled on the wire is not part of the definition. The
+      pre-2026-07-02 wording "as-received signed wire form" meant "the signed
+      document, not a pre-signing in-memory representation"; it did not mean
+      byte-literalness — a literal-bytes reading is unimplementable through
+      the audit path, where sources are only reconstructible in canonical
+      form (full-review A-2). The sort key SHA-256(canon(VC)) is a
+      full-document hash (proof included) over the same bytes as the leaf
+      input; it is distinct from the proof-excluded content hash of
+      credential.prev.content-hash / resolver.address.form.
 
   - id: commitment.source-root.tree
     status: draft
     class: audit-reachable
     statement: >-
-      The issuer MUST sort leaves by content hash ascending and build internal
+      The issuer MUST sort leaves by sort key ascending and build internal
       nodes as SHA-256(0x01 ‖ left ‖ right) per the RFC 6962 §2.1 MTH. An odd
       leaf MUST be promoted, never duplicated. For an empty source set the
       root is the SHA-256 of the empty string.
@@ -96,9 +105,14 @@ rules:
     schemas: []
     vectors: [commitment-006]
     notes: >-
-      The left-subtree split is "the largest power of two smaller than n"
-      (the k of RFC 6962 §2.1). Making this split rule explicit is a
-      precondition for recomputation agreement with verifiers.
+      The sort key is the full-document hash SHA-256(canon(VC)) defined by
+      commitment.source-root.leaf. The earlier phrase "content hash" was
+      dropped on 2026-07-02: elsewhere in the catalog that term names the
+      proof-excluded address hash (credential.prev.content-hash /
+      resolver.address.form), which is a different value. The left-subtree
+      split is "the largest power of two smaller than n" (the k of RFC 6962
+      §2.1). Making this split rule explicit is a precondition for
+      recomputation agreement with verifiers.
 
   - id: commitment.source-root.encode
     status: draft

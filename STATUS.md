@@ -109,10 +109,23 @@ rule ID の対応表:
 ## 未決
 
 - ~~conformance vector の実体~~ — **2026-06-11 解決**: 全 55 rules に 1 本以上、
-  計 78 vectors（family 別形状規約は vectors/README.md）。canon / commitment /
-  resolver の期待値は provin.oss（JCS・strict decoder・ComputeSourceRoot・Hash）で
-  実検証した実値。**0.1 タグの vector 条件を充足**（全 entry draft / 各 rule ≥1 vector /
-  lint green / source 全廃 — VERSIONING.md の 4 条件すべて成立）。
+  計 78 vectors（当時。2026-07-02 現在 89 本。family 別形状規約は vectors/README.md）。
+  canon / commitment / resolver の期待値は provin.oss（JCS・strict decoder・
+  ComputeSourceRoot・Hash）で実検証した実値。**0.1 タグの vector 条件を充足**（全 entry
+  draft / 各 rule ≥1 vector / lint green / source 全廃 — VERSIONING.md の 4 条件すべて成立）。
+  - **2026-07-02 追記（full-review A-2/B-1 の修正で一部再生成）**: 上記「実検証した実値」の
+    うち commitment-005 / commitment-007 の pinned root は「as-received literal bytes」解釈で
+    生成されており、実装（proof 込み canonical 再直列化 — `ComputeSourceRoot`）の再計算と
+    不一致だった（leaf 語義の確定 = canonical signed wire form に伴い実装出力で再生成、
+    commitment-011 の claimed root も canonical 整合に補正）。また resolver-001 / resolver-003 は
+    2026-06-16 のドメイン移行（83d60e9）で body のみ書き換わり key が旧 bytes のまま（hash 不一致で
+    accept fixture の前提が破損。-001 は Codex spec-review が検出）、resolver-008 は base64 が
+    opaque で移行漏れ（旧 .io ドメイン残存）だったため、resolver-001/002/003/008 を単一の
+    synthetic 署名文書（.dev）から再生成（key = proof 除外 content hash / body = proof 込み
+    canonical wire、`resolver.body.encoding` 改訂に整合。-003 の reject は whitespace 変異から
+    content 変異に変更 — parse→canonical 再計算では whitespace は検出不能かつ無害のため）。
+    commitment-006/008/009/010 は実装照合で一致・意図どおりを確認。壊れが機械未検出だったのは
+    conformance harness 欠落（B-2）のため — FIX-4 で第 1 弾 CI 実行化予定。
 - ~~vc_resolver 領域の rule file~~ — **2026-06-11 解決**: drafts/v1_002 vc_resolver 節
   から rules/resolver.yaml へ転記（6 rules: address.form / immutability / states /
   states.no-demotion / batch.shape / body.encoding）。

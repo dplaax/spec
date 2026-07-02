@@ -1,7 +1,7 @@
 {
   "id": "commitment-005",
   "rule": "commitment.source-root.leaf",
-  "description": "Construction over three sources (two from one issuer plus one other; odd leaf count) — leaves hash the as-received signed wire form including proof",
+  "description": "Construction over three sources (two from one issuer plus one other; odd leaf count) — leaves hash the canonical signed wire form including proof",
   "input": {
     "sources": [
       {
@@ -96,7 +96,7 @@
       "did:dplaax:poc.dplaax.dev:org:mineA:pipeline:m:process:s",
       "did:dplaax:poc.dplaax.dev:org:mineB:pipeline:m:process:s"
     ],
-    "source_root": "f1220f3ab23a6fe77e03c61f48c9e1b85fcd315fb13882f1132fc552264fda5c72acb",
+    "source_root": "f12209902a36bd81193d37adf4b0a34ad5d3a9b30e673c809bafd943c5586b938fc26",
     "source_root_canonical": "jcs-rfc8785"
   }
 }
