@@ -203,6 +203,19 @@ rule ID の対応表:
   reconcile、(3) 不採用なら "deliberately out of scope" を rationale 付きで確定し delegation 検証
   要件の代替を明記。確定まで provin.oss の delegation 公開 API は churn しない（API responsibility
   review の T3-1 = ungrounded scope / typed-struct vs body-as-SoT は本決定の下流）。（2026-06-15 起票）
+- **commitment.verify family に verified vector が無い** — 現行 vector は defect 系のみで、
+  全解決 + root 一致 → verified の正例が catalog に無い（常時 Failed の縮退実装は
+  commitment-009 でしか落ちない）。commitment-013（全 source 解決済み・root 一致 → verified）を
+  追加候補として起票。provin.oss 側は unit test（TestVerifySourceCommitmentVerified）で
+  同ケースを検証済みだが、cross-implementation の pin は vector が担う。（full-review FIX-4
+  で検出、2026-07-06 起票）
+- **`credential.field.valid-from` の受理側文言と `-00:00` の未 pin** — cred-030/031（dd52bef）で
+  非 UTC offset / 小数秒の reject は pin 済みだが、(a) statement の "Sub-second precision is
+  truncated at issuance" は発行側 guidance と受理側 reject の関係が暗黙（Codex spec-review
+  advisory: "fractional seconds MUST be rejected; issuers truncate before emission" 級の明文化を
+  推奨）、(b) RFC 3339 §4.3 の `-00:00`（unknown local offset）を UTC として受理するか否かが
+  vector 未 pin で実装間分岐の余地（provin.oss は offset==0 として受理）。statement 改訂と
+  合わせて次回 rule 改訂時に処理。（2026-07-06 起票）
 
 ## trust model（L1/L2/L3）の行き先
 
