@@ -178,7 +178,15 @@ rule ID の対応表:
   context（接地担体）の正規は provin.oss 側。
   **2026-06-11 ドメイン確定**: provin = `provin.dev`、protocol = `dplaax.dev`。
   profile context URI は `poc.provin.dev/vc/v1`（vectors / provin.oss とも反映済み）。
-- **delegation credential の正規地位（controller chain の確立・証明機構）** — 2026-06-03 に
+- ~~**delegation credential の正規地位（controller chain の確立・証明機構）**~~ —
+  **2026-07-06 解決**（full-review C-1）: (b) owner 署名 DelegationCredential VC を正規機構として
+  採用し rule 化済み — `rules/delegation.yaml`（4 rules: `delegation.shape` / `.binding` /
+  `.proof` / `.scope`、spec_draft `f63bbfe` で着地）。provin.oss は reconcile 済み
+  （`delegation` package の Build/Verify が同 rule 群の実装 — oss `54bfa5b` 起点、conformance
+  delegation-001..005 で vector 駆動）。下記の起票時論点（(a)/(b)/(c) の選択・shape pin・
+  reconcile）は上記で充足。scope grammar/registry の将来拡張は delegation.yaml の notes が担う。
+  **以下は起票時（2026-06-15）の記述をそのまま履歴として保持**（「現 catalog に delegation rule は
+  無い」等は当時の状態）: 2026-06-03 に
   deferred（retired memo `temp/technical_concerns/delegation_credential.ja.md`）のまま、
   「採用 / deliberately out of scope」どちらの結論も記録されず restructure に流れた。現 catalog に
   delegation rule は無いが、`rules/audit.yaml` / `credential.yaml` は attribution を「controller
