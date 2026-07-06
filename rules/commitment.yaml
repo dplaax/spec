@@ -137,15 +137,18 @@ rules:
     class: audit-reachable
     statement: >-
       A verifier MUST return failed on duplicate derived_from entries,
-      unknown source_root_canonical, a chain-preserving VC whose derived_from
-      lacks its predecessor's issuer, or a recomputed-root mismatch. A proper
-      subset of claimed issuers yields indeterminate.
+      unknown source_root_canonical, a predecessor missing from the claimed
+      issuers or gathered sources (content hash), or a root mismatch;
+      indeterminate on a proper issuer subset; else verified.
     uses: [commitment.source-root.tree, commitment.derived-from, commitment.scope.all-consumed]
     schemas: []
-    vectors: [commitment-008, commitment-009, commitment-010, commitment-011]
+    vectors: [commitment-008, commitment-009, commitment-010, commitment-011, commitment-013]
     notes: >-
       This verification sits outside the per-event path (an on-demand audit
-      check). The predecessor matching can be performed more strongly than at
+      check). The missing-predecessor-issuer clause applies to chain-preserving
+      VCs (whose derived_from must include the predecessor's issuer); the root
+      comparison is against the RECOMPUTED root over the gathered sources.
+      The predecessor matching can be performed more strongly than at
       issuer granularity — the verifier holds the previousCredential content
       hash, so once the claimed set is fully resolved it demands that some
       gathered source hashes to it (no match means the predecessor was

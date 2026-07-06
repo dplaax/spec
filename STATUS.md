@@ -203,13 +203,24 @@ rule ID の対応表:
   reconcile、(3) 不採用なら "deliberately out of scope" を rationale 付きで確定し delegation 検証
   要件の代替を明記。確定まで provin.oss の delegation 公開 API は churn しない（API responsibility
   review の T3-1 = ungrounded scope / typed-struct vs body-as-SoT は本決定の下流）。（2026-06-15 起票）
-- **commitment.verify family に verified vector が無い** — 現行 vector は defect 系のみで、
+- ~~commitment.verify family に verified vector が無い~~ — **2026-07-06 解決**: commitment-013
+  を追加（credential は commitment-009 の aggregate 形、source_root は commitment-011 の
+  全 3 source に対する実計算値 `f12209902a…` — provin.oss `NewSourceCommitment`/JCS を oracle に
+  実検証、`VerifySourceCommitment` で verified を確認）。rule statement も verified 帰結を明文化
+  （failed / indeterminate / verified の三値を列挙する形に圧縮改訂）。以下は起票時の記述:
+  現行 vector は defect 系のみで、
   全解決 + root 一致 → verified の正例が catalog に無い（常時 Failed の縮退実装は
   commitment-009 でしか落ちない）。commitment-013（全 source 解決済み・root 一致 → verified）を
   追加候補として起票。provin.oss 側は unit test（TestVerifySourceCommitmentVerified）で
   同ケースを検証済みだが、cross-implementation の pin は vector が担う。（full-review FIX-4
   で検出、2026-07-06 起票）
-- **`credential.field.valid-from` の受理側文言と `-00:00` の未 pin** — cred-030/031（dd52bef）で
+- ~~`credential.field.valid-from` の受理側文言と `-00:00` の未 pin~~ — **2026-07-06 解決**:
+  (a) statement を "Receivers MUST reject fractional seconds (issuers truncate before
+  emission)" 形へ改訂し受理側 reject を明文化、(b) `-00:00` は **reject** に確定（RFC 3339 §4.3
+  の unknown-local-offset は「offset 不明」の表明であり UTC の主張ではない — fail-closed
+  profile は曖昧形を受理しない。`+00:00` は offset-0 の UTC 主張として引き続き受理）。
+  cred-032（`-00:00` → reject）で pin。provin.oss は文字列レベルの `-00:00` reject を実装済み
+  （parser は offset 0 に折り畳むため parse 後では判別不能）。以下は起票時の記述: cred-030/031（dd52bef）で
   非 UTC offset / 小数秒の reject は pin 済みだが、(a) statement の "Sub-second precision is
   truncated at issuance" は発行側 guidance と受理側 reject の関係が暗黙（Codex spec-review
   advisory: "fractional seconds MUST be rejected; issuers truncate before emission" 級の明文化を
