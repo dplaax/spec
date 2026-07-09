@@ -125,7 +125,11 @@ rule ID の対応表:
     canonical wire、`resolver.body.encoding` 改訂に整合。-003 の reject は whitespace 変異から
     content 変異に変更 — parse→canonical 再計算では whitespace は検出不能かつ無害のため）。
     commitment-006/008/009/010 は実装照合で一致・意図どおりを確認。壊れが機械未検出だったのは
-    conformance harness 欠落（B-2）のため — FIX-4 で第 1 弾 CI 実行化予定。
+    conformance harness 欠落（B-2）のため。**2026-07-09 更新: harness は実行化済み** —
+    provin.oss `conformance/TestDplaaxAllVectors` が全 vector を driver 実行または理由付き
+    skip として ledger 化し、coverage guard が未 driver/未 skip の vector で CI を赤にする。
+    tranche 1（canon/cred/commitment/chain-verify/confidence/delegation/signer）が実行中、
+    tranche 2（chain-issuance/process/audit/registry/resolver）は driver 実装が進行中。
 - ~~vc_resolver 領域の rule file~~ — **2026-06-11 解決**: drafts/v1_002 vc_resolver 節
   から rules/resolver.yaml へ転記（6 rules: address.form / immutability / states /
   states.no-demotion / batch.shape / body.encoding）。
