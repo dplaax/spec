@@ -165,6 +165,14 @@ rule ID の対応表:
 - ~~監査用列挙 API（issuer / ingress set でのクエリ面）~~ — **2026-06-11 解決**:
   L2 監査モデルの仕分けにより provin 側（provin.oss docs/protocol、サービス API spec の
   指定席）と確定。spec scope 外。
+- **`credential.schema-ref` の id（registry URI）形式が未 pin** — rule statement は
+  「id (registry URI)」とのみ規定し、URI の具体形は未定義。provin.oss が schema
+  validation のデータプレーン配線（2026-07-10）で canonical 形式
+  `dplaax:schema/<name>@<version>`（name/version は url-safe `[A-Za-z0-9._-]`、node URL
+  非依存で移設可能）を採用。cross-implementation の相互運用には spec 側での形式規範化が
+  必要。resolve は id を registry の (name, version) に写像する（scheme は registry の
+  所在ではなく識別子を名付ける）。次回 rule 改訂で `credential.schema-ref` に URI 文法を
+  追記候補（provin.oss 実装が事実上の reference）。（2026-07-10 起票）
 - **federation 層のスコープ判断** — 旧 draft conformance L3 の機構群（相互 allow-list /
   購読登録 / downstream receipt / append-only 発行ストリーム / control plane 署名検証）は
   現 catalog に対応 rule が無い。一方、audit-reachable class の申告漏れ検出は
