@@ -173,12 +173,34 @@ rule ID の対応表:
   必要。resolve は id を registry の (name, version) に写像する（scheme は registry の
   所在ではなく識別子を名付ける）。次回 rule 改訂で `credential.schema-ref` に URI 文法を
   追記候補（provin.oss 実装が事実上の reference）。（2026-07-10 起票）
-- **federation 層のスコープ判断** — 旧 draft conformance L3 の機構群（相互 allow-list /
-  購読登録 / downstream receipt / append-only 発行ストリーム / control plane 署名検証）は
-  現 catalog に対応 rule が無い。一方、audit-reachable class の申告漏れ検出は
-  これらの記録を敵対的証拠として前提している（→ L2 の歯が依存）。本 catalog に
-  入れるか、Chain primitive spec として別立てか、未決。実装が network 層に到達した
-  時点で具体化する（2026-06-11 起票）。
+- ~~**federation 層のスコープ判断**~~ — **2026-07-11 解決**（起票時の具体化条件
+  「実装が network 層に到達した時点」は network-slice 1–17r の landing で成立）:
+  **hybrid 配置**で決着。旧 draft conformance L3 の 5 機構を「証拠を生む義務」と
+  「証拠を運ぶ機構」に分解し、前者だけを新 domain `rules/transfer.yaml`
+  （4 rules、全て class: audit-reachable）として本 catalog に入れた:
+  `transfer.evidence.definition`（定義アンカー — audit-reachable の omission
+  detection が突合する 3 記録クラスを束ね、「ingress store」語彙に定義上の家を
+  与える）/ `transfer.emission.append-only`（append-only 発行ストリームの抽象 —
+  emitter 側 emission record）/ `transfer.ingress.retention`（downstream receipt
+  機構 1 = subscriber 保持の抽象で、**ingress store の定義 rule**）/
+  `transfer.relationship.record`（購読登録の記録義務を転送関係の記録義務として
+  抽象化）。後者の機構（相互 allow-list = admission control で証拠鎖外、
+  control-plane RPC shape / wireauth、payload delivery mode 意味論）は
+  2026-06-11 仕分けどおり provin profile / サービス API 側に留置。
+  **これは 2026-06-11 仕分けの、証拠基盤に限定した明示的 amendment**（仕分けは
+  記録義務を profile 側と明記していた — その一部を catalog に移す）。機構自体の
+  昇格条件「第二実装出現時に 0.x minor で」は不変。命名は「転送関係」の直訳
+  `transfer`（「federation」は旧 Conformance L3 / 現 trust layering / provin Auth
+  Level の三重衝突、「chain」は chain.yaml PPC-linkage と旧 transport Chain
+  primitive の衝突で回避）。relationship.record の証拠は「相手方署名済み要求 +
+  当事者帰属の受理記録」までで、双方向 non-repudiation は現行 wire が応答側
+  署名を持たないため主張しない（signed acceptance artifact は機構昇格時の
+  profile hardening 候補）。commitment.class.definition / commitment.store.persistence
+  / audit.attribution.origin-default の notes に transfer.yaml への pointer を追記。
+  provin.oss 側 reconcile: chainmanager の関係記録を証拠品質に（署名済み登録 view
+  と解決 DID snapshot を専用 tlog へ）、ingress store 突合、conformance driver。
+  設計 spec は docs/draft/federation-transfer-evidence-spec-2026-07-11.md
+  （provin_2 scope 側、spec repo 外）。
 - ~~JSON-LD context 文書の実体~~ — **2026-06-11 解決**: 所有は二層（Model A）。
   protocol context の正規は本 repo `contexts/v1.jsonld`（byte 単位）、provin.oss は
   byte-exact vendoring + sha256 固定テスト。詳細は contexts/README.md と

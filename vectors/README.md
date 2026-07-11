@@ -47,6 +47,7 @@ objects. Shapes are fixed per family as follows:
 | `process.*` | `{"process_type", "credential"?, "behavior"?, "sequence"?}` (issuance and verification behavior conformance) | `"accept"` / `"reject"` |
 | `resolver.*` | format-type `{"key", "body"}`; state-type `{"resolver_state"}` → confidence; behavior-type `{"sequence": [...]}`; batch `{"request", "response"}`; encoding `{"entry"}` | `"accept"` / `"reject"` / `{"confidence"}` / `{"state"}` |
 | persistence / append-only (`commitment.store.*` / `registry.*`) | `{"sequence": [{"op": ...}, ...]}` | `"reject"` or expected-state object |
+| `transfer.*` | `{"sequence": [{"op": <event>}, ...]}` where `op` is one of `emit` / `receive` / `rewrite-recorded-ordinal` / `process-restart` / `enumerate` / `register-signed` / `lookup`. The driver builds real fixtures (like the persistence family); ops name the record events, not payloads | `"accept"` / `"reject"` / an expected-state object (`{"join"}` / `{"state"}`) — record-property assertions, not hashes |
 | `audit.*` | `{"chain": [<credential>, ...], "controllers": {<DID>: <controller DID>, ...}}` (chain origin first; `controllers` is the controller-binding fixture — a DID absent from its keys is terminal, i.e. an Owner. Attribution traverses these bindings, never lexical DID truncation) | `{"attribution": {"segments": [{"index": <n>, "owner": <DID>}, ...], "pre_chain": <DID>}}` |
 
 - Id numbering: `<family>-<3-digit sequence>`, file name: `<id>.json`

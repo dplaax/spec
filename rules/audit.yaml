@@ -52,7 +52,11 @@ rules:
       what the origin claims to have consumed — the means to continue an
       investigation past the cut — never that the claim is complete, so
       it cannot safely shed the cutter's responsibility (an
-      under-declared source set would otherwise launder liability).
+      under-declared source set would otherwise launder liability). The
+      continuation reconciles the commitment against the transfer evidence
+      records (rules/transfer.yaml): a source retained at a counterparty's
+      ingress store but absent from the claim is the omission this default
+      keeps the cutter answerable for.
       Boundary translation is an application of this rule, not an
       exception: responsibility for external input terminates at the
       ingesting Owner (audit-003). Deliberate extension beyond Paper 01
