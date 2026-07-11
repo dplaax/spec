@@ -21,7 +21,10 @@ rules:
       only the binding to the claimed source set at issuance time; it does
       not guarantee completeness of the claim. Omission detection remains
       audit-layer reconciliation against ingress stores (the separation of
-      integrity and completeness). The former name, origin commitment (a
+      integrity and completeness); the ingress store and the other transfer
+      evidence records are defined in rules/transfer.yaml
+      (transfer.ingress.retention / transfer.evidence.definition). The former
+      name, origin commitment (a
       chain-origin-only conception), was reworked on 2026-06-11 — the name
       narrowed the attachment surface and made the consumed-source sets of
       chain-preserving boundaries invisible to audit (see STATUS.md).
@@ -173,6 +176,10 @@ rules:
     vectors: [commitment-012]
     notes: >-
       Retrospective audits resolve source VCs long after issuance, which a
-      volatile store cannot honor. The audit-facing enumeration query surface
-      belongs to the service API layer, outside this catalog's scope
-      (see STATUS.md).
+      volatile store cannot honor. The counterparties' ingress VC stores this
+      references are defined by transfer.ingress.retention (rules/transfer.yaml),
+      which fixes their byte-preserving / durable / audit-enumerable record
+      property. The audit-facing enumeration query surface — an RPC a remote
+      auditor calls — belongs to the service API layer, outside this catalog's
+      scope (see STATUS.md); the record being enumerable and the query surface
+      are the two sides transfer.ingress.retention keeps apart.

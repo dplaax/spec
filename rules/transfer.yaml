@@ -1,0 +1,128 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — transfer (audit-reachable transfer evidence records)
+# File sharding is non-normative; an entry's identity is its id (see README.md).
+rules:
+  - id: transfer.evidence.definition
+    status: draft
+    class: audit-reachable
+    statement: >-
+      A transfer conveys a credential across a process boundary. Under the
+      audit-reachable class, omission detection reconciles a source commitment
+      against transfer evidence: emission, ingress, and relationship records.
+      A deployment MAY require them.
+    uses: [commitment.class.definition]
+    schemas: []
+    vectors: [transfer-001]
+    notes: >-
+      The definitional anchor for the three evidence records this domain
+      defines (transfer.emission.append-only / transfer.ingress.retention /
+      transfer.relationship.record), mirroring how commitment.class.definition
+      anchors the source commitment. It gives a home to the "ingress store"
+      vocabulary that commitment.class.definition and commitment.store.persistence
+      already reference in their statements without defining. Scope split
+      (settled 2026-07-11, resolving the STATUS federation open item): this
+      catalog carries only the evidence-bearing record obligations that the
+      audit-reachable class's teeth depend on; the conveyance mechanisms
+      themselves — admission control (allow-list), control-plane request shapes,
+      wire authentication, payload-delivery-mode semantics — stay on the provin
+      profile / service-API side, per the 2026-06-11 layering split. This is an
+      amendment to that split, limited to evidence substrate: role vocabulary
+      (publisher / subscriber) is deliberately kept out of the statements, which
+      speak of emitting and consuming processes in a transfer relationship. A
+      transfer relationship is a conveyance relationship between two process
+      boundaries; the term is the direct heir of the 2026-06-11 "転送関係"
+      abstraction. "federation" and "chain" are avoided as domain / class names
+      to sidestep three-way collisions (old-draft Conformance L3, current trust
+      layering L1-L3, provin Auth Level; and rules/chain.yaml PPC-linkage vs the
+      old-draft transport Chain primitive).
+
+  - id: transfer.emission.append-only
+    status: draft
+    class: audit-reachable
+    statement: >-
+      An emitting process under the audit-reachable class MUST keep an
+      append-only, tamper-evident emission record (content hash, per-stream
+      ordinal) attestable under the emitter's key. A recorded emission MUST NOT
+      be reordered, replaced, or dropped.
+    uses: [transfer.evidence.definition]
+    schemas: []
+    vectors: [transfer-002]
+    notes: >-
+      The evidence that a given credential was emitted, in an order a third
+      party can check: a per-stream ordinal makes a silent gap detectable
+      (a possible loss, never by itself a tamper verdict), and the
+      key-attestable head lets the emitter commit to its own log without a
+      trusted third party. tamper-evident means an altered past entry breaks
+      the hash chain; append-only means a recorded entry is not rewritten.
+      The concrete wire mechanics (streamId / sequenceNo carriage, checkpoint
+      signature scheme) are a wire-profile matter, not fixed here — the same
+      abstraction the old draft used ("the concrete detection mechanism is out
+      of scope of this layer"). The provin profile realises this with a
+      file-backed hash-chained log plus signed checkpoints exposed for
+      reconciliation; that realisation is the de-facto reference, not the
+      normative shape.
+
+  - id: transfer.ingress.retention
+    status: draft
+    class: audit-reachable
+    statement: >-
+      A consuming process under the audit-reachable class MUST retain each
+      received credential byte-preserving in durable storage, enumerable for
+      audit. Payload bytes are out of scope; the retained signed credential is
+      itself the tamper evidence.
+    uses: [transfer.evidence.definition, commitment.store.persistence]
+    schemas: []
+    vectors: [transfer-003]
+    notes: >-
+      This is the defining rule for the "ingress store" that
+      commitment.class.definition ("audit-layer reconciliation against ingress
+      stores") and commitment.store.persistence ("the counterparties' ingress
+      VC stores") presuppose. Boundary pins: (a) enumerable is a property of
+      the record — the holder can iterate its retained credentials at audit
+      time — while the audit-facing query surface (an RPC/API a remote auditor
+      calls) stays in the service-API layer, the same split
+      commitment.store.persistence already draws. (b) durable means the record
+      survives process restart (the tlog / store sense used elsewhere).
+      (c) The retention horizon follows the deployment-declared audit horizon;
+      indefinite retention is not imposed — retention and GC are a deployment
+      obligation, the same family as the evidence-store retention item.
+      Payload bytes are excluded (provenance metadata only, matching the sink
+      reject log's payload exclusion); erasure is the settled out-of-protocol
+      concern. Because the retained credential carries the issuer's signature,
+      tampering surfaces as a broken signature — the store need not be trusted.
+
+  - id: transfer.relationship.record
+    status: draft
+    class: audit-reachable
+    statement: >-
+      Each party to a transfer relationship MUST keep a durable, tamper-evident
+      record of establishment, agreed mode, and termination. Where the wire
+      carries a counterparty-signed request, the receiver MUST retain that
+      signed view and the verifying key material.
+    uses: [transfer.evidence.definition]
+    schemas: []
+    vectors: [transfer-004]
+    notes: >-
+      Establishes that a transfer relationship existed, on what terms, and for
+      which interval — the second half of "consumer X should have received this
+      emission" (the emission record is the first half). Honest evidentiary
+      scope (sharpened 2026-07-11): what this yields is a counterparty-signed
+      request plus each party's own party-attributed acceptance / lifetime
+      record — not a cryptographic proof of acceptance and activity binding on
+      both parties, because the current wire carries no responder signature.
+      That suffices for omission detection, whose target is the consuming
+      issuer X: X's own signed registration request is non-repudiable against
+      X, and combined with the emitter's emission record it grounds continuing
+      an investigation — the same epistemics as audit.attribution.origin-default
+      (attribution continues an investigation; it does not prove one). A signed
+      acceptance artifact (two-way non-repudiation) is a profile-hardening
+      candidate for when the conveyance mechanism is promoted; it is a wire
+      invention and is not imposed now. "Where the wire carries a
+      counterparty-signed request" is deliberately conditional: it binds the
+      obligation to retain real signature bytes wherever they exist (a note
+      that verification happened is self-serving hearsay; the signed bytes are
+      third-party re-checkable), without inventing signatures the wire lacks.
+      The provin profile realises the signed-request retention by snapshotting
+      the verified request view and the resolved key material into the chain
+      manager's evidence log; role vocabulary and request shapes stay
+      profile-side.
