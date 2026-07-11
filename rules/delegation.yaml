@@ -11,7 +11,7 @@ rules:
       whose delegatedBy equals the issuer, and a Data Integrity proof. A scope
       array MAY be present.
     uses: []
-    schemas: []
+    schemas: [delegation-credential.json]
     vectors: [delegation-001]
     notes: >-
       The delegated identity's pipeline is part of the subject DID under the
@@ -49,7 +49,7 @@ rules:
       MUST reject any other proofPurpose or a verificationMethod naming a
       different DID.
     uses: [signer.proof.structure]
-    schemas: []
+    schemas: [delegation-credential.json]
     vectors: [delegation-004]
     notes: >-
       The cryptosuite is the wire profile's assertion suite (provin uses
@@ -65,7 +65,7 @@ rules:
       tokens and MUST NOT contain a wildcard. The scope token vocabulary is
       fixed by the wire profile, not this catalog.
     uses: []
-    schemas: []
+    schemas: [delegation-credential.json]
     vectors: [delegation-005]
     notes: >-
       scope is optional; its absence means the delegated identity holds the

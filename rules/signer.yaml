@@ -11,7 +11,7 @@ rules:
       verificationMethod, proofPurpose, and proofValue;
       verificationMethod MUST be resolvable to the signer DID Document.
     uses: []
-    schemas: []
+    schemas: [pipeline-pass-credential.json]
     vectors: [signer-001]
     notes: >-
       Cryptosuite selection is declared by the wire profile; this catalog does

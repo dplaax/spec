@@ -20,9 +20,11 @@ jobs:
         with:
           python-version: "3.12"
       - name: install deps
-        run: pip install pyyaml
+        run: pip install pyyaml 'jsonschema[format-nongpl]'
       - name: spec lint
         run: python tools/lint.py
+      - name: vector-vs-schema validation
+        run: python tools/validate_vectors.py
 
   # Advisory (non-blocking): does this PR's vector set still run against the
   # current provin.oss conformance harness? Sync the PR's vectors into a fresh

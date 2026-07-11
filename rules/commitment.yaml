@@ -11,7 +11,7 @@ rules:
       is an audit attribute orthogonal to previousCredential, not a parent
       link. A deployment profile MAY require the class.
     uses: [chain.trigger.retention]
-    schemas: []
+    schemas: [pipeline-pass-credential.json]
     vectors: [commitment-001]
     notes: >-
       "Any credential" means chain origins and chain-preserving credentials
@@ -62,7 +62,7 @@ rules:
       and declares that no conformant upstream exists (chain origins only;
       see commitment.scope.all-consumed).
     uses: [commitment.class.definition, commitment.scope.all-consumed]
-    schemas: []
+    schemas: [pipeline-pass-credential.json]
     vectors: [commitment-003, commitment-004]
     notes: >-
       Multiple source credentials from the same issuer are legal —
@@ -126,7 +126,7 @@ rules:
       followed by 64 hex characters. Verifiers SHOULD dispatch on the
       multihash prefix and reject unknown prefixes.
     uses: [commitment.source-root.tree]
-    schemas: []
+    schemas: [pipeline-pass-credential.json]
     vectors: [commitment-007]
     notes: >-
       The multihash/multibase form is pinned for cross-profile compatibility
