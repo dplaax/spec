@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dPLaaX DID OAuth Grant Type</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 46rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; }
+  code, pre { font-family: ui-monospace, monospace; background: rgba(127,127,127,.12); border-radius: 4px; }
+  code { padding: .1em .3em; }
+  pre { padding: .8em 1em; overflow-x: auto; }
+  table { border-collapse: collapse; }
+  th, td { border: 1px solid rgba(127,127,127,.4); padding: .35em .7em; text-align: left; }
+  h1 { font-size: 1.5rem; }
+</style>
+</head>
+<body>
+<h1>dPLaaX DID OAuth Grant Type</h1>
+
+<p>This page is the namespace document for the OAuth 2.0 extension grant type
+(<a href="https://www.rfc-editor.org/rfc/rfc6749#section-4.5">RFC&nbsp;6749 §4.5</a>)
+identified by:</p>
+
+<pre>https://dplaax.dev/oauth/grant-type/did</pre>
+
+<p>The identifier is compared byte-for-byte by the token endpoint and is never
+dereferenced at runtime. Its meaning is frozen: semantic changes to the grant
+will be published under a new URI.</p>
+
+<h2>What it does</h2>
+
+<p>Exchanges a DID-signed assertion for an access token. The client proves
+control of a <code>did:dplaax</code> DID by signing a short-lived message with
+the DID's key; the authorization server resolves the DID document from the
+dPLaaX registry named in the DID, verifies the signature against the published
+key, and issues a token whose subject is the DID.</p>
+
+<h2>Token request</h2>
+
+<p><code>POST /oauth/token</code> with
+<code>Content-Type: application/x-www-form-urlencoded</code>:</p>
+
+<table>
+<tr><th>Field</th><th>Value</th></tr>
+<tr><td><code>grant_type</code></td><td><code>https://dplaax.dev/oauth/grant-type/did</code> (exact string)</td></tr>
+<tr><td><code>client_id</code></td><td>a registered OAuth client (public clients use <code>tokenEndpointAuthMethod: none</code>)</td></tr>
+<tr><td><code>did</code></td><td>the authenticating <code>did:dplaax</code> DID</td></tr>
+<tr><td><code>message</code></td><td>JSON: <code>{"did": &lt;same DID&gt;, "timestamp": &lt;RFC 3339&gt;, "nonce": &lt;random&gt;}</code></td></tr>
+<tr><td><code>signature</code></td><td>signature over the exact <code>message</code> bytes, base64</td></tr>
+</table>
+
+<p>The default signature algorithm is <code>ed25519_raw</code> (a raw Ed25519
+signature over the UTF-8 message bytes); deployments configure the accepted
+set. Messages are single-use (nonce replay is rejected) and expire after a
+configured maximum age.</p>
+
+<h2>Response</h2>
+
+<p>On success: a standard OAuth token response (<code>access_token</code>,
+<code>token_type: Bearer</code>). On failure: standard OAuth error responses
+(<code>invalid_request</code>, <code>invalid_client</code>,
+<code>invalid_grant</code>, <code>unsupported_grant_type</code>).</p>
+
+<h2>Reference implementation</h2>
+
+<p>The grant is implemented by the <code>@provin-line/auth-provider-did</code>
+package of the dPLaaX auth stack, which also documents the full wire contract
+and the configurable algorithm set.</p>
+
+<h2>Extending</h2>
+
+<p>Deployments that extend the wire protocol (for example, to embed a
+Verifiable Presentation) should define a new grant type under a domain they
+control (e.g. <code>https://example.com/oauth/grant-type/did-vp</code>)
+rather than reusing this identifier.</p>
+</body>
+</html>
