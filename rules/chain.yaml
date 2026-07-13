@@ -20,6 +20,12 @@ rules:
       (boundary translation) is a typical chain origin. The criterion is the
       runtime cause of activation, not hindsight observation of how many
       events were consumed.
+      Conformance projection (recorded 2026-07-13, P0-11): the trigger
+      criterion is an issuance-time obligation; its conformance-observable
+      projection is the wire invariant above — previousCredential presence
+      coincides with the chain-preserving judgment. Vector conformance pins
+      the projection; a callable runtime trigger-classifier seam is an
+      implementation choice, not a protocol requirement.
 
   - id: chain.trigger.batch-of-one
     status: draft

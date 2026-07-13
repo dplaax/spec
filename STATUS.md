@@ -64,6 +64,24 @@
   origin-default は 2026-06-16 の独立 FCoT で sound 確認済み。Paper 04 §3.4/§4.7 は設計を
   追従して書き換える対象（別 task）。delegation も同様に Paper 04 由来の
   pipelineId/delegatedRole を捨て、構造的最小形へ（`rules/delegation.yaml`）。
+- **2026-07-13: L6 spec-vs-impl 一括裁定（P0-11）— resolver.states の normative 変更を含む**。
+  (a) `resolver.states` を **authority スコープ化**: NotFound→failed は照会先が当該
+  namespace の非存在 authority（DID registry 等）である場合のみ。無スコープの旧文は
+  第三者 store が保持したことのない content への NotFound 主張で definitive failed を
+  鋳造できる audit-DoS レバーであり、commitment family の pin（commitment-009:
+  未解決→indeterminate）とも矛盾していた。state は source-local 観測として定義し
+  証拠力を分離。vector: resolver-005 に `non_existence_authority: true` を追加、
+  resolver-009（false→indeterminate）を新設、vectors/README に input shape を定義。
+  (b) `resolver.batch.shape` を条件形へ（「If an implementation or profile provides
+  a batch lookup surface…」）+ reserved 宣言（dplaax.vc.v1 に batch surface 無し）。
+  (c) `resolver.states.no-demotion` の notes を durable-history/retention 根拠へ補正
+  （新定義下で content store の NotFound は global claim ではないため）。
+  (d) `chain.trigger.retention` の notes に conformance projection を明記（wire 不変則
+  pin が規範面、runtime classifier seam は非要求）。実装側（provin.oss）:
+  `vc.Verifier.AttributeOwner` export（attribution 最小公開 API — 帰責計算の primitive、
+  credential 検証は caller 前提）、conformance driver の authority 分岐 +
+  attribution 実 walk 化 + registry Service 経路 test。Codex 二次意見 High2/Med2 反映済み
+  （裁定 spec: scope repo `docs/draft/p0-11-l6-spec-vs-impl-rulings-2026-07-13.md`）。
 
 ## Ledger: process type rename（2026-06-12）
 

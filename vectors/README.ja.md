@@ -38,7 +38,7 @@ vector ファイル自体が JSON のため、バイト精度が要る入力（�
 | `signer.*` | `{"credential": <object>}` または registry 操作 `{"registry_op": {...}}` | `"accept"` / `"reject"` |
 | `confidence.*` | 合成系 `{"axes": {<軸>: <state>}}`、lifecycle 系 `{"registry": [...], "cryptosuite", "proof_created"}` | `{"confidence": <state>}` |
 | `process.*` | `{"process_type", "credential"?, "behavior"?, "sequence"?}`（発行・検証挙動の適合性） | `"accept"` / `"reject"` |
-| `resolver.*` | 形式系 `{"key", "body"}`、状態系 `{"resolver_state"}` → confidence、挙動系 `{"sequence": [...]}`、batch `{"request", "response"}`、encoding `{"entry"}` | `"accept"` / `"reject"` / `{"confidence"}` / `{"state"}` |
+| `resolver.*` | 形式系 `{"key", "body"}`、状態系 `{"resolver_state", "non_existence_authority"?}` → confidence（`non_existence_authority` は照会先が当該識別子 namespace の非存在 authority かを示す — mapping がこれに依存する `NotFound` 入力では必須（→ `resolver.states`）、authority 非依存の state では省略）、挙動系 `{"sequence": [...]}`、batch `{"request", "response"}`、encoding `{"entry"}` | `"accept"` / `"reject"` / `{"confidence"}` / `{"state"}` |
 | 永続化・append-only 系（`commitment.store.*` / `registry.*`） | `{"sequence": [{"op": ...}, ...]}` | `"reject"` または期待状態 object |
 
 - id 採番は `<family>-<3 桁連番>`、ファイル名は `<id>.json`

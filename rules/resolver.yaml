@@ -56,17 +56,36 @@ rules:
     status: draft
     class: core
     statement: >-
-      A lookup MUST yield one of: Resolved, Unavailable, or NotFound.
-      Unavailable means no data is held but non-existence is not asserted;
-      NotFound is a definitive non-existence assertion. A verifier MUST map
-      Unavailable to indeterminate and NotFound to failed.
+      A lookup MUST yield Resolved, Unavailable, or NotFound. NotFound is a
+      definitive report of not holding the key. A verifier MUST map
+      Unavailable to indeterminate, NotFound from a non-existence authority
+      to failed, and NotFound otherwise to indeterminate.
     uses: [confidence.axes.three-state]
     schemas: []
-    vectors: [resolver-004, resolver-005]
+    vectors: [resolver-004, resolver-005, resolver-009]
     notes: >-
-      The distinction between Unavailable and NotFound underpins the
-      determinism of confidence-axis evaluation — it separates what may be
-      resolved on retry from what cannot.
+      Definitions: Unavailable means the lookup could not establish whether
+      the source holds the key, including transient inability to answer;
+      NotFound is the source's definitive report of not holding it. The
+      states are source-local observations, and their evidentiary weight is
+      a separate question of authority: a NotFound proves global
+      non-existence only when the source is authoritative for non-existence
+      in the queried identifier's namespace — a content-addressed VC store
+      is not such an authority. The Unavailable/NotFound distinction
+      underpins the determinism of confidence-axis evaluation — it separates
+      what may be resolved on retry from what cannot. Revised 2026-07-13 (P0-11 / L6 reconciliation): the earlier
+      unscoped "NotFound to failed" let any third-party store mint a
+      definitive failed for content it never held (an audit-DoS lever) and
+      contradicted the commitment family's pinned semantics (commitment-009:
+      unresolved sources map to indeterminate). Authority scoping closes both
+      directions fail-closed — absence of data never yields a definitive
+      negative, and hiding data never yields verified. In dplaax no
+      VC-content non-existence authority exists: content hashes are
+      self-certifying, and definitive emission/absence claims are the
+      transparency log's concern, not the resolver's. The DID registry is the
+      naming authority for its DIDs, so DID resolution keeps the failed
+      mapping (resolver-005); a content store's NotFound is a retry-routing
+      signal and maps to indeterminate (resolver-009).
       Source: drafts/v1_002 vc_resolver section (Lookup interface).
 
   - id: resolver.states.no-demotion
@@ -81,20 +100,26 @@ rules:
     vectors: [resolver-006]
     notes: >-
       A body that was once observed as resolvable is part of verifiable
-      history — demotion to NotFound would be a false definitive claim of
-      non-existence. Permanent deletion (e.g. for regulatory compliance) is a
-      documented out-of-protocol matter; the protocol provides no removed
-      state.
+      history: audits recompute over previously served documents, so a store
+      that forgets what it served breaks audit reproducibility. That
+      durable-history obligation, not the evidentiary weight of NotFound, is
+      what grounds the prohibition (revised 2026-07-13, P0-11 — under the
+      authority-scoped resolver.states a content store's NotFound is a
+      store-local report, no longer a global non-existence claim, but
+      demoting a previously Resolved key still destroys history the audit
+      path relies on). Permanent deletion (e.g. for regulatory compliance)
+      is a documented out-of-protocol matter; the protocol provides no
+      removed state.
       Source: drafts/v1_002 vc_resolver section (Pool semantics).
 
   - id: resolver.batch.shape
     status: draft
     class: core
     statement: >-
-      A batch response MUST have the same entry count and order as the
-      request. Each entry state is independent; partial availability is a
-      defined non-error state. A wire profile adding bulk-fetch optimizations
-      MUST preserve per-hash state semantics.
+      If an implementation or profile provides batch lookup, a batch
+      response MUST have the same entry count and order as the request; each
+      entry state is independent; partial availability is a non-error state;
+      bulk fetch MUST preserve per-hash state semantics.
     uses: [resolver.states]
     schemas: []
     vectors: [resolver-007]
@@ -102,6 +127,12 @@ rules:
       Partial availability is the natural state of a distributed resolver
       (peer cache / CDN); surfacing it as an error would break the
       indeterminate semantics of confidence evaluation.
+      Reserved rule (recorded 2026-07-13, P0-11): the dplaax.vc.v1 wire
+      profile defines no client-facing batch lookup RPC — the reference
+      implementation's batch resolver is an internal async worker, not a
+      lookup surface. The rule binds any batch surface an implementation or
+      profile adds, without obligating one to exist; resolver-007 pins the
+      shape such a surface must satisfy.
       Source: drafts/v1_002 vc_resolver section (Batch lookup / Partial
       availability).
 
