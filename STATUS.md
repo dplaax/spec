@@ -211,7 +211,7 @@ rule ID の対応表:
   同一性 = (接地 URL, label)、裸 prefix の衝突を署名スコープ内で排除。provin profile
   context（接地担体）の正規は provin.oss 側。
   **2026-06-11 ドメイン確定**: provin = `provin.dev`、protocol = `dplaax.dev`。
-  profile context URI は `poc.provin.dev/vc/v1`（vectors / provin.oss とも反映済み）。
+  profile context URI は `provin.dev/vc/v1`（vectors / provin.oss とも反映済み）。
 - ~~**delegation credential の正規地位（controller chain の確立・証明機構）**~~ —
   **2026-07-06 解決**（full-review C-1）: (b) owner 署名 DelegationCredential VC を正規機構として
   採用し rule 化済み — `rules/delegation.yaml`（4 rules: `delegation.shape` / `.binding` /

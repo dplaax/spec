@@ -27,11 +27,12 @@ claim registry (→ `credential.claim.*` in rules/credential.yaml).
 
 | file | URI | sha256 |
 |---|---|---|
-| `v1.jsonld` | `https://poc.dplaax.dev/vc/v1` | `9716bca789bdb1042451746800cc463a616a57817008001a3a895e88c0aff25f` |
+| `v1.jsonld` | `https://dplaax.dev/vc/v1` | `9716bca789bdb1042451746800cc463a616a57817008001a3a895e88c0aff25f` |
 
-- The `poc.` in the URI is a tier marker — the poc tier explicitly allows
-  byte-level evolution. At GA it will be promoted to `https://dplaax.dev/vc/v1`
-  and will be immutable from that point on.
+- The URI `https://dplaax.dev/vc/v1` is frozen as the v0 wire vocabulary and is
+  immutable. The `@context` array rides the signing scope as bytes, so
+  repointing it would partition hashes across implementations — a next-MAJOR
+  break, not a compatible change.
 - `transformationClaim` is defined with `@type: "@vocab"` — claim values
   (compact IRIs) resolve to vocabulary IRIs under the grounding URL upon JSON-LD
   expansion, so the identity of (grounding URL, label) is mechanically established

@@ -25,10 +25,11 @@ claim 値（`provin:filter` 等）は wire 上の文字列値であり context �
 
 | file | URI | sha256 |
 |---|---|---|
-| `v1.jsonld` | `https://poc.dplaax.dev/vc/v1` | `9716bca789bdb1042451746800cc463a616a57817008001a3a895e88c0aff25f` |
+| `v1.jsonld` | `https://dplaax.dev/vc/v1` | `9716bca789bdb1042451746800cc463a616a57817008001a3a895e88c0aff25f` |
 
-- URI の `poc.` は tier marker — poc tier では byte レベルの進化を明示的に許容する。
-  GA 時に `https://dplaax.dev/vc/v1` へ昇格し、以降は不変（immutable）。
+- URI `https://dplaax.dev/vc/v1` は v0 wire 語彙として凍結され、以降は不変（immutable）。
+  `@context` 配列は署名スコープに bytes で乗るため、付け替えは実装間の hash 分断
+  ＝次 MAJOR 相当の破壊であり、互換変更ではない。
 - `transformationClaim` は `@type: "@vocab"` で定義 — claim 値（compact IRI）が
   JSON-LD 展開で接地 URL 配下の語彙 IRI に解決され、(接地 URL, label) の同一性が
   JSON-LD/RDF 層でも機械的に成立する（→ `credential.claim.grounding`）。
