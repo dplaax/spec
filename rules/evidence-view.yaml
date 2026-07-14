@@ -1,0 +1,145 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — evidence-view (evaluation view, DAG spine, bundle v3)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-1 (B2.1). Inherits the P0-0 claim vocabulary.
+rules:
+  - id: evidence.manifest.persisted
+    status: draft
+    class: core
+    statement: >-
+      Every persisted evaluation state — Verified, Failed, or Indeterminate —
+      MUST have an immutable EvaluationViewManifest recording the exact inputs
+      the verdict was computed over.
+    uses: [claims.coverage.three-value]
+    schemas: [evidence-view.json]
+    vectors: []
+    notes: >-
+      Indeterminate is persisted too, and its inputs can change on retry, so it
+      also binds to a manifest rather than to the body alone.
+
+  - id: evidence.manifest.identity
+    status: draft
+    class: core
+    statement: >-
+      An EvaluationViewManifest MUST commit the head, the origin-to-head ordered
+      (BodyAddress, WireVariantID) spine whose final entry is the head, the
+      claim_contract_id, and the input-snapshot digests; the EvidenceViewID MUST
+      be the digest of that manifest.
+    uses: [evidence.manifest.persisted, identity.variant.immutable-set]
+    schemas: [evidence-view.json]
+    vectors: []
+    notes: >-
+      The EvidenceViewID is the single handle that binds a verdict to the exact
+      spine, contract, and snapshots it was computed under. The id is computed
+      from the manifest and stored outside it (not a manifest member), so the
+      digest is not self-referential. The exact canonical digest projection is
+      fixed by the P0-4 canonicalization decision (p0-2/p0-4-gated); the
+      spine-order rule (origin-to-head, final == head) makes the least-id
+      tie-break well-defined once the projection is frozen.
+
+  - id: evidence.view.terminal-verdict
+    status: draft
+    class: core
+    statement: >-
+      A view's terminal verdict MUST derive from the exact vector under its claim
+      contract: Verified only when every required scope is VERIFIED, Failed when
+      any required scope is FAILED, else Indeterminate; it MUST NOT be a
+      body-global Verified.
+    uses: [evidence.manifest.identity, claims.coverage.required-fail-closed, claims.contract.distinct-from-profile]
+    schemas: []
+    vectors: []
+    notes: >-
+      This is an internal, contract-scoped evaluation state used to gate
+      promotion (promotion.record.verified-only), distinct from the external
+      Decision headline (a profile mapping) and from any single unscoped
+      Verified. Which scopes a contract requires is part of the contract's
+      catalog definition.
+
+  - id: evidence.cache.exact-view
+    status: draft
+    class: core
+    statement: >-
+      Terminal verdict reuse MUST be keyed on the exact EvidenceViewID; a
+      verifier MUST NOT reuse a verdict keyed on body, head variant, or claim
+      contract alone.
+    uses: [evidence.manifest.identity]
+    schemas: []
+    vectors: []
+    notes: >-
+      A coarser cache key would reuse a verdict across a changed spine or
+      snapshot set, which is exactly the snapshot-crossing reuse the model
+      closes.
+
+  - id: evidence.verified.is-relation
+    status: draft
+    class: core
+    statement: >-
+      A variant's verified status MUST be treated as an evaluation relation over
+      (variant, claim contract, input snapshots) and MUST NOT be treated as a
+      body-global property.
+    uses: [evidence.manifest.identity]
+    schemas: []
+    vectors: []
+    notes: >-
+      Two valid proofs on one body can earn different chain verdicts by
+      successor context, so verified is a property of a view, not of the body.
+
+  - id: evidence.spine.bounded-dag
+    status: draft
+    class: core
+    statement: >-
+      Spine selection across multiple variants MUST be a bounded dynamic
+      programming over the layered DAG, MUST NOT be a body-local greedy
+      selection, and MUST break ties by the least EvidenceViewID when several
+      complete paths exist.
+    uses: [evidence.manifest.identity]
+    schemas: []
+    vectors: []
+    notes: >-
+      Bounding the search keeps variant explosion from being unbounded work; the
+      least-EvidenceViewID tie-break makes independent verifiers pick the same
+      spine deterministically. The budget value is a deployment/vector parameter.
+
+  - id: evidence.indeterminate.not-failed
+    status: draft
+    class: core
+    statement: >-
+      Missing input, an unavailable resolver, or an exceeded search budget MUST
+      yield Indeterminate; a body to which future variants may still be added
+      MUST NOT be given a body-level terminal Failed only for having no current
+      complete path.
+    uses: [evidence.spine.bounded-dag, confidence.lifecycle.input-semantics]
+    schemas: []
+    vectors: []
+    notes: >-
+      A body-level Failed on "no path yet" would permanently reject a body a
+      later valid variant could complete; that absence is retryable, hence
+      Indeterminate.
+
+  - id: evidence.bundle.v3
+    status: draft
+    class: core
+    statement: >-
+      A v3 bundle MUST make its selected spine variant vector, claim contract,
+      input-snapshot refs, and EvidenceViewID explicit, and an exporter MUST
+      fetch the exact variants named by that spine.
+    uses: [evidence.manifest.identity, identity.variant.immutable-set]
+    schemas: [bundle-v3.json]
+    vectors: []
+    notes: >-
+      v1 and v2 bundle reads remain supported for the migration window; a v1/v2
+      reader is not asserted able to verify a v3 bundle (reader-first rollout).
+
+  - id: evidence.bundle.reader-first
+    status: draft
+    class: core
+    statement: >-
+      A multi-variant evidence feature MUST NOT be enabled for writing while a
+      trusted old reader, auditor, exporter, or decision consumer that cannot
+      parse the new form is still in service.
+    uses: [evidence.bundle.v3]
+    schemas: []
+    vectors: []
+    notes: >-
+      Reader-first rollout prevents a mixed-version soundness failure: writers
+      wait behind readers so no consumer silently mis-reads a form it predates.

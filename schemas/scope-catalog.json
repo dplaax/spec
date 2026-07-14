@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/scope-catalog.json",
+  "title": "Scope catalog (named scopes + decision-profile archetypes)",
+  "$comment": "The normative enumeration owned by dplaax.spec_draft (claims.catalog.single-owner, claims.catalog.enumerated). Named scopes and the three decision-profile archetypes with their required scope sets. Per-scope required-check definitions are filled incrementally; scopes marked p0-2-gated depend on the trusted-time / freshness / anchor decision (P0-2). The evidence-view.json `scope` enum inlines this set (no cross-file $ref) and must stay in sync.",
+  "type": "object",
+  "$comment2": "A catalog record: which scope set and which profile a claim contract pins.",
+  "additionalProperties": true,
+  "properties": {
+    "scope": { "$ref": "#/$defs/scopeName" },
+    "profileId": { "$ref": "#/$defs/profileId" },
+    "requiredScopes": { "type": "array", "items": { "$ref": "#/$defs/scopeName" } }
+  },
+  "$defs": {
+    "scopeName": {
+      "$comment": "The named scope set (claims.scope.named). @1 is the initial version; the version suffix is part of the identity.",
+      "enum": [
+        "CREDENTIAL_ATTESTATION@1",
+        "SIGNATURE_ONLY@1",
+        "LINEAR_ATTESTATION@1",
+        "SOURCE_SET_BINDING@1",
+        "SOURCE_CREDENTIAL_ATTESTATION@1",
+        "SEMANTIC_EXECUTION@1",
+        "TLOG_REPLAY@1",
+        "TLOG_INCLUSION@1",
+        "TLOG_CONSISTENCY@1",
+        "TLOG_NON_EQUIVOCATION@1",
+        "TLOG_TRUSTED_TIME@1",
+        "RECEIPT_SIGNATURE@1",
+        "RECEIPT_EXTERNAL_EFFECT@1",
+        "RECEIPT_IDEMPOTENCY@1",
+        "RECEIPT_EXACTLY_ONCE@1"
+      ]
+    },
+    "profileId": {
+      "$comment": "The three decision-profile archetypes (claims.profile.archetypes). A profileId is a distinct identity from a claimContractId (claims.contract.distinct-from-profile).",
+      "enum": ["evidence-archive@1", "provenance-release@1", "external-effect@1"]
+    },
+    "scopeNotes": {
+      "$comment": "SEMANTIC_EXECUTION@1 is outside the protocol's decision scope (adapters / audit infrastructure own it); a protocol verifier reports it UNSUPPORTED. TLOG_TRUSTED_TIME@1 and any freshness-bearing required-scope membership are p0-2-gated (their evaluation and profile membership are fixed by the P0-2 trusted-time / lifecycle-snapshot decision)."
+    }
+  }
+}

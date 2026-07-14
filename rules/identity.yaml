@@ -1,0 +1,90 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — identity (body address, wire-variant set)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-1 (B2.1 — immutable variant set + EvidenceViewID).
+rules:
+  - id: identity.body-address
+    status: draft
+    class: core
+    statement: >-
+      A credential's body address MUST be the hash of its proof-excluded JCS
+      body, and previousCredential MUST reference that body address; re-issuing
+      a proof for the same body MUST NOT change the body address or any existing
+      successor link.
+    uses: [credential.body-sot, credential.prev.content-hash]
+    schemas: []
+    vectors: []
+    notes: >-
+      The lineage link is body-addressed, so proof re-issuance is orthogonal to
+      chain identity. This is what lets a variant set exist under one body
+      without partitioning successors.
+
+  - id: identity.wire-variant-id
+    status: draft
+    class: core
+    statement: >-
+      A WireVariantID MUST be the digest of a versioned canonical wire
+      projection of the proof-bearing credential — not the submission octets —
+      and MUST make its domain separator, id version, canonicalization profile,
+      and hash algorithm explicit.
+    uses: [identity.body-address]
+    schemas: [evidence-view.json]
+    vectors: []
+    notes: >-
+      Projecting a canonical wire form (not raw submission octets) makes the id
+      stable across benign octet differences. The canonicalization profile is
+      frozen only after the P0-4 canonicalization decision; until then the id
+      grammar is fixed but the profile bytes are provisional. The type does not
+      preclude a future independent proof-envelope id (Option D is not claimed
+      implemented here).
+
+  - id: identity.variant.immutable-set
+    status: draft
+    class: core
+    statement: >-
+      The wire bytes at a (BodyAddress, WireVariantID) pair MUST be write-once
+      immutable — the same id with the same bytes is idempotent and with
+      different bytes is corruption — and a body's variant set MUST be
+      append-only.
+    uses: [identity.wire-variant-id, credential.proof.as-received]
+    schemas: []
+    vectors: []
+    notes: >-
+      Append-only, write-once variants make a valid proof unable to be evicted
+      by a later invalid one (no first-write-wins), and make the store a set of
+      immutable evidence rather than a single overwritable value. This supersedes
+      the one-document-per-key reading of resolver.immutability for the variant
+      layout (reconciled by identity.resolution.exact-vs-legacy).
+
+  - id: identity.resolution.exact-vs-legacy
+    status: draft
+    class: core
+    statement: >-
+      Exact resolution MUST be by (BodyAddress, WireVariantID) over the
+      append-only variant set; the one-document-per-key model (resolver.immutability)
+      MUST be read as the legacy body-only projection, whose tie-break over the
+      variant set MUST be deterministic.
+    uses: [identity.variant.immutable-set, resolver.immutability, admission.resolve-variant.exact]
+    schemas: []
+    vectors: []
+    notes: >-
+      resolver.immutability still governs the content-hash check and the legacy
+      body-only projection; a deterministic tie-break keeps its "same key to same
+      document" property true for that projection while the variant set holds
+      multiple proofs.
+
+  - id: identity.proof-envelope.not-claimed
+    status: draft
+    class: core
+    statement: >-
+      A conforming implementation MUST NOT claim wire-level proof separation
+      (Option D, an independent proof envelope) as conformant under this catalog,
+      and the WireVariantID types MUST remain able to coexist with a future
+      ProofEnvelopeID.
+    uses: [identity.wire-variant-id]
+    schemas: []
+    vectors: []
+    notes: >-
+      B2.1 keeps body-addressed chains and an immutable variant set; independent
+      proof-envelope identity, transfer, and multi-attester logs are a future
+      option kept open by the type design, not implemented or claimed here.

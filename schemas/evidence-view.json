@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/evidence-view.json",
+  "title": "Evidence view (EvaluationViewManifest + scoped evidence vector)",
+  "$comment": "Structural residue of the claims.* and evidence.* rules (P0-0/P0-1). evidenceViewId is a sibling of the manifest, not a member of it (evidence.manifest.identity: the id is the digest OF the manifest, so it cannot be inside it). The `scope` enum inlines scope-catalog.json (no cross-file $ref); keep the two in sync. wireVariantId enforces the grammar shape (domain:version:profile:hashalgo:hexdigest) but not the frozen bytes, which are P0-4-gated. One-result-per-scope and the policyDecision/profile required-scope coupling are semantic constraints beyond JSON Schema (claims.coverage.three-value, claims.policy.no-accept-non-verified) and are pinned by vectors.",
+  "type": "object",
+  "required": ["manifest", "evidenceViewId", "vector"],
+  "additionalProperties": true,
+  "properties": {
+    "manifest": {
+      "type": "object",
+      "$comment": "evidence.manifest.identity: EvaluationViewManifest committing head, origin-to-head spine (final == head), claim contract, and input snapshots. It does NOT contain evidenceViewId.",
+      "required": ["head", "spine", "claimContractId", "inputSnapshotDigests"],
+      "additionalProperties": true,
+      "properties": {
+        "head": { "$ref": "#/$defs/contentAddress" },
+        "spine": {
+          "type": "array",
+          "minItems": 1,
+          "$comment": "evidence.manifest.spine: ordered (BodyAddress, WireVariantID) selection, origin-to-head; identity.variant.immutable-set.",
+          "items": {
+            "type": "object",
+            "required": ["bodyAddress", "wireVariantId"],
+            "additionalProperties": true,
+            "properties": {
+              "bodyAddress": { "$ref": "#/$defs/contentAddress" },
+              "wireVariantId": { "$ref": "#/$defs/wireVariantId" }
+            }
+          }
+        },
+        "claimContractId": { "$ref": "#/$defs/versionedId" },
+        "inputSnapshotDigests": {
+          "type": "object",
+          "minProperties": 1,
+          "$comment": "claims.verified.definition: digests of the DID / resolver / lifecycle snapshots the verdict depends on.",
+          "additionalProperties": { "$ref": "#/$defs/contentAddress" }
+        }
+      }
+    },
+    "evidenceViewId": {
+      "$ref": "#/$defs/contentAddress",
+      "$comment": "evidence.manifest.identity: digest OF the manifest (sibling, not member); evidence.cache.exact-view: the sole terminal-verdict cache key."
+    },
+    "vector": {
+      "type": "array",
+      "minItems": 1,
+      "$comment": "claims.coverage.three-value: the scoped evidence vector, one entry per known scope. One-result-per-scope is a semantic constraint (pinned by vector), not expressible here.",
+      "items": { "$ref": "#/$defs/scopeEntry" }
+    },
+    "policyDecision": { "$ref": "#/$defs/policyDecision" }
+  },
+  "$defs": {
+    "contentAddress": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "$comment": "resolver.address.form: sha256:<lowercase-hex>."
+    },
+    "versionedId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "@[0-9]+$",
+      "$comment": "A versioned identifier (claim contract / profile), e.g. name@1."
+    },
+    "wireVariantId": {
+      "type": "string",
+      "pattern": "^wvid:[0-9]+:[a-z0-9-]+:[a-z0-9-]+:[0-9a-f]+$",
+      "$comment": "identity.wire-variant-id: domain:idVersion:canonProfile:hashAlgo:hexDigest. Grammar enforced; the profile/hash bytes are P0-4-gated."
+    },
+    "scopeName": {
+      "$comment": "claims.scope.named / claims.catalog.enumerated. Inlined from scope-catalog.json (keep in sync).",
+      "enum": [
+        "CREDENTIAL_ATTESTATION@1",
+        "SIGNATURE_ONLY@1",
+        "LINEAR_ATTESTATION@1",
+        "SOURCE_SET_BINDING@1",
+        "SOURCE_CREDENTIAL_ATTESTATION@1",
+        "SEMANTIC_EXECUTION@1",
+        "TLOG_REPLAY@1",
+        "TLOG_INCLUSION@1",
+        "TLOG_CONSISTENCY@1",
+        "TLOG_NON_EQUIVOCATION@1",
+        "TLOG_TRUSTED_TIME@1",
+        "RECEIPT_SIGNATURE@1",
+        "RECEIPT_EXTERNAL_EFFECT@1",
+        "RECEIPT_IDEMPOTENCY@1",
+        "RECEIPT_EXACTLY_ONCE@1"
+      ]
+    },
+    "scopeEntry": {
+      "type": "object",
+      "required": ["scope", "coverage"],
+      "additionalProperties": true,
+      "properties": {
+        "scope": { "$ref": "#/$defs/scopeName" },
+        "coverage": { "enum": ["EVALUATED", "NOT_EVALUATED", "UNSUPPORTED"] },
+        "truthState": { "enum": ["FAILED", "INDETERMINATE", "VERIFIED"] }
+      },
+      "allOf": [
+        {
+          "$comment": "claims.coverage.three-value: truthState is present exactly when coverage is EVALUATED.",
+          "if": { "properties": { "coverage": { "const": "EVALUATED" } } },
+          "then": { "required": ["truthState"] },
+          "else": { "not": { "required": ["truthState"] } }
+        }
+      ]
+    },
+    "policyDecision": {
+      "type": "object",
+      "$comment": "claims.policy.profile-derived / claims.headline.decision-only: decision derived from a versioned profile, kept separate from evidence. The required-scope coupling (no ACCEPT while a required scope is not VERIFIED) is semantic (claims.policy.no-accept-non-verified), pinned by vector.",
+      "required": ["decision", "decisionProfileId"],
+      "additionalProperties": true,
+      "properties": {
+        "decision": { "enum": ["ACCEPT", "QUARANTINE", "DENY"] },
+        "decisionProfileId": { "$ref": "#/$defs/versionedId" }
+      }
+    }
+  }
+}

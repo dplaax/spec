@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/bundle-v3.json",
+  "title": "Bundle manifest v3 (variant spine + evidence view)",
+  "$comment": "Structural residue of the evidence.* / claims.* bundle rules (P0-1, P0-0 invariants 5/11, P0-1 invariant 21). v3 makes the selected variant spine, claim contract, input-snapshot refs (with anchor status and time_basis, claims.offline-snapshot.policy-only), the EvidenceViewID, and a durable commitment (auditor signature or signed checkpoint, claims.vector.durable-commit) explicit, so an offline verifier fetches exact variants and can check the boundary commitment. The anchorStatus enum and time_basis semantics are p0-2-gated (values fixed by the P0-2 trusted-time decision). $defs are inlined (no cross-file $ref). v1/v2 reads remain supported (evidence.bundle.reader-first); v3 is not asserted verifiable by a v1/v2 reader.",
+  "type": "object",
+  "required": ["version", "head", "spine", "claimContractId", "evidenceViewId", "inputSnapshotRefs", "commitment"],
+  "additionalProperties": true,
+  "properties": {
+    "version": { "const": 3 },
+    "head": { "$ref": "#/$defs/contentAddress" },
+    "spine": {
+      "type": "array",
+      "minItems": 1,
+      "$comment": "evidence.manifest.spine: the selected (BodyAddress, WireVariantID) spine the exporter fetched exact variants for.",
+      "items": {
+        "type": "object",
+        "required": ["bodyAddress", "wireVariantId"],
+        "additionalProperties": true,
+        "properties": {
+          "bodyAddress": { "$ref": "#/$defs/contentAddress" },
+          "wireVariantId": { "$ref": "#/$defs/wireVariantId" }
+        }
+      }
+    },
+    "claimContractId": { "$ref": "#/$defs/versionedId" },
+    "evidenceViewId": { "$ref": "#/$defs/contentAddress" },
+    "inputSnapshotRefs": {
+      "type": "object",
+      "$comment": "claims.offline-snapshot.policy-only: carried snapshots are policy state; the bundle states anchor status and time_basis and does not imply trusted observation time. anchorStatus enum and time_basis semantics are p0-2-gated.",
+      "required": ["anchorStatus", "timeBasis"],
+      "additionalProperties": true,
+      "properties": {
+        "anchorStatus": { "type": "string", "minLength": 1 },
+        "timeBasis": { "type": "string", "minLength": 1 }
+      }
+    },
+    "commitment": {
+      "type": "object",
+      "$comment": "claims.vector.durable-commit: the evidence view crossing the bundle boundary is committed by an auditor signature or a signed checkpoint reference.",
+      "required": ["type"],
+      "additionalProperties": true,
+      "properties": {
+        "type": { "enum": ["SIGNATURE", "CHECKPOINT"] }
+      }
+    }
+  },
+  "$defs": {
+    "contentAddress": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "versionedId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "@[0-9]+$"
+    },
+    "wireVariantId": {
+      "type": "string",
+      "pattern": "^wvid:[0-9]+:[a-z0-9-]+:[a-z0-9-]+:[0-9a-f]+$"
+    }
+  }
+}

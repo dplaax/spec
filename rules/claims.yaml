@@ -1,0 +1,337 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — claims (scoped evidence vector: what a verifier proves)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-0 (A2 — Versioned, Durable, Policy-Gated Scoped Evidence
+# Vector). Normative invariants transcribed from the P0-0 decision ledger.
+rules:
+  - id: claims.scope.named
+    status: draft
+    class: core
+    statement: >-
+      An external evaluation result MUST be named by a scope identifier (such
+      as CREDENTIAL_ATTESTATION, LINEAR_ATTESTATION, or SOURCE_SET_BINDING) and
+      MUST NOT reuse the trust-layer labels L1, L2, or L3, which name only
+      authentication (AUTH) contexts.
+    uses: []
+    schemas: []
+    vectors: []
+    notes: >-
+      Resolves the L1/L2/L3 double definition: the provenance layering gloss is
+      replaced by named scopes, and the layer labels are retained only for the
+      authentication surfaces (bearer/PDP, wire authentication). The scope names
+      are the external claim vocabulary; provenance axes remain an internal
+      composition input (see confidence.axes.three-state).
+
+  - id: claims.verified.definition
+    status: draft
+    class: core
+    statement: >-
+      VERIFIED for a scope MUST mean only that every required check of that
+      named scope completed and passed under the stated claim contract and the
+      enumerated input snapshots; it MUST NOT imply data acceptance, execution,
+      truth, or freshness.
+    uses: [claims.scope.named, confidence.axes.three-state]
+    schemas: []
+    vectors: []
+    notes: >-
+      This is the single meaning of a scope-level VERIFIED. It is a completed
+      evaluation relation, not a statement about the world. Input snapshots are
+      the DID, resolver, and lifecycle inputs whose identity a deterministic
+      verdict depends on.
+
+  - id: claims.scope.signature-only-cap
+    status: draft
+    class: core
+    statement: >-
+      A verifier that does not evaluate cryptosuite lifecycle input MUST NOT
+      emit LINEAR_ATTESTATION and MUST cap its linear result at SIGNATURE_ONLY,
+      which asserts signature validity without lifecycle, spine-continuity, or
+      freshness checks.
+    uses: [claims.verified.definition, confidence.cryptosuite-lifecycle, confidence.lifecycle.input-semantics]
+    schemas: []
+    vectors: []
+    notes: >-
+      The cap is versioned in the catalog (SIGNATURE_ONLY@1, LINEAR_ATTESTATION@1);
+      the version suffix is part of the scope identity but is elided in these
+      statements for length. Lifecycle-input failure semantics live in
+      confidence.cryptosuite-lifecycle and confidence.lifecycle.input-semantics.
+
+  - id: claims.coverage.three-value
+    status: draft
+    class: core
+    statement: >-
+      Each scope's coverage MUST be exactly one of EVALUATED, NOT_EVALUATED, or
+      UNSUPPORTED, and a truth-state of FAILED, INDETERMINATE, or VERIFIED MUST
+      be present if and only if coverage is EVALUATED.
+    uses: [claims.scope.named]
+    schemas: [evidence-view.json]
+    vectors: [claims-coverage-001, claims-coverage-002]
+    notes: >-
+      Coverage and truth-state are separate axes: coverage records whether the
+      scope was assessed at all; truth-state records the outcome when it was.
+      UNSUPPORTED means the deployment cannot evaluate the scope (a capability
+      fact), distinct from NOT_EVALUATED (assessable but not run).
+
+  - id: claims.coverage.required-fail-closed
+    status: draft
+    class: core
+    statement: >-
+      A required scope that is absent, NOT_EVALUATED, or UNSUPPORTED MUST fail
+      closed for that profile; a server MUST enumerate every scope it knows and
+      MUST NOT treat an absent scope as NOT_EVALUATED.
+    uses: [claims.coverage.three-value]
+    schemas: []
+    vectors: [claims-coverage-003]
+    notes: >-
+      Retires the absent-as-NotEvaluated convention: silence is not coverage.
+      Fail-closed here means the profile cannot reach ACCEPT (see
+      claims.policy.no-accept-non-verified), not that the scope is FAILED.
+
+  - id: claims.vector.durable-commit
+    status: draft
+    class: core
+    statement: >-
+      An evidence vector MUST be durably retained, and crossing a trust boundary
+      it MUST be committed by an auditor signature or a signed checkpoint; that
+      commitment attests only that the auditor issued the evaluation, not the
+      truth of any scope.
+    uses: [claims.verified.definition]
+    schemas: [evidence-view.json]
+    vectors: []
+    notes: >-
+      The vector is a durable artifact, not a transient computation. The
+      distinction between attesting issuance and attesting truth is what keeps a
+      signature from laundering a configuration choice into a portable claim.
+
+  - id: claims.policy.profile-derived
+    status: draft
+    class: core
+    statement: >-
+      A policy_decision MUST be derived solely from a versioned decision profile
+      and kept separate from evidence state, and a consumer MUST pin a single
+      claim_contract_id and decision_profile_id rather than composing fields
+      across services or versions.
+    uses: [claims.coverage.three-value]
+    schemas: []
+    vectors: []
+    notes: >-
+      Separating decision from evidence blocks configuration-downgrade
+      laundering: the same evidence vector yields different decisions only
+      through an explicit, versioned, named profile, never through a verifier
+      configuration difference.
+
+  - id: claims.policy.no-accept-non-verified
+    status: draft
+    class: core
+    statement: >-
+      A decision profile MUST NOT yield ACCEPT while any required scope is not
+      VERIFIED, and MUST map a required INDETERMINATE scope to QUARANTINE and
+      raise an alert when the quarantine dwell breaches its service objective.
+    uses: [claims.policy.profile-derived, claims.coverage.required-fail-closed]
+    schemas: []
+    vectors: [claims-policy-001]
+    notes: >-
+      INDETERMINATE is retryable, so it holds (quarantine) rather than denies;
+      an unbounded hold is itself a failure, hence the objective-breach alert.
+
+  - id: claims.source-set-binding.atomic
+    status: draft
+    class: audit-reachable
+    statement: >-
+      SOURCE_SET_BINDING MUST attest only the binding to the declared
+      consumed-source set or its root; source-credential authenticity
+      (SOURCE_CREDENTIAL_ATTESTATION) and source completeness MUST be separate,
+      independently-covered scopes.
+    uses: [claims.scope.named, commitment.source-root.tree]
+    schemas: []
+    vectors: []
+    notes: >-
+      A verified binding to a declared set does not prove the members are
+      authentic, nor that the set omits nothing. Conflating them would let a
+      binding proof imply completeness the signer never demonstrated. This rule
+      references only the declared-set/root binding, not the all-consumed
+      completeness obligation (commitment.scope.all-consumed), which is a
+      separate scope.
+
+  - id: claims.source-credential.n-of-n
+    status: draft
+    class: audit-reachable
+    statement: >-
+      SOURCE_CREDENTIAL_ATTESTATION MUST report source-credential authenticity
+      as a verified-over-total count, VERIFIED only at n/n (every declared source
+      authenticated), and MUST NOT be conflated with SOURCE_SET_BINDING or with
+      source completeness.
+    uses: [claims.scope.named, claims.source-set-binding.atomic]
+    schemas: []
+    vectors: []
+    notes: >-
+      The count carries partial authenticity (k of n) without collapsing it to a
+      single truth-state; only n/n is a verified attestation of the whole
+      declared set's authenticity, and even that says nothing about whether the
+      set is complete.
+
+  - id: claims.tlog.capability-scoped
+    status: draft
+    class: core
+    statement: >-
+      The tlog scopes — replay, inclusion, consistency, non-equivocation, and
+      trusted-time — MUST be separate and MUST reflect deployment capability; a
+      filelog-only deployment MUST report inclusion and consistency as
+      UNSUPPORTED.
+    uses: [claims.coverage.three-value]
+    schemas: []
+    vectors: []
+    notes: >-
+      The Merkle log is implemented, but the standalone binary wires filelog, so
+      inclusion and consistency are not derivable in that configuration.
+      Capability, not aspiration, sets coverage.
+
+  - id: claims.receipt.effect-separated
+    status: draft
+    class: core
+    statement: >-
+      Receipt signature, external effect, idempotency, and exactly-once MUST be
+      separate scopes, and a verifier MUST NOT derive external-effect success
+      from a receipt signature alone.
+    uses: [claims.scope.named]
+    schemas: []
+    vectors: []
+    notes: >-
+      A signed receipt proves a receipt was issued, not that the external effect
+      it references occurred, was applied once, or was idempotent.
+
+  - id: claims.headline.decision-only
+    status: draft
+    class: core
+    statement: >-
+      A conforming presentation MUST headline the outcome with the literal
+      prefix "Decision:" as "Decision: ACCEPT | QUARANTINE | DENY — <profile>",
+      and MUST NOT present a bare "Verified" as the headline.
+    uses: [claims.policy.profile-derived]
+    schemas: []
+    vectors: []
+    notes: >-
+      A bare Verified invites human compression of a scoped vector into an
+      unscoped claim. The headline carries the decision and the profile that
+      produced it; the scope vector is the detail beneath it.
+
+  - id: claims.offline-snapshot.policy-only
+    status: draft
+    class: core
+    statement: >-
+      An offline lifecycle snapshot carried in a bundle MUST be treated as
+      policy state only, MUST declare its anchor status and time_basis, and MUST
+      NOT imply trusted observation time or freshness.
+    uses: [claims.verified.definition]
+    schemas: [bundle-v3.json]
+    vectors: []
+    notes: >-
+      A carried snapshot says what policy was recorded, not what is true now.
+      Freshness and trusted time are separate scopes owned by later decisions
+      (P0-2); this rule only fixes the claim boundary of the carried snapshot.
+
+  - id: claims.catalog.single-owner
+    status: draft
+    class: core
+    statement: >-
+      The normative scope catalog MUST be owned solely by dplaax.spec_draft; an
+      implementation MUST project the catalog version and hash it consumes and
+      MUST NOT redefine a scope of the same name.
+    uses: [claims.scope.named]
+    schemas: []
+    vectors: []
+    notes: >-
+      One owner prevents same-name scope drift across implementations. The
+      version and hash an implementation projects let a consumer detect a
+      catalog mismatch instead of silently composing divergent meanings.
+
+  - id: claims.profile.archetypes
+    status: draft
+    class: core
+    statement: >-
+      The decision-profile archetype set MUST be exactly evidence-archive,
+      provenance-release, and external-effect; each archetype MUST be versioned
+      and MUST pin the required scope set its decision depends on.
+    uses: [claims.policy.profile-derived]
+    schemas: []
+    vectors: []
+    notes: >-
+      evidence-archive gates durable retention; provenance-release gates
+      cross-boundary release of a provenance claim; external-effect gates a
+      side-effecting action. The archetype set is fixed; a deployment pins
+      versions (evidence-archive@1, etc.).
+
+  - id: claims.catalog.enumerated
+    status: draft
+    class: core
+    statement: >-
+      A verifier MUST evaluate only scopes enumerated in the catalog
+      (scope-catalog.json), each at its catalog version; a scope name absent
+      from the catalog MUST NOT be evaluated or reported.
+    uses: [claims.scope.named, claims.catalog.single-owner]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      The named-scope set and the profile archetypes are enumerated in
+      scope-catalog.json. Per-scope required-check definitions are filled
+      incrementally; SEMANTIC_EXECUTION is out of the protocol's decision scope
+      and TLOG_TRUSTED_TIME plus any freshness membership are p0-2-gated.
+
+  - id: claims.contract.distinct-from-profile
+    status: draft
+    class: core
+    statement: >-
+      A claim_contract_id (the scopes, versions, and input snapshots an
+      evaluation is made under) and a decision_profile_id (the policy mapping to
+      a decision) MUST be distinct identifiers; a consumer MUST NOT use one where
+      the other is required.
+    uses: [claims.policy.profile-derived, claims.catalog.enumerated]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      Collapsing the two identities (for example naming a profile id as the
+      claim contract) would let a policy choice masquerade as an evaluation fact.
+
+  - id: claims.profile.evidence-archive
+    status: draft
+    class: core
+    statement: >-
+      The evidence-archive profile MUST require CREDENTIAL_ATTESTATION as a
+      VERIFIED scope for ACCEPT and MUST NOT require chain or source scopes,
+      since it gates durable retention of a single authentic credential.
+    uses: [claims.profile.archetypes, claims.policy.no-accept-non-verified]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      Archiving a credential asserts only that it is an authentic signed
+      credential worth retaining, not that its chain or sources are established.
+
+  - id: claims.profile.provenance-release
+    status: draft
+    class: core
+    statement: >-
+      The provenance-release profile MUST require LINEAR_ATTESTATION and
+      SOURCE_SET_BINDING as VERIFIED scopes for ACCEPT, gating cross-boundary
+      release of a provenance claim.
+    uses: [claims.profile.archetypes, claims.policy.no-accept-non-verified]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      Releasing a provenance claim across a boundary asserts the linear chain
+      and the binding to the declared source set; source completeness and
+      semantic execution remain separate, un-required scopes here.
+
+  - id: claims.profile.external-effect
+    status: draft
+    class: core
+    statement: >-
+      The external-effect profile MUST require the provenance-release scopes plus
+      a freshness scope for ACCEPT; the freshness/trusted-time scope membership
+      is fixed by the P0-2 decision and MUST NOT be assumed VERIFIED before then.
+    uses: [claims.profile.provenance-release]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      A side-effecting action needs a current, not merely historical, claim, so
+      this profile adds freshness; the exact trusted-time scope and its
+      evaluation are owned by the P0-2 decision (p0-2-gated).

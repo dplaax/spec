@@ -1,0 +1,121 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — admission (exact fetch, quarantine, eviction)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-1 (B2.1).
+rules:
+  - id: admission.resolve-variant.exact
+    status: draft
+    class: core
+    statement: >-
+      A store MUST offer an exact-fetch ResolveVariant(body, variant) or
+      equivalent API, and bundle, export, and audit evidence MUST use it rather
+      than the body-only ResolveVC.
+    uses: [identity.variant.immutable-set, resolver.address.form]
+    schemas: []
+    vectors: []
+    notes: >-
+      Evidence needs the exact bytes evaluated, not a body-only tie-break; only
+      an exact fetch can reproduce a view's spine variants byte-for-byte.
+
+  - id: admission.legacy-resolve.provisional
+    status: draft
+    class: core
+    statement: >-
+      A body-only ResolveVC result MUST be treated as a legacy_provisional
+      projection, not as A2 or B2 evidence, and MUST NOT be composed with a
+      cached body verdict.
+    uses: [admission.resolve-variant.exact, evidence.verified.is-relation]
+    schemas: []
+    vectors: []
+    notes: >-
+      The legacy projection may serve a deterministic tie-break for an
+      unaudited variant, but combining it with a cached verdict would launder a
+      body verdict onto a different variant.
+
+  - id: admission.quarantine.class
+    status: draft
+    class: core
+    statement: >-
+      Unverified variants MUST enter a quarantine storage class, and an
+      authenticated admission profile MUST enforce per-principal quota,
+      node-global quota, rate limit, and backpressure on it.
+    uses: [identity.variant.immutable-set]
+    schemas: []
+    vectors: []
+    notes: >-
+      Correctness does not depend on the quarantine cap: admission accounting
+      bounds resource use, while immutability bounds what a flood can corrupt.
+
+  - id: admission.verify-to-admit.backpressure
+    status: draft
+    class: core
+    statement: >-
+      Verify-to-admit overload MUST be surfaced as retryable backpressure and
+      MUST NOT be downgraded to unverified admission or to a false Failed.
+    uses: [admission.quarantine.class]
+    schemas: []
+    vectors: []
+    notes: >-
+      Overload is an availability condition, not a verdict; degrading it to
+      admit-unverified or to Failed would turn load into a soundness or a
+      liveness fault.
+
+  - id: admission.static-backend.closed-pilot
+    status: draft
+    class: core
+    statement: >-
+      The static auth backend MUST be treated as non-conformant for adversarial
+      or public admission and limited to closed-pilot or perimeter-authenticated
+      deployment; node-global capacity control MUST apply even with it.
+    uses: [admission.quarantine.class]
+    schemas: []
+    vectors: []
+    notes: >-
+      The static backend checks only bearer presence, not caller identity, so
+      per-principal accounting is impossible under it; only a global capacity
+      bound remains available.
+
+  - id: admission.evict.tombstone
+    status: draft
+    class: core
+    statement: >-
+      Evicting a terminal Failed variant from raw storage MUST retain an
+      immutable tombstone, the wire digest, and the verdict reference, and MUST
+      keep cold evidence for the incident profile's retention period.
+    uses: [identity.variant.immutable-set]
+    schemas: []
+    vectors: []
+    notes: >-
+      Raw failed bytes may be a storage or privacy cost, but the identity and
+      the verdict of a known-bad variant are audit evidence and stay.
+
+  - id: admission.gc.reference-aware
+    status: draft
+    class: core
+    statement: >-
+      View garbage collection MUST be reference-aware and MUST NOT delete a
+      manifest, or the equivalent embedded content, that a retained verdict, a
+      PromotionRecord, or a bundle still references.
+    uses: [promotion.durable-order, evidence.bundle.v3]
+    schemas: []
+    vectors: []
+    notes: >-
+      A retained verdict or exported bundle names its manifest; collecting a
+      referenced manifest would strand a verdict no one can re-derive.
+
+  - id: admission.catalog.no-launder
+    status: draft
+    class: core
+    statement: >-
+      A body or variant catalog tombstone MUST NOT be erased, and a
+      known-but-evicted identity MUST resolve to Unavailable with an
+      EVIDENCE_EVICTED reason, never to NotFound, so eviction cannot masquerade
+      as never-existed.
+    uses: [admission.evict.tombstone, resolver.states]
+    schemas: []
+    vectors: []
+    notes: >-
+      NotFound on a known-but-evicted identity would let eviction masquerade as
+      never-existed. EVIDENCE_EVICTED is a reason under the existing Unavailable
+      state (resolver.states), not a new resolver state, so a verifier maps it to
+      indeterminate rather than to a definitive miss.

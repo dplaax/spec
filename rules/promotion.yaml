@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — promotion (accepted-view record, durable ordering)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-1 (B2.1).
+rules:
+  - id: promotion.record.verified-only
+    status: draft
+    class: core
+    statement: >-
+      A PromotionRecord MUST be created only when an exact EvidenceViewID is
+      terminal Verified, and MUST include the body, variant, contract, snapshot
+      digest, EvidenceViewID, verdict-artifact digest, and a generation or
+      fencing token.
+    uses: [evidence.cache.exact-view, evidence.view.terminal-verdict]
+    schemas: []
+    vectors: []
+    notes: >-
+      Accepted is a promoted verified view, never a bare marker. The fencing
+      token is what makes two concurrent writers unable to both win.
+
+  - id: promotion.durable-order
+    status: draft
+    class: core
+    statement: >-
+      The durable write order MUST be variant, then verdict artifact, then
+      PromotionRecord, then the CAS current-view index, and a resolver MUST treat
+      as accepted only a promotion whose referenced verdict digest exists and
+      matches.
+    uses: [promotion.record.verified-only]
+    schemas: []
+    vectors: []
+    notes: >-
+      Ordering plus the verdict-digest existence check means a crash between
+      steps leaves a recoverable, never a dangling-accepted, state; an orphan
+      verdict is re-promotable.
+
+  - id: promotion.index.per-contract
+    status: draft
+    class: core
+    statement: >-
+      The current-view index MUST be keyed per claim contract and decision
+      profile, and a body-global singular accepted pointer MUST NOT be used.
+    uses: [promotion.durable-order, claims.policy.profile-derived]
+    schemas: []
+    vectors: []
+    notes: >-
+      A single body-global accepted pointer cannot express that one body is
+      accepted under one contract and quarantined under another.

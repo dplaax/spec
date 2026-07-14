@@ -34,14 +34,32 @@ rules:
     vectors: [confidence-002, confidence-003]
     notes: ""
 
+  - id: confidence.lifecycle.input-semantics
+    status: draft
+    class: core
+    statement: >-
+      When the lifecycle input is unavailable (registry unreachable) a verifier
+      MUST yield indeterminate, not failed; when it cannot evaluate the
+      lifecycle at all it MUST report that coverage as UNSUPPORTED; a Sunset or
+      unknown stage MUST yield failed.
+    uses: [confidence.cryptosuite-lifecycle, claims.coverage.three-value]
+    schemas: []
+    vectors: []
+    notes: >-
+      Distinguishes three lifecycle-input conditions along the coverage and
+      truth-state axes (see claims.coverage.three-value): unreachable registry
+      is a retryable indeterminate, no evaluator is an UNSUPPORTED coverage, and
+      a resolved Sunset/unknown stage is a failed outcome. This is the input to
+      the SIGNATURE_ONLY cap in claims.scope.signature-only-cap.
+
   - id: confidence.cryptosuite-lifecycle
     status: draft
     class: core
     statement: >-
-      A verifier MUST query the lifecycle registry at proof.created to
-      determine the cryptosuite stage (Active / Deprecated / Sunset). Sunset
-      or unregistered suites MUST yield failed. Deprecated is verified with
-      notation. The registry MUST be append-only.
+      A verifier evaluating LINEAR_ATTESTATION MUST query the lifecycle registry
+      at proof.created for the cryptosuite stage; Sunset or unregistered suites
+      MUST yield failed, Deprecated is verified with notation, and the registry
+      MUST be append-only.
     uses: [confidence.axes.three-state]
     schemas: []
     vectors: [confidence-004, confidence-005, confidence-006]

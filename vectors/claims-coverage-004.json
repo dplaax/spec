@@ -1,0 +1,22 @@
+{
+  "id": "claims-coverage-004",
+  "rule": "claims.coverage.three-value",
+  "description": "An EVALUATED scope missing its truth-state is malformed: coverage EVALUATED requires a truth-state. Rejected by the evidence-view schema.",
+  "input": {
+    "credential": {
+      "manifest": {
+        "head": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "spine": [
+          { "bodyAddress": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "wireVariantId": "wvid:1:eddsa-jcs-2022:sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
+        ],
+        "claimContractId": "linear-provenance@1",
+        "inputSnapshotDigests": { "did": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" }
+      },
+      "evidenceViewId": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "vector": [
+        { "scope": "LINEAR_ATTESTATION@1", "coverage": "EVALUATED" }
+      ]
+    }
+  },
+  "expect": "reject"
+}

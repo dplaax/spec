@@ -1,0 +1,23 @@
+{
+  "id": "claims-coverage-001",
+  "rule": "claims.coverage.three-value",
+  "description": "A well-formed evidence view: each EVALUATED scope carries a truth-state; claimContractId is a claim-contract id (distinct from any decision-profile id). Accepted by the evidence-view schema.",
+  "input": {
+    "credential": {
+      "manifest": {
+        "head": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "spine": [
+          { "bodyAddress": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "wireVariantId": "wvid:1:eddsa-jcs-2022:sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
+        ],
+        "claimContractId": "linear-provenance@1",
+        "inputSnapshotDigests": { "did": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" }
+      },
+      "evidenceViewId": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "vector": [
+        { "scope": "LINEAR_ATTESTATION@1", "coverage": "EVALUATED", "truthState": "VERIFIED" },
+        { "scope": "TLOG_INCLUSION@1", "coverage": "UNSUPPORTED" }
+      ]
+    }
+  },
+  "expect": "accept"
+}

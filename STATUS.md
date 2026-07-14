@@ -288,3 +288,79 @@ rule ID の対応表:
 末尾段落）。L1 = confidence 3 軸、L2 = source commitment、L3 = 意味的監査（protocol 外）。
 dplaas.oss の origin 規範記述本体は本 catalog の commitment.* rules に対応あり
 （derived_from / source_root / source_root_canonical / 構築手順 / 外部参照の除外）。
+
+## 2026-07-14 — P0-0 / P0-1 Phase 0 転記（scoped evidence vector + variant identity）
+
+FABLE↔SOL debate の Agreed 決定（ユーザー承認済み）の Phase 0（spec-first）を転記。
+実装（provin.oss / provin.auth の additive・feature-off）は後続 slice。
+
+**P0-0（A2 — Versioned, Durable, Policy-Gated Scoped Evidence Vector）**:
+- `rules/claims.yaml` 新設（15 rule）。named scope catalog、`VERIFIED` 一文定義 + non-claims、
+  coverage×truth-state 直積、decision profile 3 archetype、policy/evidence 分離、tlog/receipt/
+  source-set-binding の scope 分離、offline snapshot = policy-only、catalog single-owner。
+- `rules/confidence.yaml` に `confidence.lifecycle.input-semantics` 追加（registry unreachable=
+  indeterminate / evaluator 不在=UNSUPPORTED / Sunset・unknown=failed）。
+- `GLOSSARY.md`: `trust layering (L1/L2/L3)` を AUTH 文脈専用へ改訂し、named scope / evidence
+  vector / coverage・truth-state / decision profile / WireVariantID / EvidenceViewID を追加。
+  → 下の「trust model（L1/L2/L3）の行き先」節（2026-06-11）は **本転記で supersede**
+  （provenance の L1/L2/L3 ラベルは named scope に置換。旧節は歴史記録として残置）。
+
+**P0-1（B2.1 — immutable variant set + EvidenceViewID + PromotionRecord + quarantine）**:
+- `rules/identity.yaml`（body-address / wire-variant-id / variant.immutable-set）、
+  `rules/evidence-view.yaml`（`evidence.*` id: manifest / cache.exact-view / verified.is-relation /
+  spine.bounded-dag / indeterminate.not-failed / bundle.v3 / bundle.reader-first）、
+  `rules/promotion.yaml`（record.verified-only / durable-order / index.per-contract）、
+  `rules/admission.yaml`（resolve-variant.exact / legacy-resolve.provisional / quarantine.class /
+  verify-to-admit.backpressure / static-backend.closed-pilot / evict.tombstone / gc.reference-aware /
+  catalog.no-launder）。
+- `schemas/evidence-view.json`（EvaluationViewManifest + scoped evidence vector; coverage×truth-state
+  を if/then/else で強制）、`schemas/bundle-v3.json`（variant spine + contract + snapshot refs +
+  EvidenceViewID）新設。
+- rule-id 制約メモ: id 第 1 segment はハイフン不可（`^[a-z0-9]+(\.[a-z0-9-]+){1,3}$`）。
+  よって domain は `evidence.*`（file 名 `evidence-view.yaml` は非規範なので可）。
+
+**P0-4 gating**: WireVariantID / `eddsa-jcs-2022` の canonical profile freeze は P0-4（canonicalization
+決定、未着手）依存。Phase 0 では grammar・要件（domain separator / id version / canon profile /
+hash algo を明示）を draft で規範化し、profile bytes の凍結は P0-4 後。`identity.wire-variant-id`
+notes と両 schema の `$comment` に明記。
+
+**Vector backlog（confirm-point 2: impl/P0-4 非依存分のみ今 author、残りは backlog）**:
+- 今 author 済み: `claims-coverage-001/002/003`、`claims-policy-001`（coverage×truth-state 直積、
+  required-scope fail-closed、INDETERMINATE→QUARANTINE。evidence-view.json を fixture で実 exercise）。
+- backlog（Phase 1 storage/DAG 実装 or P0-4 後に materialize）: F-02 config-laundering（同 bytes を
+  verifier-config 差で同 VERIFIED[LINEAR_ATTESTATION@1] にできない）、filelog→TLOG_INCLUSION 不能、
+  valid→invalid overwrite、invalid front-run、two-valid-proof `V12/V20/H15`、snapshot-change 再利用不可、
+  DAG budget exhaustion→Indeterminate、crash/fencing、evicted→NotFound launder 不可、legacy 流用不可、
+  migration matrix、WireVariantID cross-language byte-equivalence、bundle v3 independent verifier。
+
+**GLOSSARY.ja / 各 rule の .ja**: 未同期（English-primary。翻訳同期は follow-up）。
+
+### Codex spec-review fold（2026-07-14、同日）
+
+Phase-0 転記に Codex spec review（10 issue）を実施し全 fold:
+- #1 catalog 未定義 → `schemas/scope-catalog.json`（named scope + profile enum、SEMANTIC_EXECUTION
+  含む、TLOG_TRUSTED_TIME / freshness は p0-2-gated）+ `claims.catalog.enumerated` /
+  `claims.contract.distinct-from-profile` / `claims.profile.{evidence-archive,provenance-release,
+  external-effect}` 追加。vector の claimContractId 誤用（profile id）を claim-contract id に修正。
+- #2 `SOURCE_CREDENTIAL_ATTESTATION (n/n)` → `claims.source-credential.n-of-n` 分離、
+  `claims.source-set-binding.atomic` の uses を completeness（all-consumed）から declared-set/root
+  binding（`commitment.source-root.tree`）へ。
+- #3 lifecycle 矛盾 → `confidence.cryptosuite-lifecycle` を LINEAR_ATTESTATION 評価時に条件付け。
+- #4 durability / `Decision:` prefix を statement に明文化。
+- #5 EvidenceViewID 循環 → schema で id を manifest の外へ、spine を origin→head・末尾==head に規定、
+  digest projection は P0-4 gate と明記。
+- #6 view-level terminal verdict → `evidence.view.terminal-verdict`（contract-scoped、body-global
+  Verified ではない）を定義し promotion から参照。
+- #7 evidence-view.json teeth → scope enum / 非空 spine・vector / content-address・wireVariantId
+  grammar pattern。one-result-per-scope と policyDecision↔profile 結合は semantic（vector で pin）と明記。
+- #8 bundle-v3.json → inputSnapshotRefs（anchorStatus + timeBasis、値は p0-2-gated）+ commitment
+  （SIGNATURE/CHECKPOINT）+ manifest refs を required 化。
+- #9 resolver 矛盾 → `identity.variant.immutable-set` の uses から `resolver.immutability` を外し、
+  `identity.resolution.exact-vs-legacy`（exact は (body, variant)、body-only は legacy projection）
+  で reconcile。eviction を Unavailable + `EVIDENCE_EVICTED` reason に（`resolver.states` 整合）。
+- #10 Option-D → `identity.proof-envelope.not-claimed`（wire-level proof separation を conformant と
+  主張しない、future ProofEnvelopeID と共存可能）を testable rule 化。
+
+catalog は 66 → 113 rule。lint / validate_vectors green。**残 semantic teeth**（one-result-per-scope、
+policyDecision↔required-scope 結合、bundle snapshot 完全形）と **P0-2-gated**（trusted-time / freshness /
+anchor 値）は上記 vector backlog に統合。
