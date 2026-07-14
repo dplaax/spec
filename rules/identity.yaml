@@ -23,20 +23,20 @@ rules:
     status: draft
     class: core
     statement: >-
-      A WireVariantID MUST be the digest of a versioned canonical wire
-      projection of the proof-bearing credential — not the submission octets —
-      and MUST make its domain separator, id version, canonicalization profile,
-      and hash algorithm explicit.
-    uses: [identity.body-address]
+      A WireVariantID MUST be the sha256 digest of the domain tag
+      "provin-wire-variant-v1\0" followed by the RFC 8785 canonical bytes of the
+      full wire document, formatted as
+      wire:v1:jcs-rfc8785:sha256:<lowercase-hex>.
+    uses: [identity.body-address, canon.jcs.base]
     schemas: [evidence-view.json]
     vectors: []
     notes: >-
-      Projecting a canonical wire form (not raw submission octets) makes the id
+      Digesting the canonical projection (not raw submission octets) makes the id
       stable across benign octet differences. The canonicalization profile is
-      frozen only after the P0-4 canonicalization decision; until then the id
-      grammar is fixed but the profile bytes are provisional. The type does not
-      preclude a future independent proof-envelope id (Option D is not claimed
-      implemented here).
+      frozen by P0-4 as jcs-rfc8785 (actual RFC 8785 + safe-integer gate). The id
+      pins its domain tag, id version (v1), canonicalizer, and hash algorithm.
+      The type does not preclude a future independent proof-envelope id (Option D
+      is not claimed implemented here).
 
   - id: identity.variant.immutable-set
     status: draft

@@ -29,15 +29,34 @@
         "RECEIPT_SIGNATURE@1",
         "RECEIPT_EXTERNAL_EFFECT@1",
         "RECEIPT_IDEMPOTENCY@1",
-        "RECEIPT_EXACTLY_ONCE@1"
+        "RECEIPT_EXACTLY_ONCE@1",
+        "KEY_AUTHORIZATION_AT_STATE@1",
+        "CONTROLLER_CHAIN_AUTHORIZATION_AT_STATE@1",
+        "ANCHORED_OBSERVATION_ORDER@1",
+        "LIFECYCLE_FRESHNESS@1",
+        "TRUSTED_OBSERVATION_TIME@1",
+        "AUTHORIZATION_AT_ISSUANCE_WITH_MAX_AGE@1",
+        "CURRENT_AUTHORIZATION_AT_REQUEST@1"
       ]
     },
     "profileId": {
       "$comment": "The three decision-profile archetypes (claims.profile.archetypes). A profileId is a distinct identity from a claimContractId (claims.contract.distinct-from-profile).",
       "enum": ["evidence-archive@1", "provenance-release@1", "external-effect@1"]
     },
+    "suiteContractId": {
+      "$comment": "The cryptosuite claim contracts (claims.suite.contract-id, P0-4). Fork W was selected, so the active contract is the W3C Multikey suite; the legacy contract is the projection of historically-emitted proofs (signer.suite.legacy-projection). The Fork C closed contract is not enumerated (unselected).",
+      "enum": ["W3C_EDDSA_JCS_2022_REC_20250515@1", "LEGACY_PROVIN_EDDSA_JCS_INT64@1"]
+    },
+    "authorizationProfileId": {
+      "$comment": "The P0-2 lifecycle authorization profiles (claims.profile.authorization). A distinct family from the resource-action archetypes (profileId): these compose the lifecycle scopes into a historical or current verdict. historical-acceptance requires the anchored-order scopes; current-authorization requires state plus LIFECYCLE_FRESHNESS.",
+      "enum": ["historical-acceptance@1", "current-authorization@1"]
+    },
+    "authContractId": {
+      "$comment": "The P0-3 DID login contracts (claims.login.contracts). OWNER_AUTHENTICATION_LOGIN is Fork Y (the selected default, uses the Owner authentication relationship); OWNER_ASSERTION_CONTROL_LOGIN is Fork X (documented closed-pilot option, requires machine-checked PDP containment, no authentication-relationship claim); LEGACY_DID_LOGIN is the bounded relationship-blind migration artifact.",
+      "enum": ["OWNER_AUTHENTICATION_LOGIN@1", "OWNER_ASSERTION_CONTROL_LOGIN@1", "LEGACY_DID_LOGIN@1"]
+    },
     "scopeNotes": {
-      "$comment": "SEMANTIC_EXECUTION@1 is outside the protocol's decision scope (adapters / audit infrastructure own it); a protocol verifier reports it UNSUPPORTED. TLOG_TRUSTED_TIME@1 and any freshness-bearing required-scope membership are p0-2-gated (their evaluation and profile membership are fixed by the P0-2 trusted-time / lifecycle-snapshot decision)."
+      "$comment": "SEMANTIC_EXECUTION@1 is outside the protocol's decision scope (adapters / audit infrastructure own it); a protocol verifier reports it UNSUPPORTED. The P0-2 lifecycle scopes (KEY_AUTHORIZATION_AT_STATE@1, CONTROLLER_CHAIN_AUTHORIZATION_AT_STATE@1, ANCHORED_OBSERVATION_ORDER@1, LIFECYCLE_FRESHNESS@1, optional TRUSTED_OBSERVATION_TIME@1) are now enumerated and the earlier p0-2 gate is retired. TRUSTED_OBSERVATION_TIME@1 stays optional and is emitted only by a profile that contracts an independent time authority (observation.trusted-time.profile)."
     }
   }
 }

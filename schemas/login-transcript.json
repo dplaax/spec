@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/login-transcript.json",
+  "title": "Signed login transcript (versioned)",
+  "$comment": "Structural residue of the auth.transcript.* rules (P0-3, A3.1). The signed login transcript binds the fields that close cross-protocol replay and relying-party substitution (auth.transcript.bound-fields): a domain-separation tag, the auth contract, the authorization-server issuer and token endpoint, the required audience, the subject DID, the exact verification method id, a nonce, and a timestamp. Per the P0-4 canonical freeze the transcript is canonicalized with jcs-rfc8785 and all fields are strings (auth-grant.yaml, canon.number.safe-integer). Wire field names are snake_case, the JWT/OAuth convention for this artifact family (contrast the camelCase W3C-VC-lineage evidence structures). $defs are inlined (no cross-file $ref).",
+  "type": "object",
+  "required": [
+    "transcript_version",
+    "domain_separation_tag",
+    "auth_contract_id",
+    "issuer",
+    "token_endpoint",
+    "audience",
+    "subject_did",
+    "verification_method",
+    "nonce",
+    "timestamp"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "transcript_version": {
+      "const": "login-transcript-v1",
+      "$comment": "auth.transcript.bound-fields: the versioned wire contract is pinned, not a free string, so a transcript names exactly one schema version."
+    },
+    "domain_separation_tag": {
+      "const": "dplaax-owner-login-v1",
+      "$comment": "auth.transcript.domain-separation: a fixed tag separates login from delegation; an arbitrary tag would not normatively close cross-protocol replay. Frozen literal (P0-3/P0-4), paired with identity.wire-variant-id's provin-wire-variant-v1 convention."
+    },
+    "auth_contract_id": {
+      "$ref": "#/$defs/authContractId",
+      "$comment": "claims.login.contracts: which login contract this transcript is made under."
+    },
+    "issuer": { "type": "string", "minLength": 1 },
+    "token_endpoint": { "type": "string", "minLength": 1 },
+    "audience": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "auth.transcript.audience-required: a strict profile requires a non-empty audience; an empty-allowlist any-audience acceptance is rejected (semantic, pinned by vector)."
+    },
+    "subject_did": { "type": "string", "minLength": 1 },
+    "verification_method": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "auth.grant.exact-method / auth.grant.kid-match: the absolute verification method id, identical to the JWS protected kid and the resolver-selected method."
+    },
+    "nonce": { "type": "string", "minLength": 1 },
+    "timestamp": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "An RFC 3339 UTC instant as a string (canon.number.safe-integer: no numeric time fields)."
+    }
+  },
+  "$defs": {
+    "authContractId": {
+      "enum": ["OWNER_AUTHENTICATION_LOGIN@1", "OWNER_ASSERTION_CONTROL_LOGIN@1", "LEGACY_DID_LOGIN@1"]
+    }
+  }
+}

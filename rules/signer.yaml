@@ -45,3 +45,68 @@ rules:
       calculation) applies. "" is the fail-closed case for zero values.
       Source: provin.oss vc/cryptosuite.go (applied at both registration and
       verification time).
+
+  - id: signer.suite.eddsa-jcs-2022
+    status: draft
+    class: core
+    statement: >-
+      The eddsa-jcs-2022 suite MUST use jcs-rfc8785 canonicalization, a
+      proof-local @context, Multikey verification methods, and MUST pass the
+      official W3C key/algorithm test vectors; a proof lacking any of these MUST
+      NOT be named eddsa-jcs-2022.
+    uses: [signer.proof.structure, canon.jcs.base]
+    schemas: []
+    vectors: []
+    notes: >-
+      Fork W (user-selected): provin's active suite is the real W3C Data
+      Integrity eddsa-jcs-2022 (Multikey, proof-local @context, official KAT), so
+      an external W3C-DI verifier can verify the base signature. Provenance
+      (chain / source commitment / scoped evidence vector) still needs provin's
+      own evaluation.
+
+  - id: signer.suite.exact-dispatch
+    status: draft
+    class: core
+    statement: >-
+      A verifier MUST dispatch on the exact suite identifier and proof shape and
+      MUST NOT try multiple canonicalizers or suites and accept whichever
+      succeeds.
+    uses: [signer.proof.structure]
+    schemas: []
+    vectors: []
+    notes: >-
+      Algorithm guessing would let a proof be validated under a suite it does not
+      declare, laundering a legacy int64 proof into a standard claim or the
+      reverse.
+
+  - id: signer.suite.legacy-projection
+    status: draft
+    class: core
+    statement: >-
+      A historically-emitted eddsa-jcs-2022 proof in the closed int64 shape (JWK,
+      no proof-local @context) MUST project to LEGACY_PROVIN_EDDSA_JCS_INT64 and
+      MUST NOT be promoted to the W3C suite contract.
+    uses: [signer.suite.eddsa-jcs-2022, canon.jcs.int64-verbatim]
+    schemas: []
+    vectors: []
+    notes: >-
+      The wire identifier eddsa-jcs-2022 historically named a non-standard
+      (JWK, int64-verbatim) profile. The distinguisher between legacy and the
+      W3C suite is the proof shape and key type (Multikey + @context), not the
+      identifier string; the legacy shape maps to a distinct claim contract.
+
+  - id: signer.suite.w3c-interop-gate
+    status: draft
+    class: core
+    statement: >-
+      Public Fork W issuance MUST be release-gated on passing the official W3C
+      key and algorithm test vectors and on demonstrating interoperability with
+      at least one external W3C Data Integrity verifier.
+    uses: [signer.suite.eddsa-jcs-2022]
+    schemas: []
+    vectors: []
+    notes: >-
+      The official KAT pins the W3C transformation, hashing, and verification
+      algorithms (so they are not restated as prose), and the external-verifier
+      interoperability is the release blocker that makes the eddsa-jcs-2022 name
+      honest: the suite is only conformant if a third party can verify it.

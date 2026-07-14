@@ -2,18 +2,32 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://poc.dplaax.dev/schemas/evidence-view.json",
   "title": "Evidence view (EvaluationViewManifest + scoped evidence vector)",
-  "$comment": "Structural residue of the claims.* and evidence.* rules (P0-0/P0-1). evidenceViewId is a sibling of the manifest, not a member of it (evidence.manifest.identity: the id is the digest OF the manifest, so it cannot be inside it). The `scope` enum inlines scope-catalog.json (no cross-file $ref); keep the two in sync. wireVariantId enforces the grammar shape (domain:version:profile:hashalgo:hexdigest) but not the frozen bytes, which are P0-4-gated. One-result-per-scope and the policyDecision/profile required-scope coupling are semantic constraints beyond JSON Schema (claims.coverage.three-value, claims.policy.no-accept-non-verified) and are pinned by vectors.",
+  "$comment": "Structural residue of the claims.* and evidence.* rules (P0-0/P0-1). evidenceViewId is a sibling of the manifest, not a member of it (evidence.manifest.identity: the id is the digest OF the manifest, so it cannot be inside it). The `scope` enum inlines scope-catalog.json (no cross-file $ref); keep the two in sync. wireVariantId is frozen (P0-4) to wire:v1:jcs-rfc8785:sha256:<64-hex>. One-result-per-scope and the policyDecision/profile required-scope coupling are semantic constraints beyond JSON Schema (claims.coverage.three-value, claims.policy.no-accept-non-verified) and are pinned by vectors.",
   "type": "object",
   "required": ["manifest", "evidenceViewId", "vector"],
   "additionalProperties": true,
   "properties": {
     "manifest": {
       "type": "object",
-      "$comment": "evidence.manifest.identity: EvaluationViewManifest committing head, origin-to-head spine (final == head), claim contract, and input snapshots. It does NOT contain evidenceViewId.",
-      "required": ["head", "spine", "claimContractId", "inputSnapshotDigests"],
+      "$comment": "evidence.manifest.identity + evidence.manifest.independent-ids: EvaluationViewManifest committing head, origin-to-head spine (final == head), claim contract, the independent dispatch ids (canonicalizerId, cryptosuiteId, schemaVersion — P0-4 inv7), and input snapshots. It does NOT contain evidenceViewId.",
+      "required": ["head", "spine", "claimContractId", "canonicalizerId", "cryptosuiteId", "schemaVersion", "inputSnapshotDigests"],
       "additionalProperties": true,
       "properties": {
         "head": { "$ref": "#/$defs/contentAddress" },
+        "canonicalizerId": {
+          "type": "string",
+          "minLength": 1,
+          "$comment": "evidence.manifest.independent-ids / canon.jcs.base: the canonicalizer contract id (jcs-rfc8785), recorded independently of the cryptosuite and claim contract."
+        },
+        "cryptosuiteId": {
+          "$ref": "#/$defs/versionedId",
+          "$comment": "evidence.manifest.independent-ids / claims.suite.contract-id: the cryptosuite claim contract id, e.g. W3C_EDDSA_JCS_2022_REC_20250515@1 or LEGACY_PROVIN_EDDSA_JCS_INT64@1."
+        },
+        "schemaVersion": {
+          "type": "string",
+          "minLength": 1,
+          "$comment": "evidence.manifest.independent-ids: the schema version the verdict was evaluated under, recorded independently of the claim contract."
+        },
         "spine": {
           "type": "array",
           "minItems": 1,
@@ -63,8 +77,8 @@
     },
     "wireVariantId": {
       "type": "string",
-      "pattern": "^wvid:[0-9]+:[a-z0-9-]+:[a-z0-9-]+:[0-9a-f]+$",
-      "$comment": "identity.wire-variant-id: domain:idVersion:canonProfile:hashAlgo:hexDigest. Grammar enforced; the profile/hash bytes are P0-4-gated."
+      "pattern": "^wire:v1:jcs-rfc8785:sha256:[0-9a-f]{64}$",
+      "$comment": "identity.wire-variant-id: frozen as wire:v1:jcs-rfc8785:sha256:<64-hex> (P0-4). Digest of the domain tag provin-wire-variant-v1 NUL plus the RFC 8785 canonical wire bytes."
     },
     "scopeName": {
       "$comment": "claims.scope.named / claims.catalog.enumerated. Inlined from scope-catalog.json (keep in sync).",
@@ -83,7 +97,14 @@
         "RECEIPT_SIGNATURE@1",
         "RECEIPT_EXTERNAL_EFFECT@1",
         "RECEIPT_IDEMPOTENCY@1",
-        "RECEIPT_EXACTLY_ONCE@1"
+        "RECEIPT_EXACTLY_ONCE@1",
+        "KEY_AUTHORIZATION_AT_STATE@1",
+        "CONTROLLER_CHAIN_AUTHORIZATION_AT_STATE@1",
+        "ANCHORED_OBSERVATION_ORDER@1",
+        "LIFECYCLE_FRESHNESS@1",
+        "TRUSTED_OBSERVATION_TIME@1",
+        "AUTHORIZATION_AT_ISSUANCE_WITH_MAX_AGE@1",
+        "CURRENT_AUTHORIZATION_AT_REQUEST@1"
       ]
     },
     "scopeEntry": {

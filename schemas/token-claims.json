@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/token-claims.json",
+  "title": "A3.1 token signed claims",
+  "$comment": "Structural residue of the auth.token.* rules (P0-3, A3.1). A token carries, as signed claims, the auth contract, the exact method id, the document snapshot digest, and the issuance lifecycle state and freshness references (auth.token.signed-claims). The token authorization scope is AUTHORIZATION_AT_ISSUANCE_WITH_MAX_AGE by default; CURRENT_AUTHORIZATION_AT_REQUEST is present only with a resource-server recheck (auth.token.issuance-vs-request, semantic constraint pinned by vector). A legacy token that lacks these claims MUST NOT be re-projected onto this shape (auth.token.no-legacy-reprojection). Wire field names are snake_case, the JWT/OAuth convention for this artifact family (these are JWT custom claims that sit alongside standard snake_case claims). $defs are inlined (no cross-file $ref).",
+  "type": "object",
+  "required": [
+    "auth_contract_id",
+    "verification_method",
+    "did_document_snapshot",
+    "lifecycle_state_ref",
+    "lifecycle_freshness_ref",
+    "authorization_scope"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "auth_contract_id": { "$ref": "#/$defs/authContractId" },
+    "verification_method": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "auth.grant.exact-method: the absolute verification method id the grant used."
+    },
+    "did_document_snapshot": {
+      "$ref": "#/$defs/contentAddress",
+      "$comment": "auth.resolve.double-binding: the digest of the canonical document bytes actually used."
+    },
+    "lifecycle_state_ref": { "type": "string", "minLength": 1 },
+    "lifecycle_freshness_ref": { "type": "string", "minLength": 1 },
+    "authorization_scope": {
+      "$ref": "#/$defs/tokenAuthorizationScope",
+      "$comment": "claims.login.token-scopes: issuance-with-max-age by default; current-at-request only with a resource-server recheck."
+    }
+  },
+  "$defs": {
+    "contentAddress": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "authContractId": {
+      "enum": ["OWNER_AUTHENTICATION_LOGIN@1", "OWNER_ASSERTION_CONTROL_LOGIN@1", "LEGACY_DID_LOGIN@1"]
+    },
+    "tokenAuthorizationScope": {
+      "enum": ["AUTHORIZATION_AT_ISSUANCE_WITH_MAX_AGE@1", "CURRENT_AUTHORIZATION_AT_REQUEST@1"]
+    }
+  }
+}

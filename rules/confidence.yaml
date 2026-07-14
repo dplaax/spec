@@ -72,3 +72,34 @@ rules:
       normative source text found), and Deprecated cutoff dates are expressible
       via the EffectiveDate of the Sunset transition entry, making a separate
       rule redundant.
+
+  - id: confidence.legacy.sunset
+    status: draft
+    class: core
+    statement: >-
+      The legacy eddsa-jcs-2022 profile MUST be Deprecated from 2026-07-14, new
+      issuance MUST be Sunset at 2026-10-01T00:00:00Z, and the legacy issuer path
+      MUST be removed by 2027-04-01T00:00:00Z.
+    uses: [confidence.cryptosuite-lifecycle, signer.suite.legacy-projection]
+    schemas: []
+    vectors: []
+    notes: >-
+      The dates enter the cryptosuite lifecycle registry (confidence.cryptosuite-lifecycle)
+      as the Deprecated and Sunset transitions for the legacy projection.
+
+  - id: confidence.legacy.anchored-eligibility
+    status: draft
+    class: core
+    statement: >-
+      Legacy suite eligibility MUST NOT rest on proof.created alone; the exact
+      WireVariantID MUST be shown by an anchored observation to predate Sunset,
+      else the legacy claim is INDETERMINATE and the standard claim
+      NOT_EVALUATED.
+    uses: [confidence.legacy.sunset, identity.wire-variant-id, observation.record.commits]
+    schemas: []
+    vectors: []
+    notes: >-
+      proof.created is signer-selected, so a leaked key could backdate a proof
+      into the legacy window. The anchor-before-Sunset requirement binds to the
+      P0-2 anchored-observation order (observation.record.commits): the exact
+      variant must be shown by an anchored observation to predate Sunset.

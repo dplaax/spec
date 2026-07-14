@@ -1,0 +1,267 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — DID authentication grant (login transcript, method, token)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-3 (A3.1 common mechanism; Fork Y selected as the default
+# steady-state Owner relationship). The DID authentication verification contract
+# is spec-owned; provin.oss and provin.auth are its projections.
+rules:
+  - id: auth.contract.normative-sot
+    status: draft
+    class: core
+    statement: >-
+      The DID authentication verification contract's normative source of truth
+      MUST be dplaax.spec_draft, and both the Go and the TypeScript
+      implementations MUST be projections of it, not independent contracts.
+    uses: [claims.catalog.single-owner]
+    schemas: []
+    vectors: []
+    notes: >-
+      One owner prevents the Go/TypeScript verification drift the debate found:
+      the two implementations verify against shared vectors rather than each
+      reinventing selection, equality, and relationship rules.
+
+  - id: auth.grant.exact-method
+    status: draft
+    class: core
+    statement: >-
+      A grant request MUST carry, inside the signed payload, the absolute
+      verification method id it uses; first-match, try-all, and
+      document-array-order dependence MUST be rejected.
+    uses: [auth.contract.normative-sot]
+    schemas: []
+    vectors: []
+    notes: >-
+      Without a signed exact method id, key selection depends on array order or a
+      try-all loop, so a rotated or attacker-added method can be silently chosen.
+      The signed id pins which key the grant claims.
+
+  - id: auth.grant.kid-match
+    status: draft
+    class: core
+    statement: >-
+      The JWS protected kid, the signed-payload method id, and the
+      resolver-selected method id MUST be identical; any divergence among the
+      three MUST fail closed.
+    uses: [auth.grant.exact-method]
+    schemas: []
+    vectors: []
+    notes: >-
+      Three references name the key: the header, the signed body, and the
+      resolved document. Allowing them to differ would let the verified key
+      differ from the claimed one.
+
+  - id: auth.method.relationship
+    status: draft
+    class: core
+    statement: >-
+      The referenced method MUST be unique, MUST have the document subject as its
+      controller, and MUST be listed in the relationship the contract requires; a
+      duplicate VM id, missing reference, or encoding ambiguity MUST fail closed.
+    uses: [auth.grant.exact-method]
+    schemas: []
+    vectors: []
+    notes: >-
+      This mirrors the OSS ExtractPublicKey boundary (relationship, exact id,
+      duplicate rejection, controller match, encoding) that provin.auth did not
+      previously share. Relationship is checked, not assumed from presence.
+
+  - id: auth.method.string-reference-only
+    status: draft
+    class: core
+    statement: >-
+      The P0 did:dplaax profile relationship MUST be a string reference only; an
+      embedded verification method MUST NOT be accepted until a version extends
+      Go, TypeScript, and the spec together.
+    uses: [auth.method.relationship]
+    schemas: []
+    vectors: []
+    notes: >-
+      Embedded methods multiply the parsing surface and the cross-language drift
+      risk. Restricting P0 to string references keeps the two implementations on
+      one narrow shape until a coordinated version widens it.
+
+  - id: auth.transcript.bound-fields
+    status: draft
+    class: core
+    statement: >-
+      A signed login transcript MUST be a versioned schema binding a
+      domain-separation tag, auth_contract_id, the issuer and token endpoint, the
+      required audience, the subject DID, the exact method id, a nonce, and a timestamp.
+    uses: [auth.grant.exact-method, canon.jcs.base]
+    schemas: [login-transcript.json]
+    vectors: []
+    notes: >-
+      Each bound field closes a substitution: the tag separates protocols, the
+      issuer/endpoint/audience pin the relying party, the method id pins the key,
+      and the nonce/timestamp bound replay. The versioned schema pins the
+      transcript version and the domain-separation tag to fixed literals
+      (login-transcript.json), not free strings. The transcript is frozen to the
+      P0-4 canonicalizer so Go and TypeScript agree byte-for-byte; the wire field
+      names are snake_case, the JWT/OAuth convention for this artifact family
+      (the W3C-VC-lineage evidence structures stay camelCase).
+
+  - id: auth.transcript.audience-required
+    status: draft
+    class: core
+    statement: >-
+      A strict profile MUST require an audience and MUST reject an empty-allowlist
+      acceptance of an arbitrary audience.
+    uses: [auth.transcript.bound-fields]
+    schemas: []
+    vectors: []
+    notes: >-
+      An empty allowlist that accepts any audience lets a transcript minted for
+      one relying party be relayed to another. A strict profile pins the intended
+      audience.
+
+  - id: auth.transcript.domain-separation
+    status: draft
+    class: core
+    statement: >-
+      Domain separation MUST close login and delegation cross-protocol replay,
+      but an implementation MUST NOT claim it closes a post-compromise fresh login
+      or a key-purpose reuse.
+    uses: [auth.transcript.bound-fields]
+    schemas: []
+    vectors: []
+    notes: >-
+      The tag stops a delegation signature being replayed as a login and the
+      reverse. It does not help once the signing key itself is compromised; that
+      is what the Fork Y purpose split addresses.
+
+  - id: auth.token.issuance-vs-request
+    status: draft
+    class: core
+    statement: >-
+      A self-contained token MUST claim only AUTHORIZATION_AT_ISSUANCE_WITH_MAX_AGE@1;
+      CURRENT_AUTHORIZATION_AT_REQUEST@1 MUST be emitted only with resource-server
+      introspection or a lifecycle recheck.
+    uses: [auth.transcript.bound-fields, liveness.controller-chain.current]
+    schemas: []
+    vectors: []
+    notes: >-
+      A token proves state at issuance, not at request. Current authorization at
+      request needs a live recheck the token cannot carry, so the two are distinct
+      claim scopes rather than one conflated bearer assertion.
+
+  - id: auth.token.signed-claims
+    status: draft
+    class: core
+    statement: >-
+      A token MUST carry, as signed claims, auth_contract_id, the exact method id,
+      the document snapshot digest, and the issuance lifecycle state and freshness
+      references.
+    uses: [auth.token.issuance-vs-request]
+    schemas: [token-claims.json]
+    vectors: []
+    notes: >-
+      The current token is a no-scope identity JWT; binding the contract, method,
+      snapshot, and lifecycle references makes the token self-describe exactly what
+      was evaluated to mint it.
+
+  - id: auth.token.lifetime-bound
+    status: draft
+    class: core
+    statement: >-
+      A token lifetime and introspection interval MUST be at or below the P0-2
+      revocation-latency bound; an unspecified value MUST fail closed.
+    uses: [auth.token.signed-claims, liveness.profile.coupled-bounds]
+    schemas: []
+    vectors: []
+    notes: >-
+      A token that outlives the revocation-latency bound reintroduces the
+      staleness the current-authorization freshness bound removed. The two bounds
+      are the same coupled system (P0-2).
+
+  - id: auth.token.no-legacy-reprojection
+    status: draft
+    class: core
+    statement: >-
+      A legacy token that lacks a contract, method, and snapshot MUST NOT be
+      re-projected onto the A3.1 contract or onto a current-at-request claim.
+    uses: [auth.token.signed-claims]
+    schemas: []
+    vectors: []
+    notes: >-
+      A legacy token carries none of the A3.1 bindings, so treating it as an A3.1
+      or current-at-request token would invent evaluation facts the issuer never
+      recorded.
+
+  - id: auth.forky.authentication-login
+    status: draft
+    class: core
+    statement: >-
+      OWNER_AUTHENTICATION_LOGIN@1 (Fork Y) is the public default login contract
+      and MUST use only methods listed in the Owner document authentication
+      relationship; an assertion-only method MUST be rejected.
+    uses: [auth.method.relationship, claims.login.contracts]
+    schemas: []
+    vectors: []
+    notes: >-
+      Fork Y is the selected default: Owners carry an independent authentication
+      key, separating login authority from assertion/delegation authority. A
+      greenfield deployment enrolls new Owners with an authentication method. The
+      enrollment/rotation/recovery contract itself is gated (auth.migration.enable-gate).
+
+  - id: auth.forkx.closed-pilot-only
+    status: draft
+    class: core
+    statement: >-
+      Fork X (OWNER_ASSERTION_CONTROL_LOGIN@1) MUST verify at boot and policy
+      reload that every permitted PDP resource, action, and field is within the
+      delegation-authorizable set, MUST fail closed otherwise, and MUST NOT claim
+      an authentication relationship.
+    uses: [auth.forky.authentication-login, delegation.scope]
+    schemas: []
+    vectors: []
+    notes: >-
+      Fork X reuses the Owner assertion key for login, so it is a documented
+      closed-pilot option, not the default. The machine-checkable containment
+      manifest schema (the delegation-authorizable set) is a follow-up; a
+      deployment that cannot prove containment is non-conformant under Fork X.
+
+  - id: auth.legacy.did-login
+    status: draft
+    class: core
+    statement: >-
+      A legacy relationship-blind grant MUST be labelled LEGACY_DID_LOGIN@1 with a
+      hard expiry and MUST NOT be promoted to the A3.1 contract or to
+      current-authorization@1.
+    uses: [auth.token.no-legacy-reprojection, claims.login.contracts]
+    schemas: []
+    vectors: []
+    notes: >-
+      The relationship-blind grant is a bounded migration artifact. Its hard
+      expiry drains the window in which a pre-A3.1 grant can still be used.
+
+  - id: auth.headline.contract-id
+    status: draft
+    class: core
+    statement: >-
+      A presentation MUST show the Decision headline and the auth contract id, and
+      MUST NOT compress Fork X into the same authentication-relationship claim as
+      Fork Y.
+    uses: [claims.headline.decision-only, auth.forkx.closed-pilot-only]
+    schemas: []
+    vectors: []
+    notes: >-
+      Fork X and Fork Y make different claims; showing the contract id keeps a
+      closed-pilot assertion-control login from being read as a public
+      authentication-relationship login.
+
+  - id: auth.migration.enable-gate
+    status: draft
+    class: core
+    statement: >-
+      Fork W issuance and Fork Y enrollment MUST NOT be enabled until the Owner
+      document migration contract — authentication-key or Multikey enrollment and
+      rotation or recovery authorization — is ratified.
+    uses: [auth.forky.authentication-login, signer.suite.eddsa-jcs-2022, lifecycle.target.did-document]
+    schemas: []
+    vectors: []
+    notes: >-
+      Existing JWK / assertion-only Owner documents cannot satisfy Fork W or Fork
+      Y, and did:dplaax has no rotation today (lifecycle.target.did-document). The
+      enrollment/rotation/recovery contract is a deferred design; this gate keeps
+      W/Y issuance off until it lands so a greenfield deployment does not enable a
+      path its identities cannot satisfy.

@@ -1,0 +1,85 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — DID / verification-method lifecycle (revocation state machine)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-2 (C2.1 — anchored-order historical authorization +
+# freshness-bounded current authorization). This domain is the DID/key
+# active→revoked lifecycle, distinct from the cryptosuite deprecation lifecycle
+# (confidence.cryptosuite-lifecycle), which shares the word but not the subject.
+rules:
+  - id: lifecycle.target.did-document
+    status: draft
+    class: core
+    statement: >-
+      While key-level lifecycle is absent, a DID revoke MUST apply to every
+      verification method in that document; a future key rotation MUST make the
+      DID and each verification-method lifecycle separate revocation targets.
+    uses: [claims.scope.named]
+    schemas: []
+    vectors: []
+    notes: >-
+      did:dplaax today carries only a DID-level active/revoked state, so a revoke
+      is document-wide. The separation of DID and verification-method targets is
+      reserved for the rotation design; it is not available in the P0 profile.
+
+  - id: lifecycle.authorization.at-state
+    status: draft
+    class: core
+    statement: >-
+      KEY_AUTHORIZATION_AT_STATE and CONTROLLER_CHAIN_AUTHORIZATION_AT_STATE MUST
+      evaluate the referenced key and its controller chain against a named
+      lifecycle state vector; a missing state snapshot MUST be INDETERMINATE and
+      a revoked state MUST be FAILED.
+    uses: [lifecycle.target.did-document, claims.lifecycle.scopes]
+    schemas: []
+    vectors: []
+    notes: >-
+      The at-state scopes are evaluated against a specific lifecycle state vector
+      (the one an observation committed), not against the live status — that is
+      what lets a historical verdict stay stable while a current one moves. The
+      per-scope required checks are filled incrementally, as elsewhere in the
+      catalog.
+
+  - id: lifecycle.event.source-of-truth
+    status: draft
+    class: core
+    statement: >-
+      The lifecycle event log MUST be the normative source of truth and the
+      mutable current status MUST be a derived index; the linearization point of
+      a revoke MUST be the durable event append, not the status write.
+    uses: [lifecycle.target.did-document]
+    schemas: []
+    vectors: []
+    notes: >-
+      Making the append the linearization point removes the non-atomic
+      status-then-event window: a reader rebuilds current status from the event
+      log, so a torn write leaves the log, not a mutable flag, authoritative.
+
+  - id: lifecycle.reconcile.no-rewind
+    status: draft
+    class: core
+    statement: >-
+      A status of revoked with a missing revoke event MUST NOT be rewound to
+      active and MUST NOT synthesize a past cutover; current MUST stay revoked
+      and the historical order MUST be INDETERMINATE absent an independent anchor.
+    uses: [lifecycle.event.source-of-truth]
+    schemas: []
+    vectors: []
+    notes: >-
+      Reconciliation is fail-safe toward the revoked side: a lost event is a lost
+      fact, not a licence to re-activate. Historical order stays open until an
+      independent anchor settles it.
+
+  - id: lifecycle.recovery.no-fabrication
+    status: draft
+    class: core
+    statement: >-
+      Recovery from a status and event drift MUST NOT fabricate a lost fact; it
+      MUST record the loss as a durable artifact and leave the derived indexes
+      rebuildable from the immutable lifecycle and observation records.
+    uses: [lifecycle.reconcile.no-rewind]
+    schemas: []
+    vectors: []
+    notes: >-
+      The general principle behind reconciliation: durable records are the ground
+      truth and a cache is always reconstructible from them, so recovery never
+      invents history to fill a gap.

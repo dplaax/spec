@@ -364,3 +364,100 @@ Phase-0 転記に Codex spec review（10 issue）を実施し全 fold:
 catalog は 66 → 113 rule。lint / validate_vectors green。**残 semantic teeth**（one-result-per-scope、
 policyDecision↔required-scope 結合、bundle snapshot 完全形）と **P0-2-gated**（trusted-time / freshness /
 anchor 値）は上記 vector backlog に統合。
+
+## 2026-07-15 — P0-2 / P0-3 / P0-4 転記（batch）
+
+FABLE↔SOL debate の Agreed 決定（ユーザー承認済み、fork 裁定含む）を 1 batch で転記。
+catalog は 113 → 177 rule。lint / validate_vectors green。実装（provin.oss / provin.auth）は後続 slice。
+
+**Fork 裁定（ユーザー確定）**: P0-4 = **Fork W**（完全 W3C `eddsa-jcs-2022` + Multikey + proof-local
+`@context` + KAT、external interop goal）。P0-3 = **Fork Y**（Owner に独立 `authentication` 鍵、
+greenfield なので新規 Owner のみ）。ledger の "Fork C / joint recommendation" 文言はユーザー選択で上書き。
+
+**P0-4（A3 common kernel — RFC 8785 canonicalization、Fork W）**:
+- `rules/canon.yaml`: `canon.jcs.base` を actual RFC 8785 化（`jcs-rfc8785`）、`canon.number.safe-integer`
+  gate 新設、`canon.jcs.int64-verbatim` を legacy verify 専用へ隔離、`canon.number.raw-token-guard`
+  （unsafe integer を lossy parse 後の値から推測せず raw-token/lossless stage で reject、inv6）。
+- `rules/identity.yaml`: `identity.wire-variant-id` を `wire:v1:jcs-rfc8785:sha256:<hex>` に freeze（inv8）。
+- `rules/signer.yaml`: `signer.suite.eddsa-jcs-2022`（Fork W）/ `.exact-dispatch`（algorithm guessing 禁止、
+  inv17）/ `.legacy-projection`（`LEGACY_PROVIN_EDDSA_JCS_INT64@1`、inv13）/ `.w3c-interop-gate`
+  （public Fork W issuance を KAT + 外部 W3C verifier interop で release-gate、Codex fold）。
+- `rules/confidence.yaml`: `confidence.legacy.sunset`（Deprecated 2026-07-14 / Sunset 2026-10-01 /
+  remove 2027-04-01、inv14）/ `.anchored-eligibility`（proof.created 単独不可、anchor-before-Sunset、
+  inv15/16。P0-2 `observation.record.commits` へ uses edge を追加）。
+- `rules/commitment.yaml`: `commitment.source-root.canonicalizer-binding`（`source_root_canonical` を
+  field 単独解釈せず enclosing contract + variant vector + snapshot へ binding、inv18/19）。
+- `rules/claims.yaml`: `claims.suite.contract-id`（W3C / LEGACY 契約）/ `claims.headline.suite-contract`
+  （Decision + cryptosuite + canonicalizer contract 表示、単一 `Verified[EDDSA]` へ圧縮しない、inv22）。
+- `rules/evidence-view.yaml`: `evidence.manifest.independent-ids`（canonicalizer / cryptosuite / schema id を
+  claim contract と独立に manifest へ commit、EvidenceViewID が dispatch 入力を分離 commit、inv7/9 — Codex fold）。
+- schemas: `scope-catalog.json` に `suiteContractId` enum。`evidence-view.json` / `bundle-v3.json` の
+  manifest に `canonicalizerId` / `cryptosuiteId` / `schemaVersion`（required、inv7 — Codex fold）。
+  wireVariantId pattern を frozen 形へ。fixtures `claims-coverage-001/002/004` を manifest id 追加で更新。
+
+**P0-2（C2.1 — anchored-order historical + freshness-bounded current）**:
+- `rules/identity-lifecycle.yaml`（id `lifecycle.*`）: `target.did-document`（revoke は doc 内全 VM、
+  inv11）/ `authorization.at-state`（KEY/CONTROLLER_AUTHORIZATION_AT_STATE を named state vector で評価
+  — Codex fold）/ `event.source-of-truth`（event log = SoT、status = derived、inv13）/
+  `reconcile.no-rewind`（inv14）/ `recovery.no-fabrication`（inv15）。
+- `rules/observation-order.yaml`（id `observation.*`）: `order.authority`（inv5）/ `record.commits`
+  （exact variant + lifecycle state vector + log 位置、`emission-log-v2.json`、inv6）/ `membership.proof`
+  （Merkle inclusion か hash-chain replay、filelog を TLOG_INCLUSION と誤称しない、inv7）/
+  `order.same-origin`（inv8）/ `order.cross-log-bridge`（inv9）/ `trusted-time.profile`（inv10）/
+  `grandfather.exact-variant`（inv20）/ `legacy.body-only`（inv22）/ `legacy.no-pre-revocation-anchor`
+  （既 revoke・anchor 無 legacy → historical INDETERMINATE + `legacy-no-pre-revocation-anchor`、inv21 —
+  Codex fold）/ `production.closed-pilot`（inv25）。
+- `rules/auth-liveness.yaml`（id `liveness.*`）: `controller-chain.current`（inv12）/
+  `cache.bounded-freshness`（inv16）/ `profile.coupled-bounds`（inv17）/ `degraded.separate-contract`
+  （inv18）/ `public-profile.fail-closed`（inv19）/ `offline.no-current-verified`（inv23）。
+- `rules/claims.yaml`: `claims.lifecycle.scopes`（5 atomic scope 列挙、inv1）/ `claims.profile.authorization`
+  （historical-acceptance@1 / current-authorization@1 = archetype とは別 family、headline 表示、
+  atomic vector 再合成禁止、inv2/24）/ `.historical-acceptance`（inv3）/ `.current-authorization`（inv4）。
+  `claims.profile.external-effect` を current-authorization scope 全体（key/controller-at-state +
+  freshness）要求へ修正（freshness 単独では ACCEPT 不可、Codex fold）。
+- schemas: `emission-log-v2.json`（observation record: exact variant `oneOf`、lifecycle state vector に
+  `lifecycleSnapshotRef`、log 位置は decimal string / inv20）。`bundle-v3.json` lifecycle 拡張
+  （`lifecycleEvidence` / `observationEvidence` / `trustProfileSnapshot`、`anchorStatus` / `timeBasis`
+  enum を P0-2 確定値へ）。`scope-catalog.json` に lifecycle scope + `authorizationProfileId` enum。
+
+**P0-3（A3.1 common mechanism + Fork Y）**:
+- `rules/auth-grant.yaml`（id `auth.*`）: `contract.normative-sot`（inv1）/ `grant.exact-method`（inv7）/
+  `grant.kid-match`（inv8）/ `method.relationship`（inv9）/ `method.string-reference-only`（inv10）/
+  `transcript.bound-fields`（versioned schema、`login-transcript.json`、inv12）/ `.audience-required`（inv13）/
+  `.domain-separation`（inv14）/ `token.issuance-vs-request`（inv15）/ `.signed-claims`（`token-claims.json`、
+  inv16）/ `.lifetime-bound`（inv17）/ `.no-legacy-reprojection`（inv18）/ `forky.authentication-login`
+  （Fork Y = public default、inv23）/ `forkx.closed-pilot-only`（inv21/22、subset + boot/reload 明示）/
+  `legacy.did-login`（inv24）/ `headline.contract-id`（inv25）/ `migration.enable-gate`（Fork W/Y は Owner
+  document migration 契約 ratify まで enable 禁止、Codex fold）。
+- `rules/did-resolution-auth.yaml`（id `auth.resolve.*`）: `id-equality`（inv2）/ `double-binding`（inv3）/
+  `result-shape`（inv4）/ `single-input-binding`（inv5）/ `failure-mapping`（inv6）/ `unknown-member`（inv11）/
+  `resource-floor`（inv19）/ `origin-pin`（inv20）。
+- `rules/claims.yaml`: `claims.login.contracts`（3 login contract、inv23/21/24）/ `.token-scopes`
+  （issuance-with-max-age / current-at-request、inv15）。
+- schemas: `login-transcript.json`（versioned、`transcriptVersion` / `domainSeparationTag` を const pin —
+  Codex fold）、`token-claims.json`。`scope-catalog.json` に token scope + `authContractId` enum。
+
+**Codex spec review（2026-07-15、file+pipe）**: 7 High を検出、全 fold（上記 "Codex fold" 印）。
+1 dismiss（evidence-view の別 authz-decision field — `decisionProfileId` は versionedId で
+`current-authorization@1` を既に受理、single-pin で合成禁止のため不要 = contract-based dismiss）。
+
+**public surface 決定（ユーザー確認済み・確定）**:
+- wire field 命名は **artifact の所属 ecosystem に従う** 原則で確定:
+  - JWT/OAuth レイヤー（`login-transcript.json` / `token-claims.json`）= **snake_case**
+    （`auth_contract_id` 等。JWT RFC 7519 / OAuth / OIDC 慣行、ledger prose と一致、rule statement も既に snake_case）。
+  - dplaax 内部 evidence 構造（`evidence-view.json` / `bundle-v3.json` / `emission-log-v2.json` /
+    `scope-catalog.json`）= **camelCase**（W3C VC data model 系の慣行）。
+- frozen literal: `transcript_version="login-transcript-v1"`、`domain_separation_tag="dplaax-owner-login-v1"`
+  （`provin-wire-variant-v1` 慣行に整合）。
+
+**Vector backlog（impl/storage 依存、後続 slice）**: revoke 前後 / signer・observer backdating /
+cross-origin bridge 有無 / parent revoke / cache freshness / status-event mismatch / grandfathering /
+filelog replay↔Merkle parity（P0-2）。id/snapshot/relationship mismatch、multi-key order、duplicate VM、
+cross-protocol replay、audience/issuer mismatch、legacy/new token matrix（P0-3）。RFC 8785 official /
+W3C KAT / custom / legacy cutover matrix、WireVariantID cross-language byte-equivalence（P0-4）。
+
+**Schema backlog（Codex 指摘、後続）**: standalone lifecycle-event / DIDDocSnapshot wire schema
+（現状は content-address ref で参照）、Fork X PDP-containment manifest schema（delegation-authorizable set
+列挙 = delegation.yaml scope grammar 依存）。
+
+**GLOSSARY / 各 rule の .ja**: 未同期（English-primary、翻訳同期は follow-up）。

@@ -1,0 +1,161 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — anchored observation order (historical-authorization anchor)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-2 (C2.1). The ANCHORED_OBSERVATION_ORDER scope moves the
+# order authority for historical authorization off self-asserted timestamps and
+# onto an append-only log position.
+rules:
+  - id: observation.order.authority
+    status: draft
+    class: core
+    statement: >-
+      proof.created, validFrom, and an observer-selected observed_at MUST NOT
+      alone serve as the order authority for historical authorization; the
+      authority MUST be an append-only observation position.
+    uses: [claims.scope.named, lifecycle.event.source-of-truth]
+    schemas: []
+    vectors: []
+    notes: >-
+      Every self-asserted timestamp is signer- or observer-selected, so a leaked
+      key can backdate it. Moving order authority to append position closes the
+      backdating lever a timestamp alone leaves open.
+
+  - id: observation.record.commits
+    status: draft
+    class: core
+    statement: >-
+      An ANCHORED_OBSERVATION_ORDER record MUST commit the exact WireVariantID or
+      EvidenceViewID, the signer and controller lifecycle state vector, and the
+      log origin, index, and checkpoint under the frozen canonicalizer.
+    uses: [observation.order.authority, identity.wire-variant-id, canon.jcs.base]
+    schemas: [emission-log-v2.json]
+    vectors: []
+    notes: >-
+      The record binds the exact variant (not a body-only digest) to a lifecycle
+      state and a log position, so an evaluator can replay the order. The v2
+      emission record carries these fields and, per the P0-4 canonical freeze,
+      encodes tree size, log position, and generation as decimal strings.
+
+  - id: observation.membership.proof
+    status: draft
+    class: core
+    statement: >-
+      Observation membership MUST be verified by a Merkle inclusion proof or by
+      hash-chain replay to a signed checkpoint, and the method MUST be stated in
+      coverage; a filelog replay MUST NOT be reported as TLOG_INCLUSION.
+    uses: [observation.record.commits, claims.tlog.capability-scoped]
+    schemas: []
+    vectors: []
+    notes: >-
+      Both membership methods are admissible but they are different capabilities:
+      inclusion is a Merkle path, replay is a linear walk. Labelling a filelog
+      replay as inclusion would overstate the deployment capability.
+
+  - id: observation.order.same-origin
+    status: draft
+    class: core
+    statement: >-
+      Only prefix and order within the same origin log are comparable without a
+      bridge; an index, checkpoint timestamp, or signed timestamp from a
+      different origin MUST NOT be compared directly to order two observations.
+    uses: [observation.record.commits]
+    schemas: []
+    vectors: []
+    notes: >-
+      Two logs share no clock or counter, so a raw index or timestamp comparison
+      across origins is meaningless. Ordering across origins needs the bridge
+      defined in the cross-log rule.
+
+  - id: observation.order.cross-log-bridge
+    status: draft
+    class: core
+    statement: >-
+      Cross-log order MUST be VERIFIED only through a witness bridge that commits
+      both checkpoints in a definite order; absent that bridge the cross-log
+      order MUST be INDETERMINATE, never assumed from unrelated timestamps.
+    uses: [observation.order.same-origin]
+    schemas: []
+    vectors: []
+    notes: >-
+      The bridge is the only artifact that ties two origins into one order. Its
+      absence is a coverage gap (a retryable indeterminate), not a licence to
+      guess an order.
+
+  - id: observation.trusted-time.profile
+    status: draft
+    class: core
+    statement: >-
+      TRUSTED_OBSERVATION_TIME MUST be emitted only by a profile that contracts
+      an independent time authority, a clock-uncertainty bound, and anchor or
+      witness conditions; historical acceptance MUST NOT implicitly claim it.
+    uses: [observation.order.authority, claims.tlog.capability-scoped]
+    schemas: []
+    vectors: []
+    notes: >-
+      Append order is not wall-clock time. A wall-clock claim needs an independent
+      authority and a stated uncertainty; without them a profile may assert order
+      but not time.
+
+  - id: observation.grandfather.exact-variant
+    status: draft
+    class: core
+    statement: >-
+      A grandfathering sweep MUST anchor only re-verified exact WireVariantIDs to
+      the current lifecycle prefix; a quarantined or unverified variant MUST NOT
+      be promoted to historical-valid by the sweep.
+    uses: [observation.record.commits, admission.catalog.no-launder]
+    schemas: []
+    vectors: []
+    notes: >-
+      The sweep back-fills anchors for evidence that was already valid, one exact
+      variant at a time. It is not a channel to launder a variant that never
+      passed verification into a historical claim.
+
+  - id: observation.legacy.body-only
+    status: draft
+    class: core
+    statement: >-
+      A legacy body-only emission record MUST be treated as a legacy-body
+      observation and MUST NOT be retroactively promoted to an observation of a
+      specific proof variant.
+    uses: [observation.record.commits, signer.suite.legacy-projection]
+    schemas: []
+    vectors: []
+    notes: >-
+      The old emission record committed only a body hash, so it cannot name a
+      proof variant after the fact. Promoting it would invent a variant
+      observation the log never made.
+
+  - id: observation.legacy.no-pre-revocation-anchor
+    status: draft
+    class: core
+    statement: >-
+      An already-revoked legacy credential with no pre-revoke anchored observation
+      MUST yield historical authorization INDETERMINATE with reason
+      legacy-no-pre-revocation-anchor, unless an independent signature failure
+      makes it FAILED.
+    uses: [observation.order.same-origin, lifecycle.reconcile.no-rewind]
+    schemas: []
+    vectors: []
+    notes: >-
+      Current revocation alone does not make the past false, but without a
+      pre-revoke anchor the historical order cannot be settled honestly, so the
+      verdict is indeterminate with an explicit reason. This is the DID-revocation
+      analogue of the cryptosuite Sunset eligibility rule
+      (confidence.legacy.anchored-eligibility), keyed on lifecycle revocation
+      rather than suite Sunset.
+
+  - id: observation.production.closed-pilot
+    status: draft
+    class: core
+    statement: >-
+      A single-operator order log MUST be treated as closed-pilot only; a
+      public-production ANCHORED_OBSERVATION_ORDER claim MUST NOT be emitted
+      until witness, pin, and non-equivocation capability is in place.
+    uses: [observation.order.cross-log-bridge]
+    schemas: []
+    vectors: []
+    notes: >-
+      One operator can rewind or split-view its own log, so its order is only
+      trustworthy inside a closed pilot. Public claims wait on the P1-C witness
+      and non-equivocation work.

@@ -1,0 +1,96 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — current-authorization liveness (state / freshness split)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-2 (C2.1). Current authorization is decomposed into
+# lifecycle state and a bounded freshness so a stale snapshot cannot be
+# laundered into a current VERIFIED.
+rules:
+  - id: liveness.controller-chain.current
+    status: draft
+    class: core
+    statement: >-
+      Current authorization MUST evaluate every authority-bearing controller
+      across Process, Pipeline, and Owner; a later ancestor revoke MUST NOT
+      change historical acceptance but MUST fail current authorization.
+    uses: [claims.scope.named, lifecycle.target.did-document]
+    schemas: []
+    vectors: []
+    notes: >-
+      Current and historical are separate axes: an ancestor revoke ends current
+      authority without rewriting what was validly observed before it. Both
+      verdicts read the same controller chain at different times.
+
+  - id: liveness.cache.bounded-freshness
+    status: draft
+    class: core
+    statement: >-
+      A current positive lifecycle cache MUST carry a bounded freshness, and a
+      source that is unavailable after the freshness expiry MUST NOT be promoted
+      to a stale VERIFIED for current authorization.
+    uses: [liveness.controller-chain.current, confidence.lifecycle.input-semantics]
+    schemas: []
+    vectors: []
+    notes: >-
+      A cached positive result is only as good as its freshness bound. Once it
+      expires and the source is unreachable, the honest state is indeterminate,
+      not a re-served stale positive.
+
+  - id: liveness.profile.coupled-bounds
+    status: draft
+    class: core
+    statement: >-
+      A current-authorization profile MUST couple its max lifecycle staleness,
+      revocation propagation objective, cache TTL, token lifetime, and outage
+      budget; an unspecified bound MUST fail closed.
+    uses: [liveness.cache.bounded-freshness]
+    schemas: []
+    vectors: []
+    notes: >-
+      These bounds are one system: a token that outlives the revocation objective
+      reintroduces the staleness the cache bound removed. Leaving any of them
+      unset defaults to the safe, closed side.
+
+  - id: liveness.degraded.separate-contract
+    status: draft
+    class: core
+    statement: >-
+      An emergency degraded mode MUST use a separate contract and profile id, a
+      signed waiver, a hard expiry, and alerts, MUST forbid auto-extension, and
+      MUST NOT emit current-authorization@1 as VERIFIED.
+    uses: [liveness.profile.coupled-bounds]
+    schemas: []
+    vectors: []
+    notes: >-
+      A degraded mode is visible and bounded or it is laundering. Its own id and
+      a signed, expiring waiver keep it from being read as the normal current
+      verdict.
+
+  - id: liveness.public-profile.fail-closed
+    status: draft
+    class: core
+    statement: >-
+      A public current-authorization profile MUST be fail-closed or backed by a
+      high-availability lifecycle source, and a single-source outage MUST NOT be
+      masked by a silent stale-active result.
+    uses: [liveness.degraded.separate-contract]
+    schemas: []
+    vectors: []
+    notes: >-
+      Availability is a design input, not an excuse: a public profile either
+      denies on outage or has redundancy. Silently serving stale-active trades
+      correctness for uptime without disclosure.
+
+  - id: liveness.offline.no-current-verified
+    status: draft
+    class: core
+    statement: >-
+      An offline bundle MUST NOT emit a current-state scope as VERIFIED;
+      historical acceptance from a bundle MUST carry the exact variant spine,
+      lifecycle evidence, observation-order evidence, and the trust-profile snapshot.
+    uses: [liveness.controller-chain.current, claims.offline-snapshot.policy-only]
+    schemas: [bundle-v3.json]
+    vectors: []
+    notes: >-
+      A bundle is a historical artifact; current state needs a live source it
+      cannot carry. Historical acceptance is reproducible only if the bundle
+      carries the full evidence the verdict depended on.

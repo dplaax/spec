@@ -1,0 +1,125 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — DID resolution for authentication (id-equality, snapshot, fetch floor)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-3 (A3.1 common mechanism). The resolver used for
+# authentication must return enough to bind the used document, not just a parsed
+# key, and must have a P0 resource floor.
+rules:
+  - id: auth.resolve.id-equality
+    status: draft
+    class: core
+    statement: >-
+      The requested DID and the returned document id MUST be compared by a
+      method-specific equality rule; did:dplaax MUST use byte-exact equality and
+      MUST NOT apply any normalization.
+    uses: [auth.contract.normative-sot]
+    schemas: []
+    vectors: []
+    notes: >-
+      Without an id-equality check a malicious registry can return a foreign
+      document. Byte-exact equality for did:dplaax avoids a normalization step
+      that could equate two distinct identifiers.
+
+  - id: auth.resolve.double-binding
+    status: draft
+    class: core
+    statement: >-
+      Exact id-equality and the anchored lifecycle DIDDocSnapshot digest binding
+      MUST be independent required checks; neither MUST substitute for the other.
+    uses: [auth.resolve.id-equality, lifecycle.event.source-of-truth]
+    schemas: []
+    vectors: []
+    notes: >-
+      id-equality alone does not stop a victim-id document substitution; a
+      snapshot digest alone does not stop a generic DID method equating requested
+      and embedded ids. Both are required, each closing what the other cannot.
+
+  - id: auth.resolve.result-shape
+    status: draft
+    class: core
+    statement: >-
+      A resolver result MUST expose, besides the parsed document, the canonical
+      bytes and their digest, the requested DID, the final origin, and the
+      lifecycle snapshot reference.
+    uses: [auth.resolve.double-binding]
+    schemas: []
+    vectors: []
+    notes: >-
+      A parsed document is not enough to bind a verdict. The canonical bytes,
+      digest, origin, and snapshot reference are what the evaluation input binds,
+      so the resolver must surface them rather than discard them.
+
+  - id: auth.resolve.single-input-binding
+    status: draft
+    class: core
+    statement: >-
+      current-authorization@1 MUST bind the used document digest, the exact method
+      id and key digest, the relationship, and the lifecycle state and freshness
+      into one evaluation input.
+    uses: [auth.resolve.result-shape, claims.profile.current-authorization]
+    schemas: []
+    vectors: []
+    notes: >-
+      Binding these into one input stops a verdict being assembled from fields
+      that came from different documents or different points in time — the drift
+      the debate found between selection and verification.
+
+  - id: auth.resolve.failure-mapping
+    status: draft
+    class: core
+    statement: >-
+      A missing snapshot or unavailable lifecycle source MUST be INDETERMINATE; a
+      digest mismatch, revoked state, id mismatch, relationship mismatch, or
+      invalid signature MUST be FAILED; neither path MUST issue a token.
+    uses: [auth.resolve.single-input-binding, confidence.lifecycle.input-semantics]
+    schemas: []
+    vectors: []
+    notes: >-
+      The three-value split holds here: a source you cannot reach is retryable
+      (indeterminate), a proven inconsistency is terminal (failed), and in neither
+      case is a token minted.
+
+  - id: auth.resolve.unknown-member
+    status: draft
+    class: core
+    statement: >-
+      An unknown DID-document member MUST be preserved for snapshot integrity; a
+      duplicate key, trailing data, invalid known-member type, or duplicate VM id
+      MUST be rejected.
+    uses: [auth.resolve.result-shape, canon.strict-decode]
+    schemas: []
+    vectors: []
+    notes: >-
+      Snapshot digests must match across Go and TypeScript, so an unknown member
+      is round-tripped, not dropped. Strictness targets duplicates, trailing data,
+      and known-member type errors, matching the OSS decoder.
+
+  - id: auth.resolve.resource-floor
+    status: draft
+    class: core
+    statement: >-
+      A P0 resolver MUST have a finite timeout, a canonical-body cap, concurrency
+      backpressure, and a redirect bound; a public profile MUST default to full
+      redirect rejection.
+    uses: [auth.resolve.result-shape]
+    schemas: []
+    vectors: []
+    notes: >-
+      The current resolver is a bare fetch with no bounds, an unauthenticated
+      resource-exhaustion surface. The P0 floor is required even though DNS and
+      private-IP guard tuning is deferred to P1-A.
+
+  - id: auth.resolve.origin-pin
+    status: draft
+    class: core
+    statement: >-
+      Origin-pin MUST apply to the final connection policy, not only the initial
+      URL, and the P0 resource bounds MUST NOT be omitted even though DNS and
+      private-IP guard tuning is deferred to P1-A.
+    uses: [auth.resolve.resource-floor]
+    schemas: []
+    vectors: []
+    notes: >-
+      A redirect can move the final connection off the pinned origin, so the pin
+      must bind the connection actually made. The measured DNS/IP guard tuning is
+      a P1-A dependency, but the resource floor is not deferrable.

@@ -37,6 +37,22 @@ rules:
       spine-order rule (origin-to-head, final == head) makes the least-id
       tie-break well-defined once the projection is frozen.
 
+  - id: evidence.manifest.independent-ids
+    status: draft
+    class: core
+    statement: >-
+      An EvaluationViewManifest MUST record the canonicalizer id, the cryptosuite
+      contract id, and the schema version independently of the claim_contract_id,
+      so the EvidenceViewID commits each dispatch input separately.
+    uses: [evidence.manifest.identity, canon.jcs.base, claims.suite.contract-id]
+    schemas: [evidence-view.json]
+    vectors: []
+    notes: >-
+      Without these separate ids the EvidenceViewID cannot distinguish a Fork W
+      proof from a legacy one, or one canonicalizer or schema version from
+      another, over the same body and spine (P0-4 inv7/inv9). Recording them
+      independently is what lets those forks produce different EvidenceViewIDs.
+
   - id: evidence.view.terminal-verdict
     status: draft
     class: core

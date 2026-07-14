@@ -2,13 +2,27 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://poc.dplaax.dev/schemas/bundle-v3.json",
   "title": "Bundle manifest v3 (variant spine + evidence view)",
-  "$comment": "Structural residue of the evidence.* / claims.* bundle rules (P0-1, P0-0 invariants 5/11, P0-1 invariant 21). v3 makes the selected variant spine, claim contract, input-snapshot refs (with anchor status and time_basis, claims.offline-snapshot.policy-only), the EvidenceViewID, and a durable commitment (auditor signature or signed checkpoint, claims.vector.durable-commit) explicit, so an offline verifier fetches exact variants and can check the boundary commitment. The anchorStatus enum and time_basis semantics are p0-2-gated (values fixed by the P0-2 trusted-time decision). $defs are inlined (no cross-file $ref). v1/v2 reads remain supported (evidence.bundle.reader-first); v3 is not asserted verifiable by a v1/v2 reader.",
+  "$comment": "Structural residue of the evidence.* / claims.* bundle rules (P0-1, P0-0 invariants 5/11, P0-1 invariant 21) with the P0-2 lifecycle extension. v3 makes the selected variant spine, claim contract, input-snapshot refs (with anchor status and time_basis, claims.offline-snapshot.policy-only), the EvidenceViewID, and a durable commitment (auditor signature or signed checkpoint, claims.vector.durable-commit) explicit, so an offline verifier fetches exact variants and can check the boundary commitment. The P0-2 extension (liveness.offline.no-current-verified) adds optional lifecycleEvidence, observationEvidence, and trustProfileSnapshot so historical acceptance is reproducible from the bundle; a current-state scope MUST NOT be VERIFIED from a bundle (semantic, pinned by vector). The anchorStatus and timeBasis enums are now fixed by the P0-2 decision. $defs are inlined (no cross-file $ref). v1/v2 reads remain supported (evidence.bundle.reader-first); v3 is not asserted verifiable by a v1/v2 reader.",
   "type": "object",
-  "required": ["version", "head", "spine", "claimContractId", "evidenceViewId", "inputSnapshotRefs", "commitment"],
+  "required": ["version", "head", "spine", "claimContractId", "canonicalizerId", "cryptosuiteId", "schemaVersion", "evidenceViewId", "inputSnapshotRefs", "commitment"],
   "additionalProperties": true,
   "properties": {
     "version": { "const": 3 },
     "head": { "$ref": "#/$defs/contentAddress" },
+    "canonicalizerId": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "evidence.manifest.independent-ids (P0-4 inv7): the canonicalizer contract id (jcs-rfc8785), carried so an offline verifier dispatches on the same canonicalizer."
+    },
+    "cryptosuiteId": {
+      "$ref": "#/$defs/versionedId",
+      "$comment": "evidence.manifest.independent-ids / claims.suite.contract-id: the cryptosuite claim contract id."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "evidence.manifest.independent-ids: the schema version the verdict was evaluated under."
+    },
     "spine": {
       "type": "array",
       "minItems": 1,
@@ -27,12 +41,18 @@
     "evidenceViewId": { "$ref": "#/$defs/contentAddress" },
     "inputSnapshotRefs": {
       "type": "object",
-      "$comment": "claims.offline-snapshot.policy-only: carried snapshots are policy state; the bundle states anchor status and time_basis and does not imply trusted observation time. anchorStatus enum and time_basis semantics are p0-2-gated.",
+      "$comment": "claims.offline-snapshot.policy-only: carried snapshots are policy state; the bundle states anchor status and time_basis and does not imply trusted observation time. The enums are now fixed by the P0-2 decision.",
       "required": ["anchorStatus", "timeBasis"],
       "additionalProperties": true,
       "properties": {
-        "anchorStatus": { "type": "string", "minLength": 1 },
-        "timeBasis": { "type": "string", "minLength": 1 }
+        "anchorStatus": {
+          "enum": ["ANCHORED", "UNANCHORED", "INDETERMINATE"],
+          "$comment": "observation.record.commits / observation.order.cross-log-bridge: whether the carried snapshot is anchored in an observation order. UNANCHORED and INDETERMINATE cannot back a historical VERIFIED."
+        },
+        "timeBasis": {
+          "enum": ["OBSERVATION_ORDER", "TRUSTED_OBSERVATION_TIME", "POLICY_SNAPSHOT"],
+          "$comment": "observation.trusted-time.profile: what the time claim rests on. OBSERVATION_ORDER is append order only (no wall-clock), TRUSTED_OBSERVATION_TIME needs a contracted time authority, POLICY_SNAPSHOT is carried policy state with no time claim."
+        }
       }
     },
     "commitment": {
@@ -43,6 +63,20 @@
       "properties": {
         "type": { "enum": ["SIGNATURE", "CHECKPOINT"] }
       }
+    },
+    "lifecycleEvidence": {
+      "type": "array",
+      "$comment": "liveness.offline.no-current-verified: DID/key lifecycle excerpts or signed checkpoints the historical verdict depended on. Optional (present for a historical-acceptance bundle); carrying it never licenses a current-state VERIFIED.",
+      "items": { "$ref": "#/$defs/contentAddress" }
+    },
+    "observationEvidence": {
+      "type": "array",
+      "$comment": "liveness.offline.no-current-verified / observation.membership.proof: the observation records and order evidence (inclusion proof or replay to a checkpoint) that anchor the variant spine.",
+      "items": { "$ref": "#/$defs/contentAddress" }
+    },
+    "trustProfileSnapshot": {
+      "$ref": "#/$defs/contentAddress",
+      "$comment": "liveness.offline.no-current-verified: the trust-profile snapshot the verdict was evaluated under, so an offline re-derivation uses the same profile."
     }
   },
   "$defs": {
@@ -57,7 +91,7 @@
     },
     "wireVariantId": {
       "type": "string",
-      "pattern": "^wvid:[0-9]+:[a-z0-9-]+:[a-z0-9-]+:[0-9a-f]+$"
+      "pattern": "^wire:v1:jcs-rfc8785:sha256:[0-9a-f]{64}$"
     }
   }
 }

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/emission-log-v2.json",
+  "title": "Emission log record v2 (anchored observation)",
+  "$comment": "Structural residue of the observation.* rules (P0-2). The v2 record is what ANCHORED_OBSERVATION_ORDER commits (observation.record.commits): the exact variant, the signer/controller lifecycle state vector, and the log origin/index/checkpoint. Per the P0-4 canonical freeze the record is canonicalized with jcs-rfc8785 and log positions (index, tree size, generation) are decimal strings, not JSON numbers (canon.number.safe-integer). v1 body-only records are a distinct legacy-body observation (observation.legacy.body-only) and are not readable as v2. $defs are inlined (no cross-file $ref).",
+  "type": "object",
+  "required": ["recordVersion", "observationSubject", "lifecycleStateVector", "logPosition"],
+  "additionalProperties": true,
+  "properties": {
+    "recordVersion": { "const": 2 },
+    "observationSubject": {
+      "type": "object",
+      "$comment": "observation.record.commits: the exact variant being observed. Exactly one of wireVariantId or evidenceViewId is the anchored subject; a body-only digest is a legacy-body observation and MUST NOT appear here.",
+      "additionalProperties": true,
+      "properties": {
+        "wireVariantId": { "$ref": "#/$defs/wireVariantId" },
+        "evidenceViewId": { "$ref": "#/$defs/contentAddress" }
+      },
+      "oneOf": [
+        { "required": ["wireVariantId"] },
+        { "required": ["evidenceViewId"] }
+      ]
+    },
+    "lifecycleStateVector": {
+      "type": "object",
+      "$comment": "observation.record.commits: the signer and controller lifecycle state at the observed position, so historical authorization can be replayed against the same states the observation saw.",
+      "required": ["signerState", "controllerStates"],
+      "additionalProperties": true,
+      "properties": {
+        "signerState": { "$ref": "#/$defs/lifecycleState" },
+        "controllerStates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/lifecycleState" }
+        }
+      }
+    },
+    "logPosition": {
+      "type": "object",
+      "$comment": "observation.record.commits / observation.order.same-origin: the log origin, index, and checkpoint that locate the record. index, treeSize, and generation are decimal strings (P0-4 canon.number.safe-integer): a log position can exceed the safe-integer range and must not be a JSON number.",
+      "required": ["origin", "index", "checkpoint"],
+      "additionalProperties": true,
+      "properties": {
+        "origin": { "type": "string", "minLength": 1 },
+        "index": { "$ref": "#/$defs/decimalString" },
+        "treeSize": { "$ref": "#/$defs/decimalString" },
+        "generation": { "$ref": "#/$defs/decimalString" },
+        "checkpoint": { "$ref": "#/$defs/contentAddress" }
+      }
+    },
+    "membershipMethod": {
+      "$comment": "observation.membership.proof: how membership is proven. A filelog replay MUST NOT be reported as TLOG_INCLUSION (semantic constraint, pinned by vector).",
+      "enum": ["MERKLE_INCLUSION", "HASH_CHAIN_REPLAY"]
+    }
+  },
+  "$defs": {
+    "contentAddress": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "$comment": "resolver.address.form: sha256:<lowercase-hex>."
+    },
+    "wireVariantId": {
+      "type": "string",
+      "pattern": "^wire:v1:jcs-rfc8785:sha256:[0-9a-f]{64}$",
+      "$comment": "identity.wire-variant-id: frozen form (P0-4)."
+    },
+    "decimalString": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "$comment": "canon.number.safe-integer: a non-negative log position in the string domain, not a JSON number."
+    },
+    "lifecycleState": {
+      "type": "object",
+      "$comment": "observation.record.commits / lifecycle.event.source-of-truth: a lifecycle state entry bound to the lifecycle event/snapshot it was read from, so the state is evidence-backed rather than an asserted label. lifecycleSnapshotRef points at the durable lifecycle record (its full wire schema is a follow-up; the record freezes to jcs-rfc8785 with decimal-string positions, P0-4).",
+      "required": ["did", "state", "lifecycleSnapshotRef"],
+      "additionalProperties": true,
+      "properties": {
+        "did": { "type": "string", "minLength": 1 },
+        "state": { "enum": ["ACTIVE", "REVOKED"] },
+        "lifecycleSnapshotRef": { "$ref": "#/$defs/contentAddress" }
+      }
+    }
+  }
+}

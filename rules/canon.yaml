@@ -6,34 +6,71 @@ rules:
     status: draft
     class: core
     statement: >-
-      The canonicalization used to compute signature scopes and content hashes
-      MUST produce a byte sequence that conforms byte-for-byte to RFC 8785
-      (JCS). The sole intentional deviation in this catalog is
-      canon.jcs.int64-verbatim.
-    uses: []
+      A new signature scope or content hash MUST use canonicalization that
+      conforms byte-for-byte to RFC 8785 (JCS), identified as jcs-rfc8785; the
+      int64-verbatim deviation (canon.jcs.int64-verbatim) MUST be confined to
+      legacy verification.
+    uses: [canon.number.safe-integer]
     schemas: []
     vectors: [canon-001, canon-002, canon-003]
     notes: >-
       RFC 8785 compliance has pitfalls (U+2028/U+2029 emitted as raw UTF-8,
       ES6 number format) that differ from common implementation defaults
       (e.g. Go encoding/json); these are pinned as vectors of this rule rather
-      than separate rules.
+      than separate rules. The canonicalizer id jcs-rfc8785 is committed to the
+      EvaluationViewManifest independently of the cryptosuite id (P0-4). For
+      numeric-free bodies (the provin core schema) actual RFC 8785 and the old
+      int64-verbatim path are byte-identical, so this is not a v0-wire change.
+
+  - id: canon.number.safe-integer
+    status: draft
+    class: core
+    statement: >-
+      A new artifact's JSON integer MUST lie in [-(2^53-1), 2^53-1]; a value
+      outside MUST be a string whose versioned schema fixes its form, an unsafe
+      integer used as a number MUST be Failed, -0 MUST canonicalize to 0, and
+      NaN or Infinity MUST be rejected.
+    uses: []
+    schemas: []
+    vectors: []
+    notes: >-
+      A decoder infers no safety from a post-JSON.parse rounded value — unsafe
+      integers are rejected at the raw-token or lossless-parse stage, before
+      canonicalization (a cross-language concern: a silent round in one language
+      would fork the bytes). Identifiers, log positions, sequences, and exact
+      decimals live in the string domain by construction.
+
+  - id: canon.number.raw-token-guard
+    status: draft
+    class: core
+    statement: >-
+      An implementation MUST NOT infer safety from a value already rounded by a
+      lossy JSON parser; an unsafe integer MUST be rejected at the raw-token or
+      lossless-parse stage, before canonicalization.
+    uses: [canon.number.safe-integer]
+    schemas: []
+    vectors: []
+    notes: >-
+      This makes the raw-token discipline normative rather than advisory: a
+      language whose default parser rounds (TypeScript's JSON.parse) would
+      otherwise pass an already-corrupted value into the canonicalizer, forking
+      the bytes from a language that preserved precision (P0-4).
 
   - id: canon.jcs.int64-verbatim
     status: draft
     class: core
     statement: >-
-      The canonicalizer MUST emit 64-bit-range integer literals in verbatim
-      decimal form, without round-tripping through an IEEE double. This
-      intentionally deviates from RFC 8785 ES6 Number::toString and preserves
-      integer precision beyond 2^53.
-    uses: [canon.jcs.base]
+      A legacy-verification canonicalizer MUST emit 64-bit-range integer
+      literals in verbatim decimal without an IEEE double round-trip; a new
+      artifact MUST NOT use this path and MUST use the safe-integer gate
+      (canon.number.safe-integer).
+    uses: [canon.jcs.base, canon.number.safe-integer]
     schemas: []
     vectors: [canon-004]
     notes: >-
-      Integers beyond 2^53 are not interoperable with strict-ES6 JCS
-      implementations — an issuer-side compatibility concern. The symmetric
-      decode-side rule is condition (3) of canon.strict-decode.
+      This is the historical deviation, now scoped to legacy verify only. New
+      issuance uses actual RFC 8785 + the safe-integer gate. The symmetric
+      decode-side condition is (3) of canon.strict-decode.
 
   - id: canon.jcs.reject-invalid-utf8
     status: draft

@@ -163,6 +163,23 @@ rules:
       by another provided source surfaces as a root mismatch (failed), not as
       indeterminate (a known limit of the commitment grammar).
 
+  - id: commitment.source-root.canonicalizer-binding
+    status: draft
+    class: audit-reachable
+    statement: >-
+      A source_root_canonical of jcs-rfc8785 MUST NOT be read from the field
+      alone; it MUST bind the enclosing suite contract, the source WireVariantID
+      vector, and the canonicalizer snapshot, and a new commitment MUST claim it
+      only when it uses actual RFC 8785.
+    uses: [commitment.source-root.leaf, canon.jcs.base, signer.suite.legacy-projection]
+    schemas: []
+    vectors: []
+    notes: >-
+      The legacy field named jcs-rfc8785 while a custom canonicalizer computed the
+      hash, so the string is not self-interpreting. Binding it to the contract,
+      variant vector, and snapshot lets a verifier tell an actual RFC 8785 root
+      from a legacy one instead of guessing from the label (P0-4).
+
   - id: commitment.store.persistence
     status: draft
     class: audit-reachable

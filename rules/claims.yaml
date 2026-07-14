@@ -274,8 +274,9 @@ rules:
     notes: >-
       The named-scope set and the profile archetypes are enumerated in
       scope-catalog.json. Per-scope required-check definitions are filled
-      incrementally; SEMANTIC_EXECUTION is out of the protocol's decision scope
-      and TLOG_TRUSTED_TIME plus any freshness membership are p0-2-gated.
+      incrementally; SEMANTIC_EXECUTION is out of the protocol's decision scope.
+      The P0-2 lifecycle authorization scopes are now enumerated
+      (claims.lifecycle.scopes), retiring the earlier p0-2 gate on freshness.
 
   - id: claims.contract.distinct-from-profile
     status: draft
@@ -325,13 +326,139 @@ rules:
     status: draft
     class: core
     statement: >-
-      The external-effect profile MUST require the provenance-release scopes plus
-      a freshness scope for ACCEPT; the freshness/trusted-time scope membership
-      is fixed by the P0-2 decision and MUST NOT be assumed VERIFIED before then.
-    uses: [claims.profile.provenance-release]
+      The external-effect profile MUST require the provenance-release and
+      current-authorization scopes (KEY_AUTHORIZATION_AT_STATE,
+      CONTROLLER_CHAIN_AUTHORIZATION_AT_STATE, LIFECYCLE_FRESHNESS) as VERIFIED
+      for ACCEPT.
+    uses: [claims.profile.provenance-release, claims.profile.current-authorization]
     schemas: [scope-catalog.json]
     vectors: []
     notes: >-
-      A side-effecting action needs a current, not merely historical, claim, so
-      this profile adds freshness; the exact trusted-time scope and its
-      evaluation are owned by the P0-2 decision (p0-2-gated).
+      A side-effecting action needs current, not merely historical, authorization,
+      so this profile adds the whole P0-2 current-authorization scope set (not
+      freshness alone): fresh lifecycle data without current key/controller
+      authorization must not reach ACCEPT. The optional trusted-time scope stays
+      profile-owned (observation.trusted-time.profile).
+
+  - id: claims.suite.contract-id
+    status: draft
+    class: core
+    statement: >-
+      A cryptosuite claim contract MUST be one of W3C_EDDSA_JCS_2022_REC_20250515
+      (the Multikey W3C suite) or LEGACY_PROVIN_EDDSA_JCS_INT64 (the closed int64
+      projection); each MUST pin its suite, canonicalizer, and
+      verification-method type.
+    uses: [claims.contract.distinct-from-profile, signer.suite.eddsa-jcs-2022]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      Fork W was selected, so the active suite contract is the W3C one and the
+      Fork C closed contract (PROVIN_EDDSA_JCS_CLOSED_2026) is not enumerated;
+      a future move to it would be a new variant, not a rewrite. The legacy
+      contract exists only as the projection of historically-emitted proofs.
+
+  - id: claims.headline.suite-contract
+    status: draft
+    class: core
+    statement: >-
+      A presentation MUST show the Decision headline, the cryptosuite contract id,
+      and the canonicalizer contract id, and MUST NOT compress distinct suite
+      contracts into a single Verified with an EDDSA label.
+    uses: [claims.headline.decision-only, claims.suite.contract-id]
+    schemas: []
+    vectors: []
+    notes: >-
+      Legacy, the closed profile, and the W3C suite are different claim contracts;
+      collapsing them under one Verified label would hide which canonicalizer and
+      suite actually produced the proof (P0-4).
+
+  - id: claims.lifecycle.scopes
+    status: draft
+    class: core
+    statement: >-
+      The lifecycle authorization scopes MUST be exactly KEY_AUTHORIZATION_AT_STATE,
+      CONTROLLER_CHAIN_AUTHORIZATION_AT_STATE, ANCHORED_OBSERVATION_ORDER,
+      LIFECYCLE_FRESHNESS, and the optional TRUSTED_OBSERVATION_TIME.
+    uses: [claims.scope.named, claims.catalog.enumerated]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      These atomic scopes separate cryptographic validity from historical
+      authorization, current authorization, and wall-clock time (P0-2). Their
+      version suffix (@1) is part of the identity and is elided here for length.
+
+  - id: claims.profile.authorization
+    status: draft
+    class: core
+    statement: >-
+      The lifecycle axis MUST be presented through the versioned authorization
+      profiles historical-acceptance@1 and current-authorization@1; a consumer
+      MUST read a profile decision and MUST NOT re-compose the atomic scope vector.
+    uses: [claims.policy.profile-derived, claims.lifecycle.scopes]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      These authorization profiles are a distinct family from the resource-action
+      archetypes (evidence-archive, provenance-release, external-effect); they
+      compose the lifecycle scopes into the historical and current verdicts the
+      headline shows. The atomic vector stays audit/debug-visible.
+
+  - id: claims.profile.historical-acceptance
+    status: draft
+    class: core
+    statement: >-
+      The historical-acceptance@1 profile MUST require CREDENTIAL_ATTESTATION,
+      KEY_AUTHORIZATION_AT_STATE, CONTROLLER_CHAIN_AUTHORIZATION_AT_STATE, and
+      ANCHORED_OBSERVATION_ORDER as VERIFIED scopes for ACCEPT.
+    uses: [claims.profile.authorization, claims.policy.no-accept-non-verified]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      Historical acceptance asserts a credential was validly authorized at an
+      anchored point in the observation order, not that the authority is current.
+      A later revoke does not retract it.
+
+  - id: claims.profile.current-authorization
+    status: draft
+    class: core
+    statement: >-
+      The current-authorization@1 profile MUST require KEY_AUTHORIZATION_AT_STATE,
+      CONTROLLER_CHAIN_AUTHORIZATION_AT_STATE, and LIFECYCLE_FRESHNESS as VERIFIED
+      scopes for ACCEPT.
+    uses: [claims.profile.authorization, claims.policy.no-accept-non-verified]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      Current authorization asserts the authority is live now, so it adds freshness
+      and drops the historical anchor. A stale or unreachable lifecycle source
+      cannot reach ACCEPT here.
+
+  - id: claims.login.contracts
+    status: draft
+    class: core
+    statement: >-
+      The DID login contracts MUST be exactly OWNER_AUTHENTICATION_LOGIN,
+      OWNER_ASSERTION_CONTROL_LOGIN, and LEGACY_DID_LOGIN; only
+      OWNER_AUTHENTICATION_LOGIN MAY display an authentication-relationship claim.
+    uses: [claims.catalog.enumerated, claims.contract.distinct-from-profile]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      Fork Y (OWNER_AUTHENTICATION_LOGIN@1) is the selected default; Fork X
+      (OWNER_ASSERTION_CONTROL_LOGIN@1) is a documented closed-pilot option and
+      LEGACY_DID_LOGIN@1 is the bounded migration artifact (P0-3).
+
+  - id: claims.login.token-scopes
+    status: draft
+    class: core
+    statement: >-
+      A token authorization scope MUST be either
+      AUTHORIZATION_AT_ISSUANCE_WITH_MAX_AGE or CURRENT_AUTHORIZATION_AT_REQUEST;
+      the latter MUST NOT be claimed without a resource-server recheck.
+    uses: [claims.login.contracts, claims.lifecycle.scopes]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      A self-contained token proves state at issuance (with a max age); a
+      current-at-request claim needs a live introspection or lifecycle recheck the
+      token cannot carry on its own (P0-3).
