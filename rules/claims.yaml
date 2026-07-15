@@ -462,3 +462,52 @@ rules:
       A self-contained token proves state at issuance (with a max age); a
       current-at-request claim needs a live introspection or lifecycle recheck the
       token cannot carry on its own (P0-3).
+
+  - id: claims.effect.contracts
+    status: draft
+    class: core
+    statement: >-
+      The external-effect contract identifiers MUST be exactly the set
+      enumerated in scope-catalog.json, and a consumer MUST derive effect
+      completion only from EFFECT_CONFIRMED@1.
+    uses: [claims.catalog.enumerated, effect.state.confirmed-only]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      The set (P0-5): EXTERNAL_EFFECT_RELEASE_AUTHORIZATION@1,
+      EFFECT_CONFIRMED@1, EFFECT_UNKNOWN@1, POSSIBLE_LOSS@1, DENY_EXPIRED@1,
+      LEGACY_SINK_RECEIPT@1. Everything else a sink emits — quarantine status,
+      dispatch attempts, receipts — is observability, not an effect claim.
+
+  - id: claims.effect.legacy-receipt
+    status: draft
+    class: core
+    statement: >-
+      A pre-B2 sink receipt MUST be projected only to LEGACY_SINK_RECEIPT@1;
+      it MUST NOT be re-projected to EFFECT_CONFIRMED@1 or any release or
+      effect contract without re-evaluation under an exact evidence view.
+    uses: [claims.effect.contracts, evidence.cache.exact-view]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      A legacy receipt carries neither a ReleaseAuthorization digest nor a
+      target acknowledgement, so it attests an adjacent-write-era local
+      attempt at most. Same grandfathering shape as confidence.legacy.sunset:
+      the past is not rewritten, and it is not promoted either.
+
+  - id: claims.effect.scope-mapping
+    status: draft
+    class: core
+    statement: >-
+      The RECEIPT_EXTERNAL_EFFECT@1 scope MUST be evaluated only from an
+      EFFECT_CONFIRMED@1 record bound to the delivery identity; a receipt
+      signature or any other artifact MUST NOT verify it.
+    uses: [claims.receipt.effect-separated, claims.effect.contracts, effect.delivery.identity]
+    schemas: [scope-catalog.json, effect-status.json]
+    vectors: []
+    notes: >-
+      Reconciles the two effect identities (Codex fold, 2026-07-15): the
+      scope is the evaluation axis a verifier reports; the P0-5 contract
+      record is its only admissible evidence. Without this pin, one consumer
+      gates on the scope and another on the contract and they diverge on
+      legacy receipts.

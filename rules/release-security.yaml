@@ -1,0 +1,496 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — release security (exact artifact-bound release gate)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-7 (B2). The discipline the protocol imposes on
+# credentials — exact identity binding, existence ≠ trust, past ≠ present,
+# absence-of-evaluation ≠ success — applied to the reference implementation's
+# own release supply chain. Three layers: artifact identity, advisory
+# decision, supply-chain trust, all bound to one output digest.
+rules:
+  - id: release.subject.exact-digest
+    status: draft
+    class: core
+    statement: >-
+      The subject of a release MUST be the exact output artifact digest;
+      tags, branches, versions, and source commits are locators or metadata
+      and MUST NOT serve as the release identity.
+    uses: []
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      A floating tag and a source commit identify an intention, not the bytes
+      that were scanned and shipped. Everything else in this domain hangs off
+      this identity choice — the same move identity.wire-variant-id made for
+      credentials.
+
+  - id: release.evidence.subject-binding
+    status: draft
+    class: core
+    statement: >-
+      Build, scan, SBOM, waiver, provenance, signature, and release decision
+      MUST bind to the same subject digest; evidence produced for one digest
+      MUST NOT be reused for another.
+    uses: [release.subject.exact-digest]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      Cross-digest reuse is the supply-chain form of verdict laundering: a
+      clean scan of yesterday's image says nothing about today's rebuild,
+      exactly as a verdict for one wire variant says nothing about another.
+
+  - id: release.build.once
+    status: draft
+    class: core
+    statement: >-
+      A release MUST be built once; a tag that was scanned MUST NOT be
+      rebuilt and published as the same release.
+    uses: [release.subject.exact-digest]
+    schemas: []
+    vectors: []
+    notes: >-
+      Scan-then-rebuild means the scanned bytes and the published bytes are
+      different artifacts that merely share a name. Build-once is what makes
+      the subject digest a fact instead of a hope.
+
+  - id: release.pin.image-digest
+    status: draft
+    class: core
+    statement: >-
+      Every build, runtime, base, and compose image used for a public release
+      MUST be digest-pinned; a multi-arch image MUST record both the index
+      digest and each platform manifest digest.
+    uses: [release.subject.exact-digest]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      The name:tag@sha256:digest form keeps the human-readable tag while
+      making the digest the identity. The per-platform manifests matter
+      because an index-level pin alone lets one architecture ship unscanned.
+
+  - id: release.pin.action-sha
+    status: draft
+    class: core
+    statement: >-
+      A release workflow action MUST be pinned to a commit SHA; a major or
+      version tag reference MUST NOT be used for a public release.
+    uses: [release.subject.exact-digest]
+    schemas: []
+    vectors: []
+    notes: >-
+      A workflow holding packages:write or npm publish credentials is inside
+      the trust boundary; a movable action tag hands that authority to
+      whoever can re-point the tag.
+
+  - id: release.pin.source-exact
+    status: draft
+    class: core
+    statement: >-
+      A release source dependency MUST resolve to a full commit SHA, and a
+      generator's published-release mode MUST NOT accept an arbitrary branch
+      name or movable tag as an exact pin.
+    uses: [release.subject.exact-digest]
+    schemas: []
+    vectors: []
+    notes: >-
+      A denylist of known moving names is not a pin discipline — any branch
+      is movable. The generator accepts only what it can verify is immutable:
+      a full commit SHA.
+
+  - id: release.toolchain.tested-is-shipped
+    status: draft
+    class: core
+    statement: >-
+      The tested Go and Node toolchains MUST match the shipped toolchains; CI
+      and container images MUST NOT implicitly use different major or minor
+      versions.
+    uses: [release.evidence.subject-binding]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      Tested-is-shipped is a coverage claim: evidence from CI applies to the
+      shipped artifact only when they are the same runtime. A version drift
+      quietly narrows every green check to "green somewhere else".
+
+  - id: release.lock.frozen-graph
+    status: draft
+    class: core
+    statement: >-
+      A generated production artifact MUST install from a committed or
+      generated lockfile with frozen resolution, or be built from the
+      workspace's locked dependency graph; build-time fresh resolution MUST
+      NOT occur.
+    uses: [release.evidence.subject-binding]
+    schemas: []
+    vectors: []
+    notes: >-
+      A fresh resolve at image build time means the published artifact's
+      dependency graph was never the tested graph and changes between
+      rebuilds. The lockfile is the frozen-graph evidence the SBOM and scans
+      inherit.
+
+  - id: release.claim.reproducible-separate
+    status: draft
+    class: core
+    statement: >-
+      IMMUTABLE_ARTIFACT and REPRODUCIBLE_BUILD MUST be separate claims: the
+      latter MUST require an independent clean build reproducing the digest,
+      and unpinned build inputs MUST be enumerated in a build-input manifest.
+    uses: [release.subject.exact-digest, release.pin.image-digest]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      Base digest pins freeze one input; apk/corepack installs, BuildKit
+      frontends, and runner images remain. Immutability says the bytes will
+      not change; reproducibility says someone else can derive them — the
+      second is strictly harder and is proven by a second build, not asserted.
+
+  - id: release.scan.state-machine
+    status: draft
+    class: core
+    statement: >-
+      A scanner result MUST be one of CLEAN, FINDINGS, TOOL_ERROR, DB_STALE,
+      UNSUPPORTED; TOOL_ERROR, DB_STALE, and UNSUPPORTED MUST NOT be
+      projected to zero advisories or treated as CLEAN.
+    uses: [release.evidence.subject-binding]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      The supply-chain form of evidence.indeterminate.not-failed: a scanner
+      that crashed, ran on a stale database, or skipped an architecture has
+      answered nothing, and "no findings reported" is not "no findings".
+
+  - id: release.scan.bounded-clean
+    status: draft
+    class: core
+    statement: >-
+      CLEAN MUST be read as no known finding for the stated scanner, database
+      snapshot, policy, and subject; it MUST NOT be presented as absence of
+      vulnerabilities or as a permanent safety property.
+    uses: [release.scan.state-machine]
+    schemas: []
+    vectors: []
+    notes: >-
+      Same bounded-claim shape as claims.verified.definition: the verdict
+      names its inputs and holds only under them. A new advisory tomorrow
+      does not falsify today's scan; it obsoletes the acceptance built on it
+      (release.acceptance.reevaluate).
+
+  - id: release.scan.coverage
+    status: draft
+    class: core
+    statement: >-
+      A public release scan MUST cover the source dependency graph, each
+      shipped binary and package artifact, every platform manifest of the
+      final image, and runtime OS packages; a trusted-supply-chain claim MUST
+      also cover the builder.
+    uses: [release.scan.state-machine, release.pin.image-digest]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      Source-graph scanning alone misses what the container adds (OS
+      packages, toolchain) and what the build drops in transit. Coverage is
+      enumerated per subject so a missing surface is a visible UNSUPPORTED,
+      not silence.
+
+  - id: release.scan.artifact-fields
+    status: draft
+    class: core
+    statement: >-
+      A scan artifact MUST record the tool and version, advisory database
+      identity and update time, policy version, platform, coverage, and
+      subject digest.
+    uses: [release.scan.state-machine, release.evidence.subject-binding]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      These fields are what make a scan re-derivable and comparable — the
+      release-evidence analog of the scan-state record a verifier needs to
+      distinguish "checked and clean" from "never checked here".
+
+  - id: release.scan.db-freshness
+    status: draft
+    class: core
+    statement: >-
+      The advisory database freshness bound MUST be fixed by the versioned
+      release profile; a scan past the bound MUST be recorded as DB_STALE,
+      not as CLEAN.
+    uses: [release.scan.state-machine, release.profile.versioned]
+    schemas: []
+    vectors: []
+    notes: >-
+      An advisory database ages like a lifecycle cache
+      (liveness.cache.bounded-freshness): past the bound the honest state is
+      stale, and serving it as current launders time into confidence.
+
+  - id: release.advisory.component-absent
+    status: draft
+    class: core
+    statement: >-
+      A finding MAY leave the waiver path as NOT_AFFECTED with reason
+      component_absent only when the component is absent from the final
+      artifact's SBOM; a component-present assessment MUST remain a finding.
+    uses: [release.sbom.subject-bound]
+    schemas: [advisory-assessment.json]
+    vectors: []
+    notes: >-
+      Absence is the only self-verifying assessment: the SBOM either lists
+      the component or it does not. Every other judgement (unreachable,
+      mitigated, not exploitable) is fallible analysis and stays inside the
+      waiver discipline.
+
+  - id: release.advisory.reachability-binding
+    status: draft
+    class: core
+    statement: >-
+      A reachability assessment MUST bind to the exact source and artifact
+      digests, entrypoints, platform, build flags, configuration assumptions,
+      and scanner rules and database; without positive evidence a component
+      MUST be classified potentially_reachable.
+    uses: [release.evidence.subject-binding]
+    schemas: [advisory-assessment.json]
+    vectors: []
+    notes: >-
+      Unreachable is not a property of a CVE; it is a property of one build
+      of one artifact under stated assumptions. Ecosystems without call-graph
+      evidence (JS at present) default to potentially_reachable rather than
+      borrowing confidence from silence.
+
+  - id: release.advisory.unreachable-waiver
+    status: draft
+    class: core
+    statement: >-
+      An unreachable assessment for a component present in the artifact MUST
+      NOT erase the finding; releasing with it MUST require a time-bounded
+      waiver under the versioned waiver contract.
+    uses: [release.advisory.reachability-binding, release.waiver.contract]
+    schemas: [release-waiver.json]
+    vectors: []
+    notes: >-
+      Unreachable-forever is how findings disappear from ledgers. Keeping the
+      finding and dating the waiver forces the question to be re-asked while
+      the code underneath keeps changing.
+
+  - id: release.advisory.waiver-required
+    status: draft
+    class: core
+    statement: >-
+      A reachable or potentially-reachable Medium or Low finding, and any
+      evidence-backed unreachable finding, MUST NOT ship in a public release
+      except under a waiver satisfying the versioned waiver contract.
+    uses: [release.advisory.reachability-binding, release.waiver.contract]
+    schemas: [release-waiver.json]
+    vectors: []
+    notes: >-
+      Below the hard High/Critical line, everything that is present and not
+      provably absent ships only as an explicit, dated, owned decision.
+      "Low severity" is a prioritization signal, not an implicit allowance.
+
+  - id: release.gate.high-critical-zero
+    status: draft
+    class: core
+    statement: >-
+      Reachable High and Critical findings MUST be zero for a public
+      release, a potentially-reachable High or Critical finding MUST be
+      treated as reachable for this gate, and this gate MUST NOT be waivable.
+    uses: [release.advisory.reachability-binding]
+    schemas: []
+    vectors: []
+    notes: >-
+      The one hard line in the advisory policy: everything below it is
+      waiver-governed judgement, everything at it is fix, downgrade with
+      evidence, or do not release. potentially_reachable folds into the gate
+      (Codex fold, 2026-07-15) because it means "no positive evidence either
+      way" — at High/Critical severity, borrowing confidence from silence is
+      exactly what the classification exists to prevent; the exit is an
+      evidence-backed unreachable assessment (which downgrades to the
+      waiver path), not a waiver of the gate itself.
+
+  - id: release.waiver.contract
+    status: draft
+    class: core
+    statement: >-
+      A waiver MUST carry the advisory and component, exact subject digest,
+      assessment evidence, owner, approver, issue time, expiry within the
+      policy cap, reversal condition, and re-evaluation triggers; automatic
+      renewal MUST NOT occur.
+    uses: [release.evidence.subject-binding, release.profile.versioned]
+    schemas: [release-waiver.json]
+    vectors: []
+    notes: >-
+      A waiver is a dated, owned risk acceptance — the same artifact
+      discipline the debate protocol applies to its own dismissals. No owner,
+      no expiry, or no reversal condition means it is not a waiver but a
+      permanent exception, which the contract exists to prevent.
+
+  - id: release.waiver.invalidation
+    status: draft
+    class: core
+    statement: >-
+      A change to source, dependencies, build profile, entrypoints,
+      configuration assumptions, scanner rules, or the advisory itself MUST
+      invalidate a reachability waiver before its expiry.
+    uses: [release.waiver.contract, release.advisory.reachability-binding]
+    schemas: [release-waiver.json]
+    vectors: []
+    notes: >-
+      The waiver's validity is parasitic on the assessment's assumptions; any
+      input drift snaps the chain. Expiry is the upper bound, not the only
+      exit.
+
+  - id: release.waiver.scanner-outage
+    status: draft
+    class: core
+    statement: >-
+      A scanner outage or stale-database waiver MUST follow the same waiver
+      contract, and a prior clean result MAY be reused only for the identical
+      artifact digest.
+    uses: [release.waiver.contract, release.scan.state-machine]
+    schemas: [release-waiver.json]
+    vectors: []
+    notes: >-
+      Infrastructure failure is also a risk acceptance, not a free pass — the
+      alternative quietly converts every scanner outage into a clean verdict.
+      Digest-identical reuse is sound because the subject bytes are the same;
+      anything looser re-opens cross-digest laundering.
+
+  - id: release.decision.evidence-separated
+    status: draft
+    class: core
+    statement: >-
+      A waived finding MUST remain recorded as PRESENT with the decision
+      ALLOW_WITH_WAIVER; a waiver MUST NOT rewrite evidence to CLEAN.
+    uses: [release.waiver.contract]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      Evidence and policy are separate ledgers here exactly as in
+      effect.expiry.deny-expired: the finding is a fact, the allowance is a
+      decision, and collapsing them destroys the audit trail that makes the
+      decision reviewable.
+
+  - id: release.headline.policy-id
+    status: draft
+    class: core
+    statement: >-
+      A release headline MUST display the release policy id and the waiver
+      count; a bare zero-vulnerabilities or secure label MUST NOT be
+      published.
+    uses: [release.decision.evidence-separated]
+    schemas: []
+    vectors: []
+    notes: >-
+      The release-notes analog of claims.headline.decision-only: the headline
+      names the policy that produced the verdict and how many exceptions it
+      carries, so the reader can weigh the claim instead of trusting an
+      adjective.
+
+  - id: release.provenance.trusted-builder
+    status: draft
+    class: core
+    statement: >-
+      A provenance verifier MUST pin the repository, workflow path, source
+      commit, builder identity, subject digest, and predicate type; an
+      attestation matching fewer fields MUST be rejected.
+    uses: [release.evidence.subject-binding]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      The existence of a signed attestation proves a signer existed, not that
+      the right builder built the right source — a compromised builder
+      self-attests happily. Verification pins who, from what, into which
+      bytes, under which predicate.
+
+  - id: release.provenance.per-ecosystem
+    status: draft
+    class: core
+    statement: >-
+      OCI images and npm packages MUST have separate provenance contracts; an
+      attestation for one artifact ecosystem MUST NOT be accepted for the
+      other.
+    uses: [release.provenance.trusted-builder]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      The two ecosystems have different subjects, predicates, and verifier
+      tool-chains; a shared bucket invites accepting the one you can check as
+      evidence for the one you cannot.
+
+  - id: release.sbom.subject-bound
+    status: draft
+    class: core
+    statement: >-
+      An SBOM MUST bind to the subject digest and record its generator,
+      generator version, and component coverage; SBOM generation alone MUST
+      NOT ground a completeness claim.
+    uses: [release.evidence.subject-binding]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      An SBOM is a claimed inventory, as complete as its generator's
+      visibility. Component-absent decisions
+      (release.advisory.component-absent) lean on it, so its own coverage and
+      cross-checks against the package-manager graph are part of the
+      evidence, not an afterthought.
+
+  - id: release.acceptance.reevaluate
+    status: draft
+    class: core
+    statement: >-
+      Publication of a new advisory MUST NOT rewrite a historical scan fact
+      but MUST trigger re-evaluation of current deployment acceptance for
+      affected subjects.
+    uses: [release.scan.bounded-clean]
+    schemas: []
+    vectors: []
+    notes: >-
+      Past and present split, applied to advisories: what was known at scan
+      time stays true as history, while what is acceptable to keep running is
+      always a present-tense question — the release twin of the P0-2 rule
+      that a revoke ends current authority without rewriting history.
+
+  - id: release.docs.match-artifacts
+    status: draft
+    class: core
+    statement: >-
+      A pinning claim in README, compose files, or release notes MUST match
+      the actual artifact references; a claim of an immutable pin over a
+      moving reference MUST be corrected as a release defect.
+    uses: [release.pin.image-digest]
+    schemas: []
+    vectors: []
+    notes: >-
+      A false pin claim is worse than no claim: an operator who believes the
+      artifact is pinned stops checking. Doc drift on security posture is
+      handled as a defect with a fix deadline, not as a documentation nit.
+
+  - id: release.claim.baseline-cap
+    status: draft
+    class: core
+    statement: >-
+      A release satisfying only the baseline gate MUST NOT claim
+      TRUSTED_SUPPLY_CHAIN or REPRODUCIBLE_BUILD; TRUSTED_SUPPLY_CHAIN MUST
+      require verified trusted-builder provenance, and REPRODUCIBLE_BUILD
+      MUST require independent reproduction evidence.
+    uses: [release.claim.reproducible-separate, release.provenance.trusted-builder]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      The maturity ramp (D-4) is a pending decision-owner choice between
+      full-B2-before-first-public-release (the debate's joint recommendation)
+      and baseline-first with dated risk acceptances; either way this cap
+      holds — the claims track the evidence, not the ambition.
+
+  - id: release.profile.versioned
+    status: draft
+    class: core
+    statement: >-
+      The public release profile MUST fix the waiver duration cap, the
+      advisory database freshness bound, and the required scanner coverage;
+      changing any of these values MUST bump the policy version.
+    uses: [release.subject.exact-digest]
+    schemas: [release-evidence-manifest.json]
+    vectors: []
+    notes: >-
+      The numbers are policy, and policy is versioned so a decision made
+      under policy v3 is never silently re-read under v4's looser (or
+      stricter) bounds. Same versioning discipline as the scope catalog.

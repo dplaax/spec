@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/observation-record.json",
+  "title": "ObservationRecord (pre-verification archive)",
+  "$comment": "Structural residue of the effect.* rules (P0-5). The append-only artifact for pre-verification archival (effect.archive.observation-record): it says 'these exact bytes were observed at this time' and nothing more — coverage is pinned NOT_EVALUATED and there is no acceptance field to misread. Actionable consumption goes through a DecisionRecord join (effect.archive.decision-record); a store whose consumers read observations directly has bypassed the release gate. $defs are inlined (no cross-file $ref).",
+  "type": "object",
+  "required": [
+    "observationRecordId",
+    "bodyAddress",
+    "wireVariantId",
+    "payloadDigest",
+    "observedAt",
+    "coverage"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "observationRecordId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bodyAddress": {
+      "$ref": "#/$defs/contentAddress"
+    },
+    "wireVariantId": {
+      "$ref": "#/$defs/wireVariantId",
+      "$comment": "The exact variant observed (identity.variant.immutable-set); a body-only archive cannot be joined to variant-exact evidence later."
+    },
+    "payloadDigest": {
+      "$ref": "#/$defs/contentAddress",
+      "$comment": "Digest of the exact payload bytes AND the content address of the payload blob persisted in the same append as this record (effect.archive.observation-record: the record carries the exact variant and payload); a record whose blob is missing is torn, not an observation."
+    },
+    "observedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "coverage": {
+      "const": "NOT_EVALUATED",
+      "$comment": "claims.coverage.three-value: an observation asserts existence, never an evaluation outcome."
+    },
+    "deliveryMetadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "$comment": "Same shape as quarantine-entry.json deliveryMetadata when the observation originated from a delivery."
+    }
+  },
+  "$defs": {
+    "contentAddress": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "$comment": "resolver.address.form: sha256:<lowercase-hex>."
+    },
+    "wireVariantId": {
+      "type": "string",
+      "pattern": "^wire:v1:jcs-rfc8785:sha256:[0-9a-f]{64}$",
+      "$comment": "identity.wire-variant-id: frozen form (P0-4)."
+    }
+  }
+}

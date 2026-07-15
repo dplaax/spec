@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/decision-record.json",
+  "title": "DecisionRecord (archive actionability gate)",
+  "$comment": "Structural residue of the effect.* rules (P0-5). The artifact that makes archived data actionable (effect.archive.decision-record): it joins an ObservationRecord to the EvidenceViewID under which the decision was made. A RELEASE decision additionally references the ReleaseAuthorization; DENY / DENY_EXPIRED record the closed outcome without fabricating an evidence verdict (effect.expiry.deny-expired). $defs are inlined (no cross-file $ref).",
+  "type": "object",
+  "required": [
+    "decisionRecordId",
+    "observationRecordId",
+    "evidenceViewId",
+    "decision",
+    "decidedAt"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "decisionRecordId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observationRecordId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidenceViewId": {
+      "$ref": "#/$defs/contentAddress",
+      "$comment": "evidence.manifest.identity: the exact view the decision was derived from."
+    },
+    "decision": {
+      "enum": ["RELEASE", "DENY", "DENY_EXPIRED"],
+      "$comment": "The policy outcome, separate from the evidence verdict (claims.policy.profile-derived)."
+    },
+    "releaseAuthorizationId": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "Present exactly when decision is RELEASE (release-authorization.json)."
+    },
+    "decidedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "if": {
+    "properties": { "decision": { "const": "RELEASE" } }
+  },
+  "then": {
+    "required": ["releaseAuthorizationId"]
+  },
+  "$defs": {
+    "contentAddress": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "$comment": "resolver.address.form: sha256:<lowercase-hex>."
+    }
+  }
+}

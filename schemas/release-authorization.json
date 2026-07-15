@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/release-authorization.json",
+  "title": "ReleaseAuthorization (external-effect release gate)",
+  "$comment": "Structural residue of the effect.* rules (P0-5). The immutable, integrity-protected artifact that is the sole capability for an irreversible external effect (effect.authorization.artifact). It commits to the exact quarantine bytes, the exact evidence view, and the exact policy snapshot — everything a bare verdict lacks — and it is the versioned wire artifact the release worker consumes (effect.authorization.wire-artifact): no evaluator-internal state crosses the boundary. The field set here is the normative commit list; removing a member is a breaking change to the authorization contract. Canonicalized with jcs-rfc8785 (P0-4); counts and positions are decimal strings. $defs are inlined (no cross-file $ref).",
+  "type": "object",
+  "required": [
+    "authorizationId",
+    "issuer",
+    "quarantineEntryId",
+    "payloadDigest",
+    "bodyAddress",
+    "wireVariantId",
+    "spineVariantIds",
+    "sourceVariantIds",
+    "evidenceViewId",
+    "claimContractId",
+    "scopeCatalogVersion",
+    "requiredScopes",
+    "policyProfileId",
+    "policySnapshotDigest",
+    "inputSnapshotDigests",
+    "verdictArtifactDigest",
+    "decision",
+    "issuedAt",
+    "validUntil"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "authorizationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "issuer": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "The authorization issuer synthesizes the decision from the per-scope vector for the exact EvidenceViewID (audit.release.synthesis)."
+    },
+    "quarantineEntryId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payloadDigest": {
+      "$ref": "#/$defs/contentAddress"
+    },
+    "bodyAddress": {
+      "$ref": "#/$defs/contentAddress"
+    },
+    "wireVariantId": {
+      "$ref": "#/$defs/wireVariantId"
+    },
+    "spineVariantIds": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/wireVariantId" },
+      "$comment": "The exact proof-variant spine, origin → head, the evidence was evaluated over (effect.gate.full-spine); the last member is the head variant."
+    },
+    "sourceVariantIds": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/wireVariantId" },
+      "$comment": "Exact variants of profile-required consumed sources (commitment.source-root.canonicalizer-binding); empty when the profile requires none."
+    },
+    "evidenceViewId": {
+      "$ref": "#/$defs/contentAddress",
+      "$comment": "evidence.manifest.identity: the exact view the terminal verdict is bound to."
+    },
+    "claimContractId": {
+      "type": "string",
+      "pattern": "^[A-Z0-9_]+@[0-9]+$"
+    },
+    "scopeCatalogVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requiredScopes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z0-9_]+@[0-9]+$",
+        "$comment": "Members of the scope-catalog.json scopeName enum; the pattern is structural, the enum is the semantic bound (claims.catalog.enumerated)."
+      }
+    },
+    "policyProfileId": {
+      "enum": ["external-effect@1"],
+      "$comment": "The archetype this authorization was derived under (claims.profile.external-effect)."
+    },
+    "policySnapshotDigest": {
+      "$ref": "#/$defs/contentAddress"
+    },
+    "inputSnapshotDigests": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/contentAddress" },
+      "$comment": "Lifecycle / registry / trust-profile snapshots the evaluation read; a mismatch at dispatch time forces re-evaluation (effect.release.freshness)."
+    },
+    "verdictArtifactDigest": {
+      "$ref": "#/$defs/contentAddress",
+      "$comment": "Digest of the underlying committed evidence vector artifact (claims.vector.durable-commit)."
+    },
+    "decision": {
+      "const": "RELEASE",
+      "$comment": "A deny is a DecisionRecord / effect-status outcome, never a ReleaseAuthorization."
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "validUntil": {
+      "type": "string",
+      "format": "date-time",
+      "$comment": "Hard bound: past this instant the authorization cannot dispatch (effect.release.freshness)."
+    }
+  },
+  "$defs": {
+    "contentAddress": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "$comment": "resolver.address.form: sha256:<lowercase-hex>."
+    },
+    "wireVariantId": {
+      "type": "string",
+      "pattern": "^wire:v1:jcs-rfc8785:sha256:[0-9a-f]{64}$",
+      "$comment": "identity.wire-variant-id: frozen form (P0-4)."
+    }
+  }
+}

@@ -1,0 +1,469 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — external-effect release gate (quarantine / ReleaseAuthorization)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+# Source decision: P0-5 (B2). A sink separates receive from irreversible external
+# effect: durable quarantine, an exact ReleaseAuthorization, and a closed
+# effect state machine keep an adjacent-only or stale verdict from being
+# laundered into an external write.
+rules:
+  - id: effect.sink.classification
+    status: draft
+    class: core
+    statement: >-
+      A sink deployment MUST be classified under a versioned sink profile —
+      external-effect-sink@1 or archive-observation-sink@1 — and an archive
+      that cannot prove evidence-only isolation MUST be treated as
+      external-effect-sink@1.
+    uses: [process.catalog, claims.profile.external-effect]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      The name "archival" proves nothing about isolation: a store feeding a
+      warehouse, index, training corpus, or regulatory export is an actionable
+      downstream, so the burden of proof sits on the evidence-only claim, not
+      on the effect classification. legacy-adjacent-write@1 exists only as a
+      migration posture (effect.migration.exclusive-writers) and can never
+      issue effect contracts.
+
+  - id: effect.gate.verified-scopes
+    status: draft
+    class: core
+    statement: >-
+      An external-effect-sink@1 deployment MUST execute an irreversible
+      external effect only after every scope required by its claim contract is
+      VERIFIED on the exact evidence view; a required FAILED scope MUST make
+      the entry ineligible for release.
+    uses: [claims.profile.external-effect, claims.policy.no-accept-non-verified, evidence.cache.exact-view]
+    schemas: []
+    vectors: []
+    notes: >-
+      This is the P0-0 external-effect profile landed on the sink: the gate is
+      the full required scope set of the profile, not the subset that happens
+      to be cheap to evaluate at receive time.
+
+  - id: effect.gate.full-spine
+    status: draft
+    class: core
+    statement: >-
+      Full chain for an external-effect release MUST mean the complete
+      previousCredential spine from head to origin; every additional scope the
+      profile marks required (source binding, lifecycle, order anchors) MUST
+      be VERIFIED before release.
+    uses: [process.sink.verify, confidence.composition.weakest-link, evidence.spine.bounded-dag]
+    schemas: []
+    vectors: []
+    notes: >-
+      An adjacent credential can be Verified while an ancestor is failed,
+      revoked, or missing; weakest-link composition only means something if
+      the composition window is the whole spine, not the last hop.
+
+  - id: effect.gate.no-bare-verdict
+    status: draft
+    class: core
+    statement: >-
+      A release decision MUST NOT be derived from an overall or aggregate
+      verdict, a body-level latest verdict, or an adjacent-only verdict; the
+      input MUST be the per-scope evidence vector bound to the exact
+      EvidenceViewID.
+    uses: [evidence.manifest.identity, evidence.view.terminal-verdict, claims.vector.durable-commit]
+    schemas: []
+    vectors: []
+    notes: >-
+      A body-keyed latest record is a laundering channel: a later, weaker
+      evaluation can overwrite a stronger one, and an aggregate flag carries
+      neither variant identity nor coverage. Only the exact view's vector says
+      what was actually checked.
+
+  - id: effect.state.closed-machine
+    status: draft
+    class: core
+    statement: >-
+      Effect state MUST use only the ten states and the transition table
+      fixed by effect-status.json; a deployment MUST NOT add states or
+      transitions, and EFFECT_UNKNOWN MUST resolve only through target
+      reconciliation to EFFECT_CONFIRMED or EFFECT_FAILED.
+    uses: [claims.policy.no-accept-non-verified]
+    schemas: [effect-status.json]
+    vectors: []
+    notes: >-
+      The ten states: RECEIVED → QUARANTINED → EVIDENCE_VERIFIED →
+      RELEASE_AUTHORIZED → DISPATCHING → EFFECT_CONFIRMED / EFFECT_UNKNOWN /
+      EFFECT_FAILED, plus QUARANTINED → DENIED / DENY_EXPIRED. A closed
+      machine is what makes the gate auditable: every path from receive to
+      irreversible effect passes RELEASE_AUTHORIZED. EFFECT_UNKNOWN is not
+      terminal-forever — a target lookup that finds the effect moves the
+      entry to EFFECT_CONFIRMED without re-writing, one that proves absence
+      moves it to EFFECT_FAILED (or back through an idempotency-capable
+      dispatch path); what is closed is guessing.
+
+  - id: effect.authorization.artifact
+    status: draft
+    class: core
+    statement: >-
+      A release MUST be authorized by an immutable, integrity-protected
+      ReleaseAuthorization committing to the field set fixed by
+      release-authorization.json; dispatch without one, or from a mutated one,
+      MUST NOT occur.
+    uses: [evidence.manifest.identity, identity.wire-variant-id, claims.catalog.enumerated]
+    schemas: [release-authorization.json]
+    vectors: []
+    notes: >-
+      The committed set (authorization id, issuer, quarantine entry, payload
+      digest, body address, WireVariantID, spine/source variant vectors,
+      EvidenceViewID, claim contract, scope catalog version, required scopes,
+      policy profile, policy/input snapshot digests, verdict artifact digest,
+      decision, issued_at, valid_until) is exactly what a bare verdict lacks:
+      it pins which bytes, under which evidence, under which policy, until
+      when.
+
+  - id: effect.authorization.wire-artifact
+    status: draft
+    class: core
+    statement: >-
+      The authorization path from evidence evaluation to release MUST cross a
+      versioned wire artifact; a release worker MUST NOT consume
+      evaluator-internal state through direct code linkage as its release
+      input.
+    uses: [effect.authorization.artifact]
+    schemas: [release-authorization.json]
+    vectors: []
+    notes: >-
+      The audit-to-write feedback gap closed by this round was structural — the
+      layers could not talk. The fix is also structural: the only thing a
+      release worker understands is the artifact, so an implementation cannot
+      quietly re-open a package-import shortcut around the gate.
+
+  - id: effect.release.exact-bytes
+    status: draft
+    class: core
+    statement: >-
+      A release worker MUST match the ReleaseAuthorization against the exact
+      stored quarantine bytes (payload digest and wire variant) and MUST NOT
+      re-fetch the payload from an external source for release.
+    uses: [effect.authorization.artifact, identity.variant.immutable-set]
+    schemas: [quarantine-entry.json]
+    vectors: []
+    notes: >-
+      What was verified is a specific byte sequence; a re-fetch substitutes
+      whatever the source serves now. The quarantine store is the custody
+      chain between evaluation and effect.
+
+  - id: effect.release.freshness
+    status: draft
+    class: core
+    statement: >-
+      A ReleaseAuthorization past valid_until, or whose policy, lifecycle
+      freshness, or input snapshots no longer match, MUST NOT dispatch; the
+      entry MUST be re-evaluated. A past VERIFIED MUST NOT act as a permanent
+      release capability.
+    uses: [effect.authorization.artifact, liveness.cache.bounded-freshness]
+    schemas: [release-authorization.json]
+    vectors: []
+    notes: >-
+      Same shape as the P0-2 liveness split: historical truth does not expire,
+      but the permission to act on it does. valid_until is the bound that
+      keeps an old authorization from becoming a standing capability.
+
+  - id: effect.quarantine.atomic-entry
+    status: draft
+    class: core
+    statement: >-
+      A quarantine entry MUST atomically persist the credential wire variant,
+      payload bytes, payload digest, delivery metadata, and sink profile id; a
+      partially persisted entry MUST NOT become eligible for evaluation or
+      release.
+    uses: [admission.quarantine.class]
+    schemas: [quarantine-entry.json]
+    vectors: []
+    notes: >-
+      Atomicity is what lets every later stage (evaluation, authorization,
+      dispatch, receipt) refer back to one immutable thing. A torn entry —
+      payload without variant, metadata without digest — is unmatchable
+      against any authorization.
+
+  - id: effect.quarantine.structural-pregate
+    status: draft
+    class: core
+    statement: >-
+      Decidable structural gates — payload binding, wire decode, allow-list —
+      MUST run before quarantine admission; their failure MUST reject the
+      delivery instead of consuming quarantine capacity.
+    uses: [effect.quarantine.atomic-entry]
+    schemas: []
+    vectors: []
+    notes: >-
+      Quarantine holds things whose verdict is pending, not things already
+      known malformed. Spending durable capacity on undecodable input converts
+      a cheap reject into a storage cost an attacker controls.
+
+  - id: effect.verdict.mapping
+    status: draft
+    class: core
+    statement: >-
+      Adjacent FAILED MUST map to DENIED; adjacent or full-evidence
+      INDETERMINATE MUST map to bounded quarantine; a required scope FAILED
+      MUST make release impossible while that verdict stands.
+    uses: [claims.policy.no-accept-non-verified, evidence.indeterminate.not-failed]
+    schemas: [effect-status.json]
+    vectors: []
+    notes: >-
+      The three-way split keeps the axes honest: FAILED is a verdict and
+      denies, INDETERMINATE is an open question and holds, and neither is
+      rewritten by how long the question stays open
+      (effect.expiry.deny-expired).
+
+  - id: effect.expiry.deny-expired
+    status: draft
+    class: core
+    statement: >-
+      Quarantine TTL or attempt exhaustion MUST NOT alter the evidence
+      verdict: the record keeps evidence INDETERMINATE and the policy decision
+      becomes DENY_EXPIRED; expiry MUST NOT be projected to FAILED.
+    uses: [evidence.indeterminate.not-failed, claims.policy.profile-derived]
+    schemas: [effect-status.json]
+    vectors: []
+    notes: >-
+      A permanent hole is an operational outcome, not a cryptographic
+      failure. Laundering it into FAILED would fabricate a verdict no
+      evaluation produced; DENY_EXPIRED records the honest thing — we stopped
+      waiting. This is the exit of the bounded quarantine hold in
+      claims.policy.no-accept-non-verified, not a competing mapping:
+      INDETERMINATE holds (QUARANTINE) while the bound runs, and DENY_EXPIRED
+      is the disposition at the bound. The evidence-view.json policyDecision
+      enum carries it as a fourth decision value.
+
+  - id: effect.dispatch.single-flight
+    status: draft
+    class: core
+    statement: >-
+      State transitions MUST be protected by compare-and-swap or generation
+      fencing so that concurrent release workers MUST NOT dispatch the same
+      quarantine entry twice.
+    uses: [effect.state.closed-machine]
+    schemas: [effect-status.json]
+    vectors: []
+    notes: >-
+      Multi-writer fencing and HA substrate are P1-D delivery items; the
+      invariant that at most one worker wins a transition is contract now,
+      whatever substrate later provides it.
+
+  - id: effect.state.confirmed-only
+    status: draft
+    class: core
+    statement: >-
+      A local write attempt MUST NOT be recorded as release success; the only
+      success state is EFFECT_CONFIRMED, a pre-existing effect-complete
+      status MUST keep meaning effect completion, and quarantine-only success
+      MUST use a distinct status.
+    uses: [effect.state.closed-machine]
+    schemas: [effect-status.json]
+    vectors: []
+    notes: >-
+      "We called Write()" and "the target applied the effect" are different
+      facts separated by every crash and timeout in between. The legacy
+      passed-status keeps meaning effect-complete; quarantine-only success
+      gets its own status so old readers are never lied to.
+
+  - id: effect.state.unknown-no-retry
+    status: draft
+    class: core
+    statement: >-
+      An ambiguous external write MUST transition to EFFECT_UNKNOWN; it MUST
+      NOT be guessed into failure, and automatic retry from EFFECT_UNKNOWN
+      MUST occur only through an idempotency-capable writer path.
+    uses: [effect.state.closed-machine, effect.writer.capability]
+    schemas: [effect-status.json]
+    vectors: []
+    notes: >-
+      A timeout after the request left the process is not evidence the effect
+      did not happen. Blind retry is how one authorized release becomes two
+      external effects; only a writer that can look up or deduplicate its own
+      effect is allowed to resolve the ambiguity automatically.
+
+  - id: effect.writer.capability
+    status: draft
+    class: core
+    statement: >-
+      An external-effect-sink@1 writer MUST provide at least one of:
+      put-if-absent on an idempotency key, a keyed command with effect
+      lookup, a transactional outbox/inbox, or a prepare/commit status
+      protocol — or MUST be declared under the limited profile.
+    uses: [effect.sink.classification]
+    schemas: []
+    vectors: []
+    notes: >-
+      Local state cannot make an external effect idempotent; only the target
+      side can. The four capabilities are the known shapes of that
+      cooperation; a writer offering none of them is handled by
+      effect.writer.limited-profile.
+
+  - id: effect.writer.limited-profile
+    status: draft
+    class: core
+    statement: >-
+      A writer lacking every idempotency capability MUST be declared a
+      limited profile; after EFFECT_UNKNOWN it MUST NOT retry automatically
+      and resolution MUST be recorded as manual reconciliation.
+    uses: [effect.writer.capability, effect.state.unknown-no-retry]
+    schemas: []
+    vectors: []
+    notes: >-
+      Limited is a disclosure, not a punishment: the deployment still works,
+      but its ambiguity handling is a human process, and the profile label is
+      what keeps that fact visible to consumers and operators.
+
+  - id: effect.delivery.identity
+    status: draft
+    class: core
+    statement: >-
+      A delivery identity MUST include at least the sink contract, sink
+      instance, target namespace, quarantine entry or delivery occurrence,
+      and the body/variant pair; distinct legitimate deliveries MUST NOT
+      collapse into one identity.
+    uses: [identity.wire-variant-id]
+    schemas: [effect-status.json]
+    vectors: []
+    notes: >-
+      The same credential can be legitimately delivered to two targets, or
+      twice to one target under two occurrences; an idempotency key coarser
+      than the delivery identity silently drops one of them.
+
+  - id: effect.claim.no-local-exactly-once
+    status: draft
+    class: core
+    statement: >-
+      Local sink state alone MUST NOT ground an EXACTLY_ONCE or an end-to-end
+      AT_MOST_ONCE claim; those are independent delivery claims and MUST be
+      evaluated as their own scopes.
+    uses: [claims.receipt.effect-separated]
+    schemas: [scope-catalog.json]
+    vectors: []
+    notes: >-
+      RECEIPT_IDEMPOTENCY@1 / RECEIPT_EXACTLY_ONCE@1 stay separate scopes with
+      their own evidence (P1-D: outbox, effect lookup, crash matrix). What the
+      sink can honestly say from its own state is only which effect states it
+      observed.
+
+  - id: effect.receipt.confirmed-only
+    status: draft
+    class: core
+    statement: >-
+      A delivery receipt MUST be issued only after EFFECT_CONFIRMED and MUST
+      bind the delivery identity, the ReleaseAuthorization digest, and the
+      target acknowledgement reference.
+    uses: [process.sink.receipt, effect.delivery.identity, effect.authorization.artifact]
+    schemas: []
+    vectors: []
+    notes: >-
+      A receipt issued before confirmation attests an intention, not an
+      effect. Binding the authorization digest makes the receipt auditable
+      back through the exact evidence that permitted the effect.
+
+  - id: effect.receipt.limited-claim
+    status: draft
+    class: core
+    statement: >-
+      A receipt MUST claim only that the sink observed an effect
+      confirmation; it MUST NOT be promoted to target-side truth,
+      exactly-once delivery, or business success.
+    uses: [claims.receipt.effect-separated, effect.receipt.confirmed-only]
+    schemas: []
+    vectors: []
+    notes: >-
+      The target acknowledged; that is all the sink knows. Whether the target
+      later lost the write, deduplicated it, or rejected it at a business
+      layer are separate questions with separate evidence.
+
+  - id: effect.archive.observation-record
+    status: draft
+    class: core
+    statement: >-
+      Pre-verification archival MUST write an append-only ObservationRecord
+      carrying the exact variant and payload with coverage NOT_EVALUATED; an
+      ObservationRecord MUST NOT be presented as accepted, verified, or
+      released.
+    uses: [claims.coverage.three-value, identity.variant.immutable-set]
+    schemas: [observation-record.json]
+    vectors: []
+    notes: >-
+      Observation is a legitimate need (we saw these bytes at this time) and
+      gets an artifact that says exactly that — coverage NOT_EVALUATED — so
+      the act of storing can never masquerade as the act of accepting.
+
+  - id: effect.archive.decision-record
+    status: draft
+    class: core
+    statement: >-
+      An actionable consumer MUST read archived data only through a
+      DecisionRecord whose decision is RELEASE, referencing the
+      ObservationRecord and the EvidenceViewID under which release was
+      decided; a DENY or DENY_EXPIRED record MUST NOT enable consumption.
+    uses: [effect.archive.observation-record, evidence.manifest.identity]
+    schemas: [decision-record.json]
+    vectors: []
+    notes: >-
+      The join is the gate: observation says what exists, decision says what
+      may be acted on and under which evidence. A consumer reading
+      observations directly has bypassed the release gate by construction.
+
+  - id: effect.quarantine.capacity
+    status: draft
+    class: core
+    statement: >-
+      A quarantine store MUST enforce global and per-principal byte quotas,
+      retention, backpressure, disk alerts, crash recovery, and an
+      encryption-at-rest policy fixed by the deployment profile.
+    uses: [admission.quarantine.class]
+    schemas: [quarantine-entry.json]
+    vectors: []
+    notes: >-
+      Quarantine buffers untrusted bytes by design, so its capacity is an
+      attack surface: a valid-adjacent flood or a permanent-hole flood is a
+      storage DoS. Confidentiality/retention/key management details are P1-F
+      allocations; the obligation to have a policy is not deferred.
+
+  - id: effect.quarantine.no-fallback
+    status: draft
+    class: core
+    statement: >-
+      Quarantine capacity exhaustion MUST surface as rejection or
+      backpressure; it MUST NOT fall back to an unverified external write.
+    uses: [effect.quarantine.capacity, admission.verify-to-admit.backpressure]
+    schemas: []
+    vectors: []
+    notes: >-
+      Overload is an availability condition. Degrading it to an unverified
+      effect would let an attacker convert a flood into a gate bypass —
+      the exact laundering path this round exists to close.
+
+  - id: effect.migration.exclusive-writers
+    status: draft
+    class: core
+    statement: >-
+      A legacy synchronous writer and the release worker MUST NOT be enabled
+      for the same delivery target concurrently; the cutover feature gate
+      MUST be mutually exclusive per sink.
+    uses: [effect.state.confirmed-only]
+    schemas: []
+    vectors: []
+    notes: >-
+      Running both writers doubles effects and splits the state machine's
+      custody of the target. Cutover is per-sink and one-way while active;
+      returning to the legacy adjacent-write path is a dated,
+      decision-owner-approved risk acceptance, not a rollback default.
+
+  - id: effect.transport.possible-loss
+    status: draft
+    class: core
+    statement: >-
+      While the inbound transport can drop a delivery before the quarantine
+      entry is durably committed, the deployment MUST surface that window as
+      POSSIBLE_LOSS to operators; it MUST NOT be reported as loss-free.
+    uses: [effect.quarantine.atomic-entry]
+    schemas: []
+    vectors: []
+    notes: >-
+      Core NATS is at-most-once: an event can vanish between transport accept
+      and quarantine commit. Durable consumers/outbox close the window
+      (P1-D); until then the honest posture is a visible POSSIBLE_LOSS
+      indicator, not silence.

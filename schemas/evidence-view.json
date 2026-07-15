@@ -131,7 +131,7 @@
       "required": ["decision", "decisionProfileId"],
       "additionalProperties": true,
       "properties": {
-        "decision": { "enum": ["ACCEPT", "QUARANTINE", "DENY"] },
+        "decision": { "enum": ["ACCEPT", "QUARANTINE", "DENY", "DENY_EXPIRED"] },
         "decisionProfileId": { "$ref": "#/$defs/versionedId" }
       }
     }

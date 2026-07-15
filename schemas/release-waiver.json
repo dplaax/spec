@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/release-waiver.json",
+  "title": "ReleaseWaiver (dated, owned, reversal-conditioned)",
+  "$comment": "Structural residue of the release.* rules (P0-7). The versioned waiver contract (release.waiver.contract): every field is mandatory because a waiver missing an owner, an expiry, or a reversal condition is a permanent exception, which this artifact exists to prevent. Scanner-outage waivers use the same shape (release.waiver.scanner-outage). autoRenew is pinned false — renewal is a fresh decision on fresh evidence. $defs are inlined (no cross-file $ref).",
+  "type": "object",
+  "required": [
+    "waiverId",
+    "advisoryId",
+    "componentRef",
+    "subjectDigest",
+    "assessmentRef",
+    "owner",
+    "approver",
+    "issuedAt",
+    "expiry",
+    "policyVersion",
+    "reversalCondition",
+    "reevaluationTriggers",
+    "autoRenew"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "waiverId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "advisoryId": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "For a scanner-outage waiver: the outage/staleness incident identifier instead of an advisory."
+    },
+    "componentRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subjectDigest": {
+      "$ref": "#/$defs/contentAddress",
+      "$comment": "The exact artifact this waiver covers; it does not travel to any other digest (release.evidence.subject-binding)."
+    },
+    "assessmentRef": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "The advisory-assessment.json assessmentId whose classification this waiver rides on; assumption drift there invalidates this waiver early (release.waiver.invalidation)."
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approver": {
+      "type": "string",
+      "minLength": 1
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiry": {
+      "type": "string",
+      "format": "date-time",
+      "$comment": "Within the policy's duration cap (release.profile.versioned)."
+    },
+    "policyVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reversalCondition": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "The pre-declared condition under which this waiver is withdrawn."
+    },
+    "reevaluationTriggers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "autoRenew": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "contentAddress": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "$comment": "resolver.address.form: sha256:<lowercase-hex>."
+    }
+  }
+}

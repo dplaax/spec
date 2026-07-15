@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/advisory-assessment.json",
+  "title": "AdvisoryAssessment (finding classification, exact-binding)",
+  "$comment": "Structural residue of the release.* rules (P0-7). One assessment per (advisory, component, subject): the classification plus the exact bindings that scope it (release.advisory.reachability-binding). component_absent is the only classification that exits the waiver path, and only via the final artifact's SBOM (release.advisory.component-absent); everything else stays a finding — evidence, never erasure (release.decision.evidence-separated). $defs are inlined (no cross-file $ref).",
+  "type": "object",
+  "required": [
+    "assessmentId",
+    "advisoryId",
+    "componentRef",
+    "subjectDigest",
+    "severity",
+    "classification",
+    "scanner",
+    "assessedAt"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "assessmentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "advisoryId": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "CVE / GHSA / ecosystem advisory identifier."
+    },
+    "componentRef": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "Package URL (purl) or equivalent exact component reference, matching the SBOM entry it is judged against."
+    },
+    "subjectDigest": {
+      "$ref": "#/$defs/contentAddress"
+    },
+    "sourceDigest": {
+      "$ref": "#/$defs/contentAddress",
+      "$comment": "Digest of the exact source snapshot the reachability analysis read, when the analysis is source-based."
+    },
+    "severity": {
+      "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    },
+    "classification": {
+      "enum": ["component_absent", "unreachable", "potentially_reachable", "reachable"],
+      "$comment": "Reachable HIGH/CRITICAL blocks release non-waivably (release.gate.high-critical-zero); unreachable still needs a dated waiver (release.advisory.unreachable-waiver); no positive evidence defaults to potentially_reachable."
+    },
+    "reachabilityBinding": {
+      "type": "object",
+      "additionalProperties": true,
+      "$comment": "The assumptions the classification is parasitic on; drift in any of them invalidates dependent waivers early (release.waiver.invalidation).",
+      "properties": {
+        "entrypoints": { "type": "array", "items": { "type": "string" } },
+        "platform": { "type": "string" },
+        "buildFlags": { "type": "array", "items": { "type": "string" } },
+        "configurationAssumptions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "scanner": {
+      "type": "object",
+      "required": ["tool", "toolVersion", "dbSnapshotId"],
+      "additionalProperties": true,
+      "properties": {
+        "tool": { "type": "string" },
+        "toolVersion": { "type": "string" },
+        "ruleset": { "type": "string" },
+        "dbSnapshotId": { "type": "string" }
+      }
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "$comment": "Call-graph output, SBOM entry, analysis artifacts — the positive evidence behind an unreachable classification."
+    },
+    "sbomRef": {
+      "$ref": "#/$defs/contentAddress",
+      "$comment": "The SBOM digest the component_absent check was made against (release.advisory.component-absent); required for that classification."
+    },
+    "assessedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "An unreachable classification is only as good as its bindings and its positive evidence (release.advisory.reachability-binding); a schema-valid unreachable with none of them is the laundering the rules prohibit.",
+      "if": {
+        "properties": { "classification": { "const": "unreachable" } }
+      },
+      "then": {
+        "required": ["reachabilityBinding", "evidenceRefs", "sourceDigest"],
+        "properties": {
+          "reachabilityBinding": { "required": ["entrypoints", "platform", "configurationAssumptions"] },
+          "evidenceRefs": { "minItems": 1 },
+          "scanner": { "required": ["ruleset"] }
+        }
+      }
+    },
+    {
+      "$comment": "component_absent is self-verifying only against a named SBOM of the final artifact (release.advisory.component-absent).",
+      "if": {
+        "properties": { "classification": { "const": "component_absent" } }
+      },
+      "then": { "required": ["sbomRef"] }
+    }
+  ],
+  "$defs": {
+    "contentAddress": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "$comment": "resolver.address.form: sha256:<lowercase-hex>."
+    }
+  }
+}

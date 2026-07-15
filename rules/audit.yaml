@@ -64,3 +64,20 @@ rules:
       onward, not what preceded"): the extension is grounded in the
       accountability-follows-the-last-cryptographic-link reasoning above,
       not an external paper.
+
+  - id: audit.release.synthesis
+    status: draft
+    class: core
+    statement: >-
+      A ReleaseAuthorization issuer MUST synthesize the decision from the
+      per-scope evidence vector committed for the exact EvidenceViewID and
+      MUST commit the underlying verdict artifact digest into the
+      authorization.
+    uses: [claims.vector.durable-commit, evidence.manifest.identity]
+    schemas: [release-authorization.json]
+    vectors: []
+    notes: >-
+      The issuer side of effect.gate.no-bare-verdict (P0-5): synthesis reads
+      the durably committed vector, never an aggregate flag or a body-keyed
+      latest record, and the committed digest is what lets an independent
+      reader re-derive the same required-scope decision.

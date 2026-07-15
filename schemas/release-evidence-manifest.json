@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/release-evidence-manifest.json",
+  "title": "ReleaseEvidenceManifest (exact artifact-bound release gate)",
+  "$comment": "Structural residue of the release.* rules (P0-7). One manifest per release subject: the exact output digest (release.subject.exact-digest) with every piece of evidence — build inputs, toolchain, scans, SBOM, provenance, waivers, decision — bound to that digest (release.evidence.subject-binding). The ArtifactSBOMReference and BuildProvenanceReference artifacts from the decision ledger live here as $defs (sbomReference / provenanceReference); they are reference shapes, not standalone files. $defs are inlined (no cross-file $ref).",
+  "type": "object",
+  "required": [
+    "subjectDigest",
+    "subjectType",
+    "sourceCommit",
+    "scans",
+    "releaseDecision",
+    "policyVersion"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "subjectDigest": {
+      "$ref": "#/$defs/contentAddress"
+    },
+    "subjectType": {
+      "enum": ["oci-image", "oci-image-index", "npm-package", "go-binary", "file"],
+      "$comment": "An oci-image-index subject additionally enumerates platformManifests (release.pin.image-digest)."
+    },
+    "platformManifests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["platform", "manifestDigest"],
+        "additionalProperties": true,
+        "properties": {
+          "platform": { "type": "string", "minLength": 1 },
+          "manifestDigest": { "$ref": "#/$defs/contentAddress" }
+        }
+      },
+      "$comment": "Required when subjectType is oci-image-index; each member is a scan subject of its own (release.scan.coverage)."
+    },
+    "sourceCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "$comment": "Full commit SHA (release.pin.source-exact). A locator, not the release identity."
+    },
+    "buildWorkflowRef": {
+      "type": "object",
+      "additionalProperties": true,
+      "$comment": "Repository / workflow path / action SHAs the release ran under (release.pin.action-sha); the provenance verifier pins the same fields independently (release.provenance.trusted-builder).",
+      "properties": {
+        "repository": { "type": "string" },
+        "workflowPath": { "type": "string" },
+        "actionPins": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["action", "commitSha"],
+            "additionalProperties": true,
+            "properties": {
+              "action": { "type": "string" },
+              "commitSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+            }
+          }
+        }
+      }
+    },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": true,
+      "$comment": "Tested-is-shipped evidence (release.toolchain.tested-is-shipped): the tested and shipped versions are recorded and equal.",
+      "properties": {
+        "go": { "type": "string" },
+        "node": { "type": "string" }
+      }
+    },
+    "buildInputManifest": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "kind", "pin"],
+        "additionalProperties": true,
+        "properties": {
+          "name": { "type": "string" },
+          "kind": {
+            "enum": ["base-image", "os-package", "package-manager", "build-frontend", "runner-image", "other"]
+          },
+          "pin": {
+            "type": "string",
+            "$comment": "Digest / version pin, or the literal 'unpinned' — enumerating an unpinned input is what keeps IMMUTABLE_ARTIFACT and REPRODUCIBLE_BUILD separate claims (release.claim.reproducible-separate)."
+          }
+        }
+      }
+    },
+    "scans": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/scanArtifact" }
+    },
+    "sbom": {
+      "$ref": "#/$defs/sbomReference"
+    },
+    "provenance": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/provenanceReference" }
+    },
+    "waiverIds": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "$comment": "References into release-waiver.json artifacts; the count surfaces in the headline (release.headline.policy-id)."
+    },
+    "reproduction": {
+      "type": "object",
+      "$comment": "Second-build evidence for REPRODUCIBLE_BUILD@1 (release.claim.reproducible-separate): an independent clean builder deriving the same digest. reproducedDigest matching subjectDigest is a semantic check (vector-pinned), not expressible here.",
+      "required": ["secondBuilderId", "reproducedDigest", "reproducedAt"],
+      "additionalProperties": true,
+      "properties": {
+        "secondBuilderId": { "type": "string", "minLength": 1 },
+        "reproducedDigest": { "$ref": "#/$defs/contentAddress" },
+        "reproducedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "releaseDecision": {
+      "type": "object",
+      "required": ["policyId", "decision", "waiverCount"],
+      "additionalProperties": true,
+      "properties": {
+        "policyId": { "type": "string", "minLength": 1 },
+        "decision": {
+          "enum": ["ALLOW", "ALLOW_WITH_WAIVER", "BLOCK"],
+          "$comment": "The policy outcome; findings stay recorded as evidence regardless (release.decision.evidence-separated)."
+        },
+        "waiverCount": { "$ref": "#/$defs/decimalString" }
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "enum": ["IMMUTABLE_ARTIFACT@1", "REPRODUCIBLE_BUILD@1", "TRUSTED_SUPPLY_CHAIN@1"]
+      },
+      "$comment": "The release claims actually asserted. A baseline-gate release asserts at most IMMUTABLE_ARTIFACT@1 (release.claim.baseline-cap)."
+    },
+    "policyVersion": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "The versioned public release profile in force (release.profile.versioned)."
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "An index subject without its per-platform manifests lets one architecture ship unscanned (release.pin.image-digest / release.scan.coverage).",
+      "if": {
+        "properties": { "subjectType": { "const": "oci-image-index" } }
+      },
+      "then": { "required": ["platformManifests"] }
+    },
+    {
+      "$comment": "TRUSTED_SUPPLY_CHAIN rides on verified provenance (release.claim.baseline-cap); a manifest claiming it must carry the provenance references it was verified from.",
+      "if": {
+        "required": ["claims"],
+        "properties": { "claims": { "contains": { "const": "TRUSTED_SUPPLY_CHAIN@1" } } }
+      },
+      "then": {
+        "required": ["provenance", "sbom", "buildWorkflowRef"],
+        "properties": { "provenance": { "minItems": 1 } }
+      }
+    },
+    {
+      "$comment": "REPRODUCIBLE_BUILD needs the enumerated build-input closure the second builder consumed (release.claim.reproducible-separate).",
+      "if": {
+        "required": ["claims"],
+        "properties": { "claims": { "contains": { "const": "REPRODUCIBLE_BUILD@1" } } }
+      },
+      "then": { "required": ["buildInputManifest", "reproduction"] }
+    }
+  ],
+  "$defs": {
+    "contentAddress": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "$comment": "resolver.address.form: sha256:<lowercase-hex>."
+    },
+    "decimalString": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "$comment": "canon.number.safe-integer: a count in the string domain, not a JSON number."
+    },
+    "scanArtifact": {
+      "type": "object",
+      "$comment": "release.scan.artifact-fields + release.scan.state-machine: one scan of one subject surface.",
+      "required": ["tool", "toolVersion", "dbSnapshotId", "dbUpdatedAt", "policyVersion", "platform", "coverage", "state", "subjectDigest"],
+      "additionalProperties": true,
+      "properties": {
+        "tool": { "type": "string" },
+        "toolVersion": { "type": "string" },
+        "dbSnapshotId": { "type": "string" },
+        "dbUpdatedAt": { "type": "string", "format": "date-time" },
+        "policyVersion": { "type": "string" },
+        "platform": { "type": "string" },
+        "coverage": {
+          "enum": ["source-graph", "shipped-binary", "npm-tarball", "oci-platform-manifest", "runtime-os-packages", "builder"],
+          "$comment": "release.scan.coverage: the enumerated surfaces; a surface with no scan artifact was not covered."
+        },
+        "state": {
+          "enum": ["CLEAN", "FINDINGS", "TOOL_ERROR", "DB_STALE", "UNSUPPORTED"],
+          "$comment": "release.scan.state-machine: error states never project to zero advisories."
+        },
+        "subjectDigest": { "$ref": "#/$defs/contentAddress" },
+        "findingRefs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "$comment": "References into advisory-assessment.json artifacts when state is FINDINGS."
+        }
+      }
+    },
+    "sbomReference": {
+      "type": "object",
+      "$comment": "ArtifactSBOMReference (release.sbom.subject-bound): the SBOM binding, generator identity, and coverage — generation alone grounds no completeness claim.",
+      "required": ["subjectDigest", "sbomDigest", "format", "generator", "generatorVersion", "componentCoverage"],
+      "additionalProperties": true,
+      "properties": {
+        "subjectDigest": { "$ref": "#/$defs/contentAddress" },
+        "sbomDigest": { "$ref": "#/$defs/contentAddress" },
+        "format": { "enum": ["cyclonedx", "spdx"] },
+        "generator": { "type": "string" },
+        "generatorVersion": { "type": "string" },
+        "componentCoverage": { "type": "string" }
+      }
+    },
+    "provenanceReference": {
+      "type": "object",
+      "$comment": "BuildProvenanceReference (release.provenance.trusted-builder / .per-ecosystem): the pinned verification fields; an attestation matching fewer fields is rejected.",
+      "required": ["ecosystem", "predicateType", "builderIdentity", "repository", "workflowPath", "sourceCommit", "subjectDigest", "attestationDigest"],
+      "additionalProperties": true,
+      "properties": {
+        "ecosystem": { "enum": ["oci", "npm"] },
+        "predicateType": { "type": "string" },
+        "builderIdentity": { "type": "string" },
+        "repository": { "type": "string" },
+        "workflowPath": { "type": "string" },
+        "sourceCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "subjectDigest": { "$ref": "#/$defs/contentAddress" },
+        "attestationDigest": { "$ref": "#/$defs/contentAddress" }
+      }
+    }
+  }
+}

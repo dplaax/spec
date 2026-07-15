@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://poc.dplaax.dev/schemas/effect-status.json",
+  "title": "Effect status record (closed quarantine/release state machine)",
+  "$comment": "Structural residue of the effect.* rules (P0-5). One record per state transition of a quarantine entry under the closed machine (effect.state.closed-machine): RECEIVED → QUARANTINED → EVIDENCE_VERIFIED → RELEASE_AUTHORIZED → DISPATCHING → EFFECT_CONFIRMED | EFFECT_UNKNOWN | EFFECT_FAILED, plus QUARANTINED → DENIED | DENY_EXPIRED. The generation field carries the compare-and-swap fencing token (effect.dispatch.single-flight) as a decimal string. The only success state is EFFECT_CONFIRMED (effect.state.confirmed-only); EFFECT_UNKNOWN is an observation of ambiguity, never a guessed failure (effect.state.unknown-no-retry). $defs are inlined (no cross-file $ref).",
+  "type": "object",
+  "required": [
+    "quarantineEntryId",
+    "state",
+    "generation",
+    "occurredAt"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "quarantineEntryId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "$ref": "#/$defs/effectState"
+    },
+    "previousState": {
+      "$ref": "#/$defs/effectState"
+    },
+    "generation": {
+      "$ref": "#/$defs/decimalString",
+      "$comment": "Monotonic per entry; a transition is valid only when it wins the compare-and-swap on this token (effect.dispatch.single-flight)."
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "releaseAuthorizationId": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "Present from RELEASE_AUTHORIZED onward (release-authorization.json)."
+    },
+    "deliveryIdentity": {
+      "$ref": "#/$defs/deliveryIdentity"
+    },
+    "targetAcknowledgementRef": {
+      "type": "string",
+      "$comment": "Present in EFFECT_CONFIRMED: the reference a receipt binds (effect.receipt.confirmed-only)."
+    },
+    "reason": {
+      "type": "string",
+      "$comment": "Non-normative operator context (deny reason label, timeout class, etc.)."
+    },
+    "writerProfile": {
+      "enum": ["idempotency-capable@1", "limited-manual-reconciliation@1"],
+      "$comment": "effect.writer.capability / .limited-profile: which writer conformance class handled this delivery. Kept in sync with scope-catalog.json writerCapabilityProfile. A limited writer never re-enters DISPATCHING from EFFECT_UNKNOWN."
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "From RELEASE_AUTHORIZED onward the authorization is a mandatory binding (effect.authorization.artifact), not an optional annotation.",
+      "if": {
+        "properties": {
+          "state": {
+            "enum": ["RELEASE_AUTHORIZED", "DISPATCHING", "EFFECT_CONFIRMED", "EFFECT_UNKNOWN", "EFFECT_FAILED"]
+          }
+        }
+      },
+      "then": { "required": ["releaseAuthorizationId"] }
+    },
+    {
+      "$comment": "A dispatch and every effect outcome are about one delivery (effect.delivery.identity); a record without the identity cannot be deduplicated or reconciled.",
+      "if": {
+        "properties": {
+          "state": {
+            "enum": ["DISPATCHING", "EFFECT_CONFIRMED", "EFFECT_UNKNOWN", "EFFECT_FAILED"]
+          }
+        }
+      },
+      "then": { "required": ["deliveryIdentity"] }
+    },
+    {
+      "$comment": "EFFECT_CONFIRMED means target confirmation was observed (effect.state.confirmed-only); the acknowledgement reference is what a receipt binds (effect.receipt.confirmed-only).",
+      "if": {
+        "properties": { "state": { "const": "EFFECT_CONFIRMED" } }
+      },
+      "then": { "required": ["targetAcknowledgementRef"] }
+    }
+  ],
+  "$defs": {
+    "effectState": {
+      "enum": [
+        "RECEIVED",
+        "QUARANTINED",
+        "EVIDENCE_VERIFIED",
+        "RELEASE_AUTHORIZED",
+        "DISPATCHING",
+        "EFFECT_CONFIRMED",
+        "EFFECT_UNKNOWN",
+        "EFFECT_FAILED",
+        "DENIED",
+        "DENY_EXPIRED"
+      ],
+      "$comment": "effect.state.closed-machine: the closed set; a deployment adds no members and no transitions."
+    },
+    "transitionTable": {
+      "$comment": "effect.state.closed-machine: THE normative transition table (empty list = terminal). EFFECT_UNKNOWN resolves only through target reconciliation (effect.state.unknown-no-retry): a lookup that finds the effect moves to EFFECT_CONFIRMED without re-writing; proof of absence moves to EFFECT_FAILED; DISPATCHING re-entry is allowed only through an idempotency-capable writer path (effect.writer.capability). This $def is a reference table, not an instance validator.",
+      "const": {
+        "RECEIVED": ["QUARANTINED"],
+        "QUARANTINED": ["EVIDENCE_VERIFIED", "DENIED", "DENY_EXPIRED"],
+        "EVIDENCE_VERIFIED": ["RELEASE_AUTHORIZED", "QUARANTINED"],
+        "RELEASE_AUTHORIZED": ["DISPATCHING", "QUARANTINED"],
+        "DISPATCHING": ["EFFECT_CONFIRMED", "EFFECT_UNKNOWN", "EFFECT_FAILED"],
+        "EFFECT_UNKNOWN": ["EFFECT_CONFIRMED", "EFFECT_FAILED", "DISPATCHING"],
+        "EFFECT_CONFIRMED": [],
+        "EFFECT_FAILED": [],
+        "DENIED": [],
+        "DENY_EXPIRED": []
+      }
+    },
+    "decimalString": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "$comment": "canon.number.safe-integer: fencing token in the string domain, not a JSON number."
+    },
+    "deliveryIdentity": {
+      "type": "object",
+      "$comment": "effect.delivery.identity: the minimum discriminator set; an idempotency key coarser than this collapses distinct legitimate deliveries.",
+      "required": [
+        "sinkContractId",
+        "sinkInstanceId",
+        "targetNamespace",
+        "deliveryOccurrence",
+        "bodyAddress",
+        "wireVariantId"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "sinkContractId": { "type": "string", "minLength": 1 },
+        "sinkInstanceId": { "type": "string", "minLength": 1 },
+        "targetNamespace": { "type": "string", "minLength": 1 },
+        "deliveryOccurrence": {
+          "type": "string",
+          "minLength": 1,
+          "$comment": "Quarantine entry id or per-entry occurrence discriminator."
+        },
+        "bodyAddress": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "wireVariantId": {
+          "type": "string",
+          "pattern": "^wire:v1:jcs-rfc8785:sha256:[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

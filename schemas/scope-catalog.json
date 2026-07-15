@@ -55,6 +55,18 @@
       "$comment": "The P0-3 DID login contracts (claims.login.contracts). OWNER_AUTHENTICATION_LOGIN is Fork Y (the selected default, uses the Owner authentication relationship); OWNER_ASSERTION_CONTROL_LOGIN is Fork X (documented closed-pilot option, requires machine-checked PDP containment, no authentication-relationship claim); LEGACY_DID_LOGIN is the bounded relationship-blind migration artifact.",
       "enum": ["OWNER_AUTHENTICATION_LOGIN@1", "OWNER_ASSERTION_CONTROL_LOGIN@1", "LEGACY_DID_LOGIN@1"]
     },
+    "sinkProfileId": {
+      "$comment": "The versioned sink profiles (effect.sink.classification, P0-5). legacy-adjacent-write@1 is a migration posture only (effect.migration.exclusive-writers): it can never issue effect contracts and ends at the legacy cutover. Kept in sync with the quarantine-entry.json inline copy.",
+      "enum": ["external-effect-sink@1", "archive-observation-sink@1", "legacy-adjacent-write@1"]
+    },
+    "writerCapabilityProfile": {
+      "$comment": "The writer conformance classes (effect.writer.capability / .limited-profile, P0-5). idempotency-capable provides at least one target-side dedup shape; limited-manual-reconciliation provides none, never auto-retries after EFFECT_UNKNOWN, and resolves ambiguity as recorded manual reconciliation.",
+      "enum": ["idempotency-capable@1", "limited-manual-reconciliation@1"]
+    },
+    "effectContractId": {
+      "$comment": "The external-effect claim contracts (claims.effect.contracts, P0-5). EFFECT_CONFIRMED@1 is the only contract that means effect completion (effect.state.confirmed-only); LEGACY_SINK_RECEIPT@1 is the projection of pre-B2 receipts (claims.effect.legacy-receipt) and never re-projects upward.",
+      "enum": ["EXTERNAL_EFFECT_RELEASE_AUTHORIZATION@1", "EFFECT_CONFIRMED@1", "EFFECT_UNKNOWN@1", "POSSIBLE_LOSS@1", "DENY_EXPIRED@1", "LEGACY_SINK_RECEIPT@1"]
+    },
     "scopeNotes": {
       "$comment": "SEMANTIC_EXECUTION@1 is outside the protocol's decision scope (adapters / audit infrastructure own it); a protocol verifier reports it UNSUPPORTED. The P0-2 lifecycle scopes (KEY_AUTHORIZATION_AT_STATE@1, CONTROLLER_CHAIN_AUTHORIZATION_AT_STATE@1, ANCHORED_OBSERVATION_ORDER@1, LIFECYCLE_FRESHNESS@1, optional TRUSTED_OBSERVATION_TIME@1) are now enumerated and the earlier p0-2 gate is retired. TRUSTED_OBSERVATION_TIME@1 stays optional and is emitted only by a profile that contracts an independent time authority (observation.trusted-time.profile)."
     }

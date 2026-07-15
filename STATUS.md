@@ -461,3 +461,95 @@ W3C KAT / custom / legacy cutover matrix、WireVariantID cross-language byte-equ
 列挙 = delegation.yaml scope grammar 依存）。
 
 **GLOSSARY / 各 rule の .ja**: 未同期（English-primary、翻訳同期は follow-up）。
+
+## 2026-07-15 — P0-5 / P0-7 転記（batch 2、P0 全 8 round 転記完了）
+
+FABLE↔SOL debate の Agreed 決定 2 件を転記。catalog は 177 → 239 rule。lint / validate_vectors green。
+これで P0-0〜P0-7 の全 architecture decision が rule catalog に SoT 化された。実装（provin.oss / provin.auth）は後続 slice。
+
+**P0-5（B2 — durable quarantine + ReleaseAuthorization + external-effect state machine）**:
+
+- `rules/external-effect.yaml`（id `effect.*`、28 rule 新設）: sink profile 分類（`external-effect-sink@1` /
+  `archive-observation-sink@1`、evidence-only 証明不能な archive は external-effect 扱い、inv23）/
+  required-scope 全 VERIFIED gate（inv1）/ full spine to origin 定義（inv2）/ bare verdict 禁止
+  （Overall・body-level latest・adjacent、inv3）/ closed state machine
+  `RECEIVED→QUARANTINED→EVIDENCE_VERIFIED→RELEASE_AUTHORIZED→DISPATCHING→EFFECT_*` + `DENIED`/`DENY_EXPIRED`
+  （inv 状態機械）/ ReleaseAuthorization artifact + versioned wire artifact 経由の構造強制（inv4/26）/
+  exact quarantine bytes 照合・再 fetch 禁止（inv5）/ valid_until + freshness 再評価（inv6）/
+  atomic entry（inv7）/ structural pregate（inv8）/ verdict mapping（inv9）/ TTL→`DENY_EXPIRED`
+  （evidence 不変、inv10）/ CAS/fencing single-flight（inv11）/ `EFFECT_CONFIRMED` のみ成功
+  （inv12/20）/ `EFFECT_UNKNOWN` no-guess no-auto-retry（inv13）/ Writer idempotency capability 4 形
+  （inv14）/ limited profile（inv15）/ delivery identity（inv16）/ local-state exactly-once 禁止
+  （inv17、P1-D 独立 claim）/ receipt confirmed-only + limited claim（inv18/19）/
+  ObservationRecord・DecisionRecord 分離（inv21/22）/ quarantine capacity・no-fallback（inv24/25）/
+  writer 排他 cutover（inv27）/ `POSSIBLE_LOSS` 可視化（inv28）。
+- `rules/claims.yaml` +2: `claims.effect.contracts`（contract 集合の enumerate、完了は
+  `EFFECT_CONFIRMED@1` のみ）/ `claims.effect.legacy-receipt`（`LEGACY_SINK_RECEIPT@1` 投影、再昇格禁止）。
+- `rules/audit.yaml` +1: `audit.release.synthesis`（per-scope vector からの synthesis + verdict digest commit）。
+- schemas: `quarantine-entry.json`（payload blob と同一 atomic commit を明記）/
+  `release-authorization.json`（normative commit list 全 field required）/ `observation-record.json`
+  （coverage=NOT_EVALUATED const）/ `decision-record.json`（RELEASE 時 releaseAuthorizationId 必須の
+  if/then）/ `effect-status.json`（closed enum + state 依存 required の if/then 3 本 + deliveryIdentity）。
+- `scope-catalog.json` +2 def: `sinkProfileId`（legacy-adjacent-write@1 は migration posture のみ）/
+  `effectContractId`（6 contract）。
+
+**P0-7（B2 — Exact Artifact-Bound Release Security Gate）**:
+
+- `rules/release-security.yaml`（id `release.*`、31 rule 新設）: subject = exact output digest（inv1）/
+  同一 digest binding・cross-digest 再利用禁止（inv2）/ build-once（inv3）/ image digest pin +
+  multi-arch index+platform 両記録（inv4）/ action SHA pin（inv5）/ source full-SHA・denylist 不可
+  （inv6）/ tested=shipped toolchain（inv7）/ frozen lockfile graph（inv8）/ IMMUTABLE≠REPRODUCIBLE +
+  build-input manifest（inv9/10）/ scan state 5 分類・error→CLEAN 投影禁止（inv11）/ bounded CLEAN
+  （inv12/30）/ scan coverage 面 enumerate + trusted claim は builder も（inv13）/ scan artifact fields
+  （inv14）/ DB freshness→DB_STALE（inv15）/ component_absent のみ非 waiver（inv16）/ reachability
+  exact-binding + positive evidence なしは potentially_reachable（inv18/20）/ unreachable も dated waiver
+  （inv17）/ Medium/Low も waiver 必須（inv22、self-review で追加）/ reachable High/Critical 0 非 waiver
+  （inv21）/ waiver contract 全 field + auto-renew 禁止（inv23）/ waiver 早期失効（inv19）/
+  scanner-outage waiver 同規律 + 同一 digest のみ clean 再利用（inv24）/ evidence PRESENT +
+  ALLOW_WITH_WAIVER 分離（inv25）/ headline policy id + waiver count（inv26）/ trusted-builder 検証
+  6 field pin（inv27）/ OCI/npm provenance 分離（inv28）/ SBOM subject-bound（inv29）/ 新 advisory で
+  acceptance 再評価（inv30）/ docs pin claim 一致（inv31）/ baseline は TRUSTED_SUPPLY_CHAIN /
+  REPRODUCIBLE_BUILD を名乗らない（inv32、D-4 maturity-ramp は notes に未裁定と明記）/
+  versioned release profile（waiver cap / DB freshness / coverage、変更は version bump）。
+- schemas: `release-evidence-manifest.json`（scanArtifact / sbomReference / provenanceReference $defs、
+  oci-image-index→platformManifests 必須、TRUSTED_SUPPLY_CHAIN claim→provenance+sbom+workflowRef 必須、
+  REPRODUCIBLE_BUILD claim→buildInputManifest 必須の if/then）/ `advisory-assessment.json`
+  （4 分類 + reachabilityBinding）/ `release-waiver.json`（全 field required、autoRenew const false）。
+
+**GLOSSARY**: P0-5 6 語（quarantine entry / ReleaseAuthorization / effect status /
+ObservationRecord・DecisionRecord / delivery identity）+ P0-7 7 語（release subject / immutable artifact /
+reproducible build / clean scan / component absent / unreachable・potentially reachable /
+trusted build provenance）を追加。WireVariantID の stale な「P0-4 pending」注記を frozen 形へ修正。
+
+**裁定状況**: D-3（optimistic profile）は debate 内で実質決着 — B2 に含めず、需要発生時のみ別 Ledger
+（`effect.migration.exclusive-writers` の rollback 規律にも反映）。**D-4（maturity-ramp）のみ未裁定**、
+期限は first public release 前（`release.claim.baseline-cap` の notes に明記）。
+
+**Vector backlog（impl/storage 依存、後続 slice）**: broken ancestor/hole/revocation、source scope failure、
+stale/expired authorization、crash/timeout/duplicate dispatch、multi-worker fencing、archive
+observation/decision split、quota/no-fallback（P0-5）。tag-only/moving-ref/major-tag 拒否、scanner error
+state 非投影、cross-digest evidence 拒否、waiver 失効/expiry、multi-arch 片面 scan block、SBOM
+component-absent 偽装拒否、wrong-repo attestation 拒否（P0-7）。
+
+**Schema backlog（後続）**: quarantine store の operational policy schema（quota/retention 数値は
+deployment profile 側）、release profile の数値 catalog（waiver cap / DB freshness bound の versioned
+値表）、Writer capability manifest（P1-D の conformance suite と対）、receipt credential の subject
+wire fields（delivery identity / authorization digest / target acknowledgement の binding 形 —
+`effect.receipt.confirmed-only` の rule はあるが PipelinePassCredential 側の required 形は wire-profile
+起草待ち。Codex #6 指摘の残余）。
+
+**Codex spec review（2026-07-15、file+pipe、2 回目 — 1 回目は途中 kill で stdout 空、stderr から
+schema-binding 系の予兆 1 点を先行 fold）**: 10 issues（High 5 / Medium 5）検出、全 10 fold:
+(1) DecisionRecord は decision=RELEASE のみ actionable(High)、(2) EFFECT_UNKNOWN の reconciliation
+遷移を transition table として effect-status.json に normative 化(High)、(3) DENY_EXPIRED を
+evidence-view.json policyDecision enum に追加 + bounded quarantine との関係を notes に明記(Med)、
+(4) writer capability「or limited profile」明文化 + `writerCapabilityProfile` def 追加(Med)、
+(5) 既存 effect-complete status の意味保存を statement に昇格(Med)、(6) ObservationRecord の
+payload blob 同時 persist を明記 + receipt wire fields は backlog(Med、部分 fold)、
+(7) `claims.effect.scope-mapping` 新設 — RECEIPT_EXTERNAL_EFFECT@1 scope は EFFECT_CONFIRMED@1
+record からのみ評価(Med)、(8) potentially_reachable High/Critical を hard gate に折り込み
+（fail-closed 解釈、inv20 の趣旨。**ユーザー確認推奨**: gate を厳しくする方向の解釈裁量）(High)、
+(9) advisory-assessment に unreachable/component_absent の条件付き required（binding + evidence +
+sbomRef）+ SBOM componentCoverage required 化(High)、(10) baseline-cap の claim 別 evidence 分離 +
+manifest schema の per-claim 条件付き required（provenance minItems 1 / reproduction）(High)。
+fold 後 240 rule、lint / validate_vectors / schema check green。dismiss 0。
