@@ -13,7 +13,7 @@ rules:
       successor link.
     uses: [credential.body-sot, credential.prev.content-hash]
     schemas: []
-    vectors: []
+    vectors: [identity-002]
     notes: >-
       The lineage link is body-addressed, so proof re-issuance is orthogonal to
       chain identity. This is what lets a variant set exist under one body
@@ -28,15 +28,18 @@ rules:
       full wire document, formatted as
       wire:v1:jcs-rfc8785:sha256:<lowercase-hex>.
     uses: [identity.body-address, canon.jcs.base]
-    schemas: [evidence-view.json]
-    vectors: []
+    schemas: [pipeline-pass-credential.json]
+    vectors: [identity-001]
     notes: >-
       Digesting the canonical projection (not raw submission octets) makes the id
       stable across benign octet differences. The canonicalization profile is
       frozen by P0-4 as jcs-rfc8785 (actual RFC 8785 + safe-integer gate). The id
       pins its domain tag, id version (v1), canonicalizer, and hash algorithm.
       The type does not preclude a future independent proof-envelope id (Option D
-      is not claimed implemented here).
+      is not claimed implemented here). The schema reference names the artifact
+      the id is derived FROM (the wire document this rule's vectors carry); the
+      id's own grammar residue is the wireVariantId definition in
+      evidence-view.json, where the id appears as a member.
 
   - id: identity.variant.immutable-set
     status: draft
@@ -48,13 +51,18 @@ rules:
       append-only.
     uses: [identity.wire-variant-id, credential.proof.as-received]
     schemas: []
-    vectors: []
+    vectors: [identity-003, identity-004, identity-005, identity-006]
     notes: >-
       Append-only, write-once variants make a valid proof unable to be evicted
       by a later invalid one (no first-write-wins), and make the store a set of
       immutable evidence rather than a single overwritable value. This supersedes
       the one-document-per-key reading of resolver.immutability for the variant
-      layout (reconciled by identity.resolution.exact-vs-legacy).
+      layout (reconciled by identity.resolution.exact-vs-legacy). "Different
+      bytes" is measured against the canonical projection the id names, so bytes
+      that merely re-spell that document (extra whitespace, alternate escapes)
+      are corruption at that id rather than an alternate encoding of it — a
+      digest recomputed after canonicalization cannot see the difference
+      (identity-004).
 
   - id: identity.resolution.exact-vs-legacy
     status: draft
@@ -66,12 +74,22 @@ rules:
       variant set MUST be deterministic.
     uses: [identity.variant.immutable-set, resolver.immutability, admission.resolve-variant.exact]
     schemas: []
-    vectors: []
+    vectors: [identity-007]
     notes: >-
-      resolver.immutability still governs the content-hash check and the legacy
-      body-only projection; a deterministic tie-break keeps its "same key to same
-      document" property true for that projection while the variant set holds
-      multiple proofs.
+      The projection is set-relative: it is a function of the variant set held
+      at the time of the read, so it is stable for a fixed set and can name a
+      different variant once the set grows. That is weaker than reading
+      resolver.immutability as full-document stability over time, and the
+      difference is the reason exact resolution exists — only
+      (BodyAddress, WireVariantID) names one document for all time. What holds
+      unconditionally is the body-level part of resolver.immutability: every
+      variant of a body carries that same body, so the content hash a verifier
+      recomputes from any projected document still equals the key, and a
+      projection that returned a different body would be caught by that rule's
+      own check. Determinism is what this rule fixes; which variant a
+      conformant tie-break selects is left to the implementation, since the
+      projection is provisional rather than evidence
+      (admission.resolve-vc.legacy-projection).
 
   - id: identity.proof-envelope.not-claimed
     status: draft

@@ -40,6 +40,11 @@ vector ファイル自体が JSON のため、バイト精度が要る入力（�
 | `process.*` | `{"process_type", "credential"?, "behavior"?, "sequence"?}`（発行・検証挙動の適合性） | `"accept"` / `"reject"` |
 | `resolver.*` | 形式系 `{"key", "body"}`、状態系 `{"resolver_state", "non_existence_authority"?}` → confidence（`non_existence_authority` は照会先が当該識別子 namespace の非存在 authority かを示す — mapping がこれに依存する `NotFound` 入力では必須（→ `resolver.states`）、authority 非依存の state では省略）、挙動系 `{"sequence": [...]}`、batch `{"request", "response"}`、encoding `{"entry"}` | `"accept"` / `"reject"` / `{"confidence"}` / `{"state"}` |
 | 永続化・append-only 系（`commitment.store.*` / `registry.*`） | `{"sequence": [{"op": ...}, ...]}` | `"reject"` または期待状態 object |
+| `identity.*` | 導出系 `{"credential": <wire 形式 JSON object>}` または `{"variants": [<wire 形式>, ...]}` — 入力をテキストでなく object で持つのは、これらの rule が **canonical 射影**を digest するため（到着時の綴りは id が定義上消し去るもの）。store 系 `{"sequence": [{"op": "put-variant" \| "get-variant" \| "list-variants" \| "legacy-put" \| "get", ...}]}` で、op は store 事象を指し、バイト精度が要点になる箇所は `stored_bytes`（JSON テキスト）で「storage が保持している内容」を注入する | `"reject"` または期待出力 object（導出系は `{"canonical", "body_address", "wire_variant_id"}`、store 系は `{"variant_set", "exact_bytes"?, "projection_variant_id"?}`） |
 
 - id 採番は `<family>-<3 桁連番>`、ファイル名は `<id>.json`
 - description には「何の規範挙動を固定しているか」を 1 文で（実装名は書かない）
+- `identity-*` は `tools/gen_identity_vectors.py` が生成する（`--check` で再導出
+  して差分検出）。hash は rule 本文だけから導出し、実装の出力からは取らない —
+  実装が書いた KAT は「コードがコード自身と等しい」ことしか証明しないため。
+  編集は JSON ではなく生成器に対して行う。
