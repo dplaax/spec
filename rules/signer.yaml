@@ -85,6 +85,30 @@ rules:
       needs the document @context anyway, so the proof-local mirror costs the
       suite nothing.
 
+  - id: signer.suite.rdfc-expansion-guard
+    status: draft
+    class: core
+    statement: >-
+      An eddsa-rdfc-2022 implementation MUST reject a document whose expansion
+      would drop an undefined non-keyword term or an unsafe numeric, and MUST
+      resolve @context IRIs only from embedded copies, never by network fetch.
+    uses: [signer.suite.eddsa-rdfc-2022, canon.number.safe-integer]
+    schemas: []
+    vectors: []
+    notes: >-
+      JSON-LD expansion silently drops terms the context does not define, so
+      without this guard a member can leave the signing scope with no signature
+      break — the RDFC analog of an unknown proof member, and a parser
+      differential between implementations that expand differently. Network
+      context resolution would make the signing scope depend on a mutable
+      remote document and open a fetch surface from the verification path.
+      Both controls are the p0-7/p0-12 implementation's established behavior
+      (fail-closed reject on create and verify, offline allowlist loader);
+      normative here so an independent implementation cannot conform while
+      silently dropping. Added on a commit security-review finding
+      (2026-07-15) against the initial rdfc-contract amendment, which named
+      the canonicalization without these teeth.
+
   - id: signer.suite.exact-dispatch
     status: draft
     class: core
