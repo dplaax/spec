@@ -488,7 +488,7 @@ rules:
       effect contract without re-evaluation under an exact evidence view.
     uses: [claims.effect.contracts, evidence.cache.exact-view]
     schemas: [scope-catalog.json]
-    vectors: []
+    vectors: [claims-effect-001]
     notes: >-
       A legacy receipt carries neither a ReleaseAuthorization digest nor a
       target acknowledgement, so it attests an adjacent-write-era local
@@ -504,7 +504,7 @@ rules:
       signature or any other artifact MUST NOT verify it.
     uses: [claims.receipt.effect-separated, claims.effect.contracts, effect.delivery.identity]
     schemas: [scope-catalog.json, effect-status.json]
-    vectors: []
+    vectors: [claims-effect-002]
     notes: >-
       Reconciles the two effect identities (Codex fold, 2026-07-15): the
       scope is the evaluation axis a verifier reports; the P0-5 contract

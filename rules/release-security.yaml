@@ -32,7 +32,7 @@ rules:
       MUST NOT be reused for another.
     uses: [release.subject.exact-digest]
     schemas: [release-evidence-manifest.json]
-    vectors: []
+    vectors: [release-001, release-007]
     notes: >-
       Cross-digest reuse is the supply-chain form of verdict laundering: a
       clean scan of yesterday's image says nothing about today's rebuild,
@@ -46,7 +46,7 @@ rules:
       rebuilt and published as the same release.
     uses: [release.subject.exact-digest]
     schemas: []
-    vectors: []
+    vectors: [release-012]
     notes: >-
       Scan-then-rebuild means the scanned bytes and the published bytes are
       different artifacts that merely share a name. Build-once is what makes
@@ -61,7 +61,7 @@ rules:
       digest and each platform manifest digest.
     uses: [release.subject.exact-digest]
     schemas: [release-evidence-manifest.json]
-    vectors: []
+    vectors: [release-004]
     notes: >-
       The name:tag@sha256:digest form keeps the human-readable tag while
       making the digest the identity. The per-platform manifests matter
@@ -75,7 +75,7 @@ rules:
       version tag reference MUST NOT be used for a public release.
     uses: [release.subject.exact-digest]
     schemas: []
-    vectors: []
+    vectors: [release-005]
     notes: >-
       A workflow holding packages:write or npm publish credentials is inside
       the trust boundary; a movable action tag hands that authority to
@@ -153,7 +153,7 @@ rules:
       projected to zero advisories or treated as CLEAN.
     uses: [release.evidence.subject-binding]
     schemas: [release-evidence-manifest.json]
-    vectors: []
+    vectors: [release-006]
     notes: >-
       The supply-chain form of evidence.indeterminate.not-failed: a scanner
       that crashed, ran on a stale database, or skipped an architecture has
@@ -185,7 +185,7 @@ rules:
       also cover the builder.
     uses: [release.scan.state-machine, release.pin.image-digest]
     schemas: [release-evidence-manifest.json]
-    vectors: []
+    vectors: [release-013]
     notes: >-
       Source-graph scanning alone misses what the container adds (OS
       packages, toolchain) and what the build drops in transit. Coverage is
@@ -231,7 +231,7 @@ rules:
       artifact's SBOM; a component-present assessment MUST remain a finding.
     uses: [release.sbom.subject-bound]
     schemas: [advisory-assessment.json]
-    vectors: []
+    vectors: [release-010]
     notes: >-
       Absence is the only self-verifying assessment: the SBOM either lists
       the component or it does not. Every other judgement (unreachable,
@@ -248,7 +248,7 @@ rules:
       MUST be classified potentially_reachable.
     uses: [release.evidence.subject-binding]
     schemas: [advisory-assessment.json]
-    vectors: []
+    vectors: [release-002]
     notes: >-
       Unreachable is not a property of a CVE; it is a property of one build
       of one artifact under stated assumptions. Ecosystems without call-graph
@@ -294,7 +294,7 @@ rules:
       treated as reachable for this gate, and this gate MUST NOT be waivable.
     uses: [release.advisory.reachability-binding]
     schemas: []
-    vectors: []
+    vectors: [release-008]
     notes: >-
       The one hard line in the advisory policy: everything below it is
       waiver-governed judgement, everything at it is fix, downgrade with
@@ -315,7 +315,7 @@ rules:
       renewal MUST NOT occur.
     uses: [release.evidence.subject-binding, release.profile.versioned]
     schemas: [release-waiver.json]
-    vectors: []
+    vectors: [release-003]
     notes: >-
       A waiver is a dated, owned risk acceptance — the same artifact
       discipline the debate protocol applies to its own dismissals. No owner,
@@ -331,7 +331,7 @@ rules:
       invalidate a reachability waiver before its expiry.
     uses: [release.waiver.contract, release.advisory.reachability-binding]
     schemas: [release-waiver.json]
-    vectors: []
+    vectors: [release-009]
     notes: >-
       The waiver's validity is parasitic on the assessment's assumptions; any
       input drift snaps the chain. Expiry is the upper bound, not the only
@@ -473,7 +473,7 @@ rules:
       MUST require independent reproduction evidence.
     uses: [release.claim.reproducible-separate, release.provenance.trusted-builder]
     schemas: [release-evidence-manifest.json]
-    vectors: []
+    vectors: [release-011]
     notes: >-
       The maturity ramp (D-4) is a pending decision-owner choice between
       full-B2-before-first-public-release (the debate's joint recommendation)

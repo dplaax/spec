@@ -67,7 +67,7 @@ rules:
       EvidenceViewID.
     uses: [evidence.manifest.identity, evidence.view.terminal-verdict, claims.vector.durable-commit]
     schemas: []
-    vectors: []
+    vectors: [effect-006]
     notes: >-
       A body-keyed latest record is a laundering channel: a later, weaker
       evaluation can overwrite a stronger one, and an aggregate flag carries
@@ -84,7 +84,7 @@ rules:
       reconciliation to EFFECT_CONFIRMED or EFFECT_FAILED.
     uses: [claims.policy.no-accept-non-verified]
     schemas: [effect-status.json]
-    vectors: []
+    vectors: [effect-005, effect-009]
     notes: >-
       The ten states: RECEIVED → QUARANTINED → EVIDENCE_VERIFIED →
       RELEASE_AUTHORIZED → DISPATCHING → EFFECT_CONFIRMED / EFFECT_UNKNOWN /
@@ -106,7 +106,7 @@ rules:
       MUST NOT occur.
     uses: [evidence.manifest.identity, identity.wire-variant-id, claims.catalog.enumerated]
     schemas: [release-authorization.json]
-    vectors: []
+    vectors: [effect-001]
     notes: >-
       The committed set (authorization id, issuer, quarantine entry, payload
       digest, body address, WireVariantID, spine/source variant vectors,
@@ -142,7 +142,7 @@ rules:
       re-fetch the payload from an external source for release.
     uses: [effect.authorization.artifact, identity.variant.immutable-set]
     schemas: [quarantine-entry.json]
-    vectors: []
+    vectors: [effect-007]
     notes: >-
       What was verified is a specific byte sequence; a re-fetch substitutes
       whatever the source serves now. The quarantine store is the custody
@@ -158,7 +158,7 @@ rules:
       release capability.
     uses: [effect.authorization.artifact, liveness.cache.bounded-freshness]
     schemas: [release-authorization.json]
-    vectors: []
+    vectors: [effect-008]
     notes: >-
       Same shape as the P0-2 liveness split: historical truth does not expire,
       but the permission to act on it does. valid_until is the bound that
@@ -174,7 +174,7 @@ rules:
       release.
     uses: [admission.quarantine.class]
     schemas: [quarantine-entry.json]
-    vectors: []
+    vectors: [effect-002]
     notes: >-
       Atomicity is what lets every later stage (evaluation, authorization,
       dispatch, receipt) refer back to one immutable thing. A torn entry —
@@ -205,7 +205,7 @@ rules:
       MUST make release impossible while that verdict stands.
     uses: [claims.policy.no-accept-non-verified, evidence.indeterminate.not-failed]
     schemas: [effect-status.json]
-    vectors: []
+    vectors: [effect-010]
     notes: >-
       The three-way split keeps the axes honest: FAILED is a verdict and
       denies, INDETERMINATE is an open question and holds, and neither is
@@ -221,7 +221,7 @@ rules:
       becomes DENY_EXPIRED; expiry MUST NOT be projected to FAILED.
     uses: [evidence.indeterminate.not-failed, claims.policy.profile-derived]
     schemas: [effect-status.json]
-    vectors: []
+    vectors: [effect-013]
     notes: >-
       A permanent hole is an operational outcome, not a cryptographic
       failure. Laundering it into FAILED would fabricate a verdict no
@@ -384,7 +384,7 @@ rules:
       released.
     uses: [claims.coverage.three-value, identity.variant.immutable-set]
     schemas: [observation-record.json]
-    vectors: []
+    vectors: [effect-003]
     notes: >-
       Observation is a legitimate need (we saw these bytes at this time) and
       gets an artifact that says exactly that — coverage NOT_EVALUATED — so
@@ -400,7 +400,7 @@ rules:
       decided; a DENY or DENY_EXPIRED record MUST NOT enable consumption.
     uses: [effect.archive.observation-record, evidence.manifest.identity]
     schemas: [decision-record.json]
-    vectors: []
+    vectors: [effect-004, effect-011]
     notes: >-
       The join is the gate: observation says what exists, decision says what
       may be acted on and under which evidence. A consumer reading
@@ -430,7 +430,7 @@ rules:
       backpressure; it MUST NOT fall back to an unverified external write.
     uses: [effect.quarantine.capacity, admission.verify-to-admit.backpressure]
     schemas: []
-    vectors: []
+    vectors: [effect-012]
     notes: >-
       Overload is an availability condition. Degrading it to an unverified
       effect would let an attacker convert a flood into a gate bypass —

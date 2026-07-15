@@ -553,3 +553,25 @@ record からのみ評価(Med)、(8) potentially_reachable High/Critical を har
 sbomRef）+ SBOM componentCoverage required 化(High)、(10) baseline-cap の claim 別 evidence 分離 +
 manifest schema の per-claim 条件付き required（provenance minItems 1 / reproduction）(High)。
 fold 後 240 rule、lint / validate_vectors / schema check green。dismiss 0。
+
+### 2026-07-15 追補 — P0-5 / P0-7 conformance vectors（spec-level 分）
+
+28 vector 追加（`effect-001..013` / `claims-effect-001..002` / `release-001..013`）。
+lint green（双方向参照解決）、validate_vectors green — **19 fixture/schema validations + 101 synthetic
+negative checks**（新 schema 8 本を `GOOD_FIXTURES` に登録、required-deletion mutant 75 件が全 fail =
+under-strict drift ガード有効）。vectors/README.md に `effect.*` / `release.*` family の input/expect
+shape 規約を追加。
+
+- **accept（schema fixture）**: ReleaseAuthorization / quarantine entry / ObservationRecord /
+  DecisionRecord(RELEASE) / EFFECT_CONFIRMED status / ReleaseEvidenceManifest(baseline) /
+  unreachable assessment(full binding) / waiver(full contract)。
+- **judgment**: bare-verdict 拒否、exact-bytes mismatch、expired authorization、closed-machine 逸脱遷移、
+  ancestor FAILED 遮断、DENY record 非 actionable、quota no-fallback、DENY_EXPIRED disposition、
+  legacy receipt 非昇格、scope-mapping（P0-5）。tag-only pin、major-tag action、TOOL_ERROR→CLEAN 投影、
+  cross-digest scan、potentially_reachable CRITICAL、waiver 早期失効、component_absent 偽装、
+  baseline claim cap、build-once 違反、multi-arch 片面 scan（P0-7）。
+
+**残 vector backlog（impl 依存、実装 slice と並走）**: crash/timeout/duplicate dispatch matrix、
+multi-worker fencing race、shadow cutover duplicate/loss counter（P0-5 実装 test）。live advisory scan、
+二重 build digest 比較、外部 verifier interop（P0-7 release evidence）。P0-2/3/4 分（batch 1 記載）も
+Go/TS byte-equivalence・W3C KAT 等の実装依存分が未消化のまま残る。

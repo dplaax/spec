@@ -41,6 +41,14 @@ ROOT = Path(__file__).resolve().parent.parent
 GOOD_FIXTURES = {
     "pipeline-pass-credential.json": ("commitment-001", "input.credential"),
     "delegation-credential.json": ("delegation-001", "input.credential"),
+    "release-authorization.json": ("effect-001", "input.credential"),
+    "quarantine-entry.json": ("effect-002", "input.credential"),
+    "observation-record.json": ("effect-003", "input.credential"),
+    "decision-record.json": ("effect-004", "input.credential"),
+    "effect-status.json": ("effect-005", "input.credential"),
+    "release-evidence-manifest.json": ("release-001", "input.credential"),
+    "advisory-assessment.json": ("release-002", "input.credential"),
+    "release-waiver.json": ("release-003", "input.credential"),
 }
 
 errors: list[str] = []
