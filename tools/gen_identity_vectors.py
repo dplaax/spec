@@ -63,7 +63,7 @@ BODY = {
     "credentialSubject": {
         "pipelineId": "pl-line1",
         "processId": "proc-p1",
-        "transformationClaim": "provin:transform",
+        "transformationClaim": "provin:convert",
         "outputHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
         "previousCredential": None,
     },
@@ -93,7 +93,12 @@ def build() -> list[dict]:
 
     assert body_address(WIRE_B) == body, "fixture bug: re-issuing a proof moved the body address"
     assert var_a != var_b, "fixture bug: distinct wire bytes collided"
-    assert var_a < var_b, "fixture bug: expected the A variant to sort first"
+
+    # A variant SET is lexicographic, and which of the two sorts first is an
+    # accident of the fixture's bytes — not something a rule says. Sorting here
+    # keeps the expectation about the set, so changing an unrelated fixture
+    # field cannot silently flip what these vectors assert.
+    var_set = sorted([var_a, var_b])
 
     # The same document, non-canonically spelled: one space after the outermost
     # brace. It parses to the identical document — so it canonicalizes back to
@@ -155,7 +160,7 @@ def build() -> list[dict]:
                     {"op": "put-variant", "credential": WIRE_B},
                 ]
             },
-            "expect": {"variant_set": [var_a, var_b], "exact_bytes": {var_a: canon_a, var_b: canon_b}},
+            "expect": {"variant_set": var_set, "exact_bytes": {var_a: canon_a, var_b: canon_b}},
         },
         {
             "id": "identity-006",
@@ -167,7 +172,7 @@ def build() -> list[dict]:
                     {"op": "put-variant", "credential": WIRE_A},
                 ]
             },
-            "expect": {"variant_set": [var_a, var_b], "exact_bytes": {var_a: canon_a, var_b: canon_b}},
+            "expect": {"variant_set": var_set, "exact_bytes": {var_a: canon_a, var_b: canon_b}},
         },
         {
             "id": "identity-007",
