@@ -44,8 +44,8 @@
       "enum": ["evidence-archive@1", "provenance-release@1", "external-effect@1"]
     },
     "suiteContractId": {
-      "$comment": "The cryptosuite claim contracts (claims.suite.contract-id, P0-4). Fork W was selected, so the active contract is the W3C Multikey suite; the legacy contract is the projection of historically-emitted proofs (signer.suite.legacy-projection). The Fork C closed contract is not enumerated (unselected).",
-      "enum": ["W3C_EDDSA_JCS_2022_REC_20250515@1", "LEGACY_PROVIN_EDDSA_JCS_INT64@1"]
+      "$comment": "The cryptosuite claim contracts (claims.suite.contract-id, P0-4 + rdfc amendment 2026-07-15). Fork W was selected, so the active jcs contract is the W3C Multikey suite; the rdfc contract is the Phase-2 opt-in W3C suite (v0-mandatory per the p0-7/p0-12 ruling — the P0-4 transcription enumerated only the jcs pair and left it without an id, found during ForkW-1 implementation review); the legacy contract is the projection of historically-emitted proofs (signer.suite.legacy-projection). The Fork C closed contract is not enumerated (unselected).",
+      "enum": ["W3C_EDDSA_JCS_2022_REC_20250515@1", "W3C_EDDSA_RDFC_2022_REC_20250515@1", "LEGACY_PROVIN_EDDSA_JCS_INT64@1"]
     },
     "authorizationProfileId": {
       "$comment": "The P0-2 lifecycle authorization profiles (claims.profile.authorization). A distinct family from the resource-action archetypes (profileId): these compose the lifecycle scopes into a historical or current verdict. historical-acceptance requires the anchored-order scopes; current-authorization requires state plus LIFECYCLE_FRESHNESS.",

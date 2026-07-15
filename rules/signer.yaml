@@ -64,6 +64,27 @@ rules:
       (chain / source commitment / scoped evidence vector) still needs provin's
       own evaluation.
 
+  - id: signer.suite.eddsa-rdfc-2022
+    status: draft
+    class: core
+    statement: >-
+      The eddsa-rdfc-2022 suite MUST use urdna2015 canonicalization, a
+      proof-local @context, Multikey verification methods, and MUST pass the
+      official W3C test vectors; a proof lacking any of these MUST NOT be named
+      eddsa-rdfc-2022.
+    uses: [signer.proof.structure]
+    schemas: []
+    vectors: []
+    notes: >-
+      The Phase-2 opt-in W3C suite, v0-mandatory per the p0-7/p0-12 ruling and
+      already anchored to the official vc-di-eddsa vectors with every
+      intermediate pinned. Enumerated late: the P0-4 transcription covered only
+      the eddsa-jcs-2022 identity split and left this production suite without
+      a claim contract, which surfaced when the ForkW-1 exact dispatch rejected
+      it (found by both implementation reviewers, 2026-07-15). RDF expansion
+      needs the document @context anyway, so the proof-local mirror costs the
+      suite nothing.
+
   - id: signer.suite.exact-dispatch
     status: draft
     class: core

@@ -344,15 +344,14 @@ rules:
     status: draft
     class: core
     statement: >-
-      A cryptosuite claim contract MUST be one of W3C_EDDSA_JCS_2022_REC_20250515
-      (the Multikey W3C suite) or LEGACY_PROVIN_EDDSA_JCS_INT64 (the closed int64
-      projection); each MUST pin its suite, canonicalizer, and
-      verification-method type.
-    uses: [claims.contract.distinct-from-profile, signer.suite.eddsa-jcs-2022]
+      A cryptosuite claim contract MUST be one of W3C_EDDSA_JCS_2022_REC_20250515,
+      W3C_EDDSA_RDFC_2022_REC_20250515, or LEGACY_PROVIN_EDDSA_JCS_INT64; each
+      MUST pin its suite, canonicalizer, and verification-method type.
+    uses: [claims.contract.distinct-from-profile, signer.suite.eddsa-jcs-2022, signer.suite.eddsa-rdfc-2022]
     schemas: [scope-catalog.json]
     vectors: []
     notes: >-
-      Fork W was selected, so the active suite contract is the W3C one and the
+      Fork W was selected, so the active jcs contract is the W3C one and the
       Fork C closed contract (PROVIN_EDDSA_JCS_CLOSED_2026) is not enumerated;
       a future move to it would be a new variant, not a rewrite. The legacy
       contract exists only as the projection of historically-emitted proofs.

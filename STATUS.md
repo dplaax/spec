@@ -575,3 +575,14 @@ shape 規約を追加。
 multi-worker fencing race、shadow cutover duplicate/loss counter（P0-5 実装 test）。live advisory scan、
 二重 build digest 比較、外部 verifier interop（P0-7 release evidence）。P0-2/3/4 分（batch 1 記載）も
 Go/TS byte-equivalence・W3C KAT 等の実装依存分が未消化のまま残る。
+
+### 2026-07-15 追補 2 — rdfc 契約 id の catalog amendment（ForkW-1 review 起因）
+
+ForkW-1 実装の multi-agent-review（Claude + Codex、両者収束）で、P0-4 転記の盲点を検出:
+`claims.suite.contract-id` が jcs 系 2 契約の閉集合で、`claims.headline.suite-contract` は
+全 verdict に contract id 表示を要求 — **v0 必須（p0-7/p0-12 裁定）の production suite
+`eddsa-rdfc-2022` に表示すべき契約 id が存在しない**不整合。amendment:
+`W3C_EDDSA_RDFC_2022_REC_20250515@1` を suiteContractId enum と
+`claims.suite.contract-id` の列挙に追加、`signer.suite.eddsa-rdfc-2022` rule を新設
+（urdna2015 + proof-local @context + Multikey + 公式 KAT）。240 → 241 rule、
+lint / validate_vectors green。
