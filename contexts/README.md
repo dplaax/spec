@@ -17,7 +17,10 @@ Two-layer structure:
    the profile's side)** — terms for the profile-owned custom subject fields, and
    claim grounding (prefix → URL mapping, → `credential.claim.grounding`). Redefinition of protocol terms is not permitted (`@protected` mechanically enforces
    this as well). Example: the canonical source for the provin profile context is
-   provin.oss `vc/contexts/provin-v1.jsonld`.
+   provin-line/profile.spec `contexts/v1.jsonld`. (Until that repository existed
+   it was provin.oss `vc/contexts/provin-v1.jsonld` — the implementation standing
+   in for a spec that had not been written. The document is unchanged; its owner
+   is not.)
 
 Claim values (e.g., `provin:filter`) are string values on the wire and are
 outside the scope of the context — semantic grounding is handled by the profile's

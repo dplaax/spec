@@ -15,7 +15,9 @@ byte-exact コピーを compile-time embed する（runtime fetch 禁止）。`@
    profile 所有の custom subject field の term と、claim namespace prefix の接地
    （prefix → URL 写像、→ `credential.claim.grounding`）。protocol term の再定義は
    不可（`@protected` が機械的にも阻止する）。例: provin profile context の正規は
-   provin.oss `vc/contexts/provin-v1.jsonld`。
+   provin-line/profile.spec `contexts/v1.jsonld`。（同 repo が存在するまでは
+   provin.oss `vc/contexts/provin-v1.jsonld` が正規だった — 書かれていない spec
+   の代わりに実装が立っていた状態。文書は不変で、所有者だけが変わった。）
 
 claim 値（`provin:filter` 等）は wire 上の文字列値であり context の対象外 —
 意味の釘付けは profile の claim registry が担う（→ rules/credential.yaml の
