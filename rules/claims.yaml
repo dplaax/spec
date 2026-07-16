@@ -65,7 +65,7 @@ rules:
       be present if and only if coverage is EVALUATED.
     uses: [claims.scope.named]
     schemas: [evidence-view.json]
-    vectors: [claims-coverage-001, claims-coverage-002]
+    vectors: [claims-coverage-001, claims-coverage-002, claims-coverage-004]
     notes: >-
       Coverage and truth-state are separate axes: coverage records whether the
       scope was assessed at all; truth-state records the outcome when it was.

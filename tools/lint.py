@@ -9,6 +9,8 @@
   4. status / class の enum
   5. statement: status が todo 以外なら必須・256 文字以内・規範語を 1 つ以上含む
   6. vector ファイルの rule 逆参照の解決
+  7. rule↔vector の双方向一致 (vector が参照する rule は、その vector を列挙する)
+  8. vector カバレッジ床: VECTOR_REQUIRED_FILES の family は全 rule が vector を持つ
 """
 import json
 import re
@@ -23,6 +25,18 @@ ID_RE = re.compile(r"^[a-z0-9]+(\.[a-z0-9-]+){1,3}$")
 STATUSES = {"todo", "draft", "stable"}
 CLASSES = {"core", "audit-reachable"}
 MD_EXCLUDE = {"STATUS.md"}
+# 0.1 タグの vector カバレッジ床 (VERSIONING.md「0.1 タグの条件」と対)。
+# 列挙された family は全 rule が 1 本以上の vector を持たなければならない。
+# family の追加 = 0.2 に向けたカバレッジ拡大 (VERSIONING.md 側と同期して育てる)。
+VECTOR_REQUIRED_FILES = {
+    "chain.yaml",
+    "credential.yaml",
+    "delegation.yaml",
+    "process.yaml",
+    "registry.yaml",
+    "resolver.yaml",
+    "transfer.yaml",
+}
 
 errors: list[str] = []
 
@@ -85,6 +99,8 @@ def check_rules(rules: dict[str, dict]) -> None:
         for ref in e.get("vectors") or []:
             if ref not in vector_files:
                 err(f"{where}: vectors が未解決: {ref}")
+        if e["_file"] in VECTOR_REQUIRED_FILES and not e.get("vectors"):
+            err(f"{where}: vector カバレッジ床の family なのに vectors が空")
 
 
 def check_vectors(rules: dict[str, dict]) -> None:
@@ -96,8 +112,11 @@ def check_vectors(rules: dict[str, dict]) -> None:
             continue
         if v.get("id") != path.stem:
             err(f"vectors/{path.name}: id とファイル名の不一致: {v.get('id')}")
-        if v.get("rule") not in rules:
-            err(f"vectors/{path.name}: rule が未解決: {v.get('rule')}")
+        rid = v.get("rule")
+        if rid not in rules:
+            err(f"vectors/{path.name}: rule が未解決: {rid}")
+        elif path.stem not in (rules[rid].get("vectors") or []):
+            err(f"vectors/{path.name}: rule {rid} の vectors に未登録 (双方向参照の破れ)")
         if "input" not in v or "expect" not in v:
             err(f"vectors/{path.name}: input / expect が必須")
 
