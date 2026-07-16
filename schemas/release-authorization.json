@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/release-authorization.json",
+  "$id": "https://dplaax.dev/schemas/release-authorization.json",
   "title": "ReleaseAuthorization (external-effect release gate)",
   "$comment": "Structural residue of the effect.* rules (P0-5). The immutable, integrity-protected artifact that is the sole capability for an irreversible external effect (effect.authorization.artifact). It commits to the exact quarantine bytes, the exact evidence view, and the exact policy snapshot — everything a bare verdict lacks — and it is the versioned wire artifact the release worker consumes (effect.authorization.wire-artifact): no evaluator-internal state crosses the boundary. The field set here is the normative commit list; removing a member is a breaking change to the authorization contract. Canonicalized with jcs-rfc8785 (P0-4); counts and positions are decimal strings. $defs are inlined (no cross-file $ref).",
   "type": "object",

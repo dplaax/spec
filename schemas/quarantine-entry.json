@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/quarantine-entry.json",
+  "$id": "https://dplaax.dev/schemas/quarantine-entry.json",
   "title": "Quarantine entry (external-effect release gate)",
   "$comment": "Structural residue of the effect.* rules (P0-5). One atomically persisted entry per received delivery (effect.quarantine.atomic-entry): the exact wire variant, the payload bytes' digest, the delivery metadata, and the sink profile the entry was admitted under. The entry is the custody chain between evaluation and effect — a ReleaseAuthorization is matched against these exact bytes, never against a re-fetch (effect.release.exact-bytes). State lives in the effect-status record (effect-status.json), keyed by quarantineEntryId; the entry itself is immutable once committed. $defs are inlined (no cross-file $ref).",
   "type": "object",

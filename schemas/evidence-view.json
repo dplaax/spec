@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/evidence-view.json",
+  "$id": "https://dplaax.dev/schemas/evidence-view.json",
   "title": "Evidence view (EvaluationViewManifest + scoped evidence vector)",
   "$comment": "Structural residue of the claims.* and evidence.* rules (P0-0/P0-1). evidenceViewId is a sibling of the manifest, not a member of it (evidence.manifest.identity: the id is the digest OF the manifest, so it cannot be inside it). The `scope` enum inlines scope-catalog.json (no cross-file $ref); keep the two in sync. wireVariantId is frozen (P0-4) to wire:v1:jcs-rfc8785:sha256:<64-hex>. One-result-per-scope and the policyDecision/profile required-scope coupling are semantic constraints beyond JSON Schema (claims.coverage.three-value, claims.policy.no-accept-non-verified) and are pinned by vectors.",
   "type": "object",

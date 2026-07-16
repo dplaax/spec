@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/decision-record.json",
+  "$id": "https://dplaax.dev/schemas/decision-record.json",
   "title": "DecisionRecord (archive actionability gate)",
   "$comment": "Structural residue of the effect.* rules (P0-5). The artifact that makes archived data actionable (effect.archive.decision-record): it joins an ObservationRecord to the EvidenceViewID under which the decision was made. A RELEASE decision additionally references the ReleaseAuthorization; DENY / DENY_EXPIRED record the closed outcome without fabricating an evidence verdict (effect.expiry.deny-expired). $defs are inlined (no cross-file $ref).",
   "type": "object",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/release-waiver.json",
+  "$id": "https://dplaax.dev/schemas/release-waiver.json",
   "title": "ReleaseWaiver (dated, owned, reversal-conditioned)",
   "$comment": "Structural residue of the release.* rules (P0-7). The versioned waiver contract (release.waiver.contract): every field is mandatory because a waiver missing an owner, an expiry, or a reversal condition is a permanent exception, which this artifact exists to prevent. Scanner-outage waivers use the same shape (release.waiver.scanner-outage). autoRenew is pinned false — renewal is a fresh decision on fresh evidence. $defs are inlined (no cross-file $ref).",
   "type": "object",

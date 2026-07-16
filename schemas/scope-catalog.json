@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/scope-catalog.json",
+  "$id": "https://dplaax.dev/schemas/scope-catalog.json",
   "title": "Scope catalog (named scopes + decision-profile archetypes)",
   "$comment": "The normative enumeration owned by dplaax.spec_draft (claims.catalog.single-owner, claims.catalog.enumerated). Named scopes and the three decision-profile archetypes with their required scope sets. Per-scope required-check definitions are filled incrementally; scopes marked p0-2-gated depend on the trusted-time / freshness / anchor decision (P0-2). The evidence-view.json `scope` enum inlines this set (no cross-file $ref) and must stay in sync.",
   "type": "object",

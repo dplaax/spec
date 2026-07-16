@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/observation-record.json",
+  "$id": "https://dplaax.dev/schemas/observation-record.json",
   "title": "ObservationRecord (pre-verification archive)",
   "$comment": "Structural residue of the effect.* rules (P0-5). The append-only artifact for pre-verification archival (effect.archive.observation-record): it says 'these exact bytes were observed at this time' and nothing more — coverage is pinned NOT_EVALUATED and there is no acceptance field to misread. Actionable consumption goes through a DecisionRecord join (effect.archive.decision-record); a store whose consumers read observations directly has bypassed the release gate. $defs are inlined (no cross-file $ref).",
   "type": "object",

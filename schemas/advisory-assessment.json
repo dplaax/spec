@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/advisory-assessment.json",
+  "$id": "https://dplaax.dev/schemas/advisory-assessment.json",
   "title": "AdvisoryAssessment (finding classification, exact-binding)",
   "$comment": "Structural residue of the release.* rules (P0-7). One assessment per (advisory, component, subject): the classification plus the exact bindings that scope it (release.advisory.reachability-binding). component_absent is the only classification that exits the waiver path, and only via the final artifact's SBOM (release.advisory.component-absent); everything else stays a finding — evidence, never erasure (release.decision.evidence-separated). $defs are inlined (no cross-file $ref).",
   "type": "object",

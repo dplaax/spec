@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/login-transcript.json",
+  "$id": "https://dplaax.dev/schemas/login-transcript.json",
   "title": "Signed login transcript (versioned)",
   "$comment": "Structural residue of the auth.transcript.* rules (P0-3, A3.1). The signed login transcript binds the fields that close cross-protocol replay and relying-party substitution (auth.transcript.bound-fields): a domain-separation tag, the auth contract, the authorization-server issuer and token endpoint, the required audience, the subject DID, the exact verification method id, a nonce, and a timestamp. Per the P0-4 canonical freeze the transcript is canonicalized with jcs-rfc8785 and all fields are strings (auth-grant.yaml, canon.number.safe-integer). Wire field names are snake_case, the JWT/OAuth convention for this artifact family (contrast the camelCase W3C-VC-lineage evidence structures). $defs are inlined (no cross-file $ref).",
   "type": "object",

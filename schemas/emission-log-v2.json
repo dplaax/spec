@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/emission-log-v2.json",
+  "$id": "https://dplaax.dev/schemas/emission-log-v2.json",
   "title": "Emission log record v2 (anchored observation)",
   "$comment": "Structural residue of the observation.* rules (P0-2). The v2 record is what ANCHORED_OBSERVATION_ORDER commits (observation.record.commits): the exact variant, the signer/controller lifecycle state vector, and the log origin/index/checkpoint. Per the P0-4 canonical freeze the record is canonicalized with jcs-rfc8785 and log positions (index, tree size, generation) are decimal strings, not JSON numbers (canon.number.safe-integer). v1 body-only records are a distinct legacy-body observation (observation.legacy.body-only) and are not readable as v2. $defs are inlined (no cross-file $ref).",
   "type": "object",

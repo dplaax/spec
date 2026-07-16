@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/bundle-v3.json",
+  "$id": "https://dplaax.dev/schemas/bundle-v3.json",
   "title": "Bundle manifest v3 (variant spine + evidence view)",
   "$comment": "Structural residue of the evidence.* / claims.* bundle rules (P0-1, P0-0 invariants 5/11, P0-1 invariant 21) with the P0-2 lifecycle extension. v3 makes the selected variant spine, claim contract, input-snapshot refs (with anchor status and time_basis, claims.offline-snapshot.policy-only), the EvidenceViewID, and a durable commitment (auditor signature or signed checkpoint, claims.vector.durable-commit) explicit, so an offline verifier fetches exact variants and can check the boundary commitment. The P0-2 extension (liveness.offline.no-current-verified) adds optional lifecycleEvidence, observationEvidence, and trustProfileSnapshot so historical acceptance is reproducible from the bundle; a current-state scope MUST NOT be VERIFIED from a bundle (semantic, pinned by vector). The anchorStatus and timeBasis enums are now fixed by the P0-2 decision. $defs are inlined (no cross-file $ref). v1/v2 reads remain supported (evidence.bundle.reader-first); v3 is not asserted verifiable by a v1/v2 reader.",
   "type": "object",

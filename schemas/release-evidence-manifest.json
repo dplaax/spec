@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/release-evidence-manifest.json",
+  "$id": "https://dplaax.dev/schemas/release-evidence-manifest.json",
   "title": "ReleaseEvidenceManifest (exact artifact-bound release gate)",
   "$comment": "Structural residue of the release.* rules (P0-7). One manifest per release subject: the exact output digest (release.subject.exact-digest) with every piece of evidence — build inputs, toolchain, scans, SBOM, provenance, waivers, decision — bound to that digest (release.evidence.subject-binding). The ArtifactSBOMReference and BuildProvenanceReference artifacts from the decision ledger live here as $defs (sbomReference / provenanceReference); they are reference shapes, not standalone files. $defs are inlined (no cross-file $ref).",
   "type": "object",

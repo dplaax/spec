@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://poc.dplaax.dev/schemas/effect-status.json",
+  "$id": "https://dplaax.dev/schemas/effect-status.json",
   "title": "Effect status record (closed quarantine/release state machine)",
   "$comment": "Structural residue of the effect.* rules (P0-5). One record per state transition of a quarantine entry under the closed machine (effect.state.closed-machine): RECEIVED → QUARANTINED → EVIDENCE_VERIFIED → RELEASE_AUTHORIZED → DISPATCHING → EFFECT_CONFIRMED | EFFECT_UNKNOWN | EFFECT_FAILED, plus QUARANTINED → DENIED | DENY_EXPIRED. The generation field carries the compare-and-swap fencing token (effect.dispatch.single-flight) as a decimal string. The only success state is EFFECT_CONFIRMED (effect.state.confirmed-only); EFFECT_UNKNOWN is an observation of ambiguity, never a guessed failure (effect.state.unknown-no-retry). $defs are inlined (no cross-file $ref).",
   "type": "object",
