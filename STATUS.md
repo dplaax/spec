@@ -233,7 +233,7 @@ rule ID の対応表:
 - ~~**delegation credential の正規地位（controller chain の確立・証明機構）**~~ —
   **2026-07-06 解決**（full-review C-1）: (b) owner 署名 DelegationCredential VC を正規機構として
   採用し rule 化済み — `rules/delegation.yaml`（4 rules: `delegation.shape` / `.binding` /
-  `.proof` / `.scope`、spec_draft `f63bbfe` で着地）。provin.oss は reconcile 済み
+  `.proof` / `.scope`、spec `f63bbfe` で着地）。provin.oss は reconcile 済み
   （`delegation` package の Build/Verify が同 rule 群の実装 — oss `54bfa5b` 起点、conformance
   delegation-001..005 で vector 駆動）。下記の起票時論点（(a)/(b)/(c) の選択・shape pin・
   reconcile）は上記で充足。scope grammar/registry の将来拡張は delegation.yaml の notes が担う。

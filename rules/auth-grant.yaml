@@ -10,7 +10,7 @@ rules:
     class: core
     statement: >-
       The DID authentication verification contract's normative source of truth
-      MUST be dplaax.spec_draft, and both the Go and the TypeScript
+      MUST be dplaax.spec, and both the Go and the TypeScript
       implementations MUST be projections of it, not independent contracts.
     uses: [claims.catalog.single-owner]
     schemas: []

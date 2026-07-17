@@ -234,7 +234,7 @@ rules:
     status: draft
     class: core
     statement: >-
-      The normative scope catalog MUST be owned solely by dplaax.spec_draft; an
+      The normative scope catalog MUST be owned solely by dplaax.spec; an
       implementation MUST project the catalog version and hash it consumes and
       MUST NOT redefine a scope of the same name.
     uses: [claims.scope.named]

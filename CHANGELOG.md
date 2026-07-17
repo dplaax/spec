@@ -22,4 +22,4 @@ Initial internal release of the specification draft.
 - Conformance and protocol drafts for the provenance data plane, the audit /
   reconciliation model, and the cross-organization export seam.
 
-[0.1.0]: https://github.com/dplaax/spec_draft/releases/tag/v0.1.0
+[0.1.0]: https://github.com/dplaax/spec/releases/tag/v0.1.0
