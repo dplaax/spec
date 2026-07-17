@@ -44,7 +44,7 @@ rules:
       three MUST fail closed.
     uses: [auth.grant.exact-method]
     schemas: []
-    vectors: []
+    vectors: [auth-grant-kid-mismatch-001]
     notes: >-
       Three references name the key: the header, the signed body, and the
       resolved document. Allowing them to differ would let the verified key

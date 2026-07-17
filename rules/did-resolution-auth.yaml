@@ -14,7 +14,7 @@ rules:
       MUST NOT apply any normalization.
     uses: [auth.contract.normative-sot]
     schemas: []
-    vectors: []
+    vectors: [did-resolution-id-mismatch-001]
     notes: >-
       Without an id-equality check a malicious registry can return a foreign
       document. Byte-exact equality for did:dplaax avoids a normalization step
@@ -73,7 +73,7 @@ rules:
       invalid signature MUST be FAILED; neither path MUST issue a token.
     uses: [auth.resolve.single-input-binding, confidence.lifecycle.input-semantics]
     schemas: []
-    vectors: []
+    vectors: [did-resolution-unavailable-001]
     notes: >-
       The three-value split holds here: a source you cannot reach is retryable
       (indeterminate), a proven inconsistency is terminal (failed), and in neither
