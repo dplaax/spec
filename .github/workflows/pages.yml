@@ -1,0 +1,66 @@
+# Publishes dplaax.dev via GitHub Pages.
+#
+# The served tree is ASSEMBLED at deploy from the single source of truth:
+# `site/` holds the hand-authored pages (grant-type namespace doc, the apex
+# root/404 redirects to www.dplaax.dev, CNAME); the machine-readable wire
+# identifiers are copied in byte-for-byte from their canonical locations
+# (`contexts/v1.jsonld` -> /vc/v1, `schemas/*.json` -> /schemas/*). Nothing is
+# duplicate-committed under site/, so there is no drift to keep in sync.
+#
+# NOTE: Pages only serves once the repo is public (free plan). Until then this
+# workflow builds but does not publish anything reachable.
+name: pages
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One publish at a time; don't cancel an in-flight deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Assemble the served tree
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site/vc _site/schemas
+          # hand-authored pages + CNAME + .nojekyll
+          cp -R site/. _site/
+          # wire identifiers, copied byte-exact from the canonical sources
+          cp contexts/v1.jsonld _site/vc/v1
+          cp schemas/*.json _site/schemas/
+      - name: Guard byte-exact context (must match the sha256 pin)
+        run: |
+          set -euo pipefail
+          expected=9716bca789bdb1042451746800cc463a616a57817008001a3a895e88c0aff25f
+          actual=$(sha256sum _site/vc/v1 | cut -d' ' -f1)
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::served /vc/v1 sha256 $actual != pinned $expected (contexts/v1.jsonld drifted from the signing-scope pin)"
+            exit 1
+          fi
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

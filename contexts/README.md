@@ -43,3 +43,9 @@ claim registry (→ `credential.claim.*` in rules/credential.yaml).
 - After modifying this document, update the sha256 in the table above and
   synchronize the change byte-exact to the vendoring target
   (provin.oss `vc/contexts/`).
+- This file is also **served** byte-exact at its own URI
+  `https://dplaax.dev/vc/v1`: the Pages workflow (`.github/workflows/pages.yml`)
+  copies it to `/vc/v1` at deploy and fails the build if the served bytes'
+  sha256 diverges from the pin above. So `contexts/v1.jsonld` is the single
+  source for three consumers — this repo's served identifier, the provin.oss
+  vendored copy, and any implementation embedding it — all sharing one sha256.
