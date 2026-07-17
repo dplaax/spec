@@ -13,7 +13,7 @@ name: pages
 
 on:
   push:
-    branches: [develop]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
