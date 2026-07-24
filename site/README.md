@@ -27,30 +27,25 @@ redirect.
   not places in a website. Human documentation sections may exist alongside
   (e.g. `/spec/...`) but identifiers do not point into them.
 - **Self-contained pages only**: no external assets, no build step that
-  rewrites bytes (no minification). `.nojekyll` keeps branch-based Pages
-  publishing from touching content.
+  rewrites bytes (no minification).
 
 ## Publishing
 
-`.github/workflows/pages.yml` deploys to GitHub Pages (source: GitHub
-Actions) on push to `develop`. It **assembles** the served tree rather than
-serving `site/` verbatim: it copies `site/` as-is, then copies the
+`.github/workflows/deploy.yml` publishes to S3 + CloudFront (bucket
+`wire.dplaax.dev` behind an OAC distribution — topology in
+`infra/deploy.md`). It **assembles** the served tree rather than serving
+`site/` verbatim: it copies the hand-authored pages, then copies the
 machine-readable identifiers in byte-for-byte from their canonical sources —
 `contexts/v1.jsonld` → `/vc/v1`, `schemas/*.json` → `/schemas/*.json` — so
-those payloads live in exactly one place and cannot drift. A build step fails
+those payloads live in exactly one place and cannot drift. A guard step fails
 the deploy if the served `/vc/v1` sha256 ever diverges from the signing-scope
-pin (`9716bca…`). The `CNAME` file binds `dplaax.dev`.
+pin (`9716bca…`).
 
-Not live until the repo is public: on the free plan GitHub Pages does not
-serve a private repo. The workflow + `CNAME` make it ready; going public
-activates it. Until then nothing breaks — no identifier requires
-dereferencing (the context is embedded + sha256-pinned in provin.oss).
-
-Caveat: GitHub Pages cannot set a custom `Content-Type`, so `/vc/v1`
-(extensionless) is served with the host default rather than
-`application/ld+json`. Acceptable because the context is never dereferenced
-at runtime; if a strict media type is ever required, move the apex to an
-S3+CloudFront origin (as `provin.dev` already uses).
+S3 object metadata is what lets the extensionless identifier paths carry
+their correct media types (`/vc/v1` → `application/ld+json`) — the reason
+this surface moved off GitHub Pages, which derives `Content-Type` from the
+file extension alone. The Pages-era control files (`CNAME`, `.nojekyll`)
+remain in `site/` as inert history but are not shipped to S3.
 
 ## Current documents
 
