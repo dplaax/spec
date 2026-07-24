@@ -1,0 +1,116 @@
+# Deploys the dplaax.dev wire surface to S3 + CloudFront.
+#
+# dplaax.dev serves the protocol's machine-readable wire identifiers — the
+# JSON-LD context at /vc/v1, the JSON Schemas under /schemas/, and the OAuth
+# grant-type namespace document at /oauth/grant-type/did. GitHub Pages derives
+# Content-Type from the file extension only and cannot override response
+# headers, so the extensionless /vc/v1 was served as application/octet-stream.
+# S3 object metadata lets us serve it as application/ld+json — the reason this
+# surface moves off Pages. See infra/deploy.md.
+#
+# The served tree is ASSEMBLED here from the single source of truth: site/ holds
+# the hand-authored apex pages (root + 404 redirect to www.dplaax.dev, the
+# grant-type doc); the wire identifiers are copied byte-for-byte from their
+# canonical locations (contexts/v1.jsonld -> /vc/v1, schemas/*.json ->
+# /schemas/*). Nothing is duplicate-committed under site/.
+#
+# Disabled until the AWS OIDC role, bucket, and distribution exist. To activate,
+# change `if: false` and populate repo secrets:
+#   - AWS_ROLE_TO_ASSUME       (OIDC role with S3 + CloudFront perms, scoped to
+#                               this bucket/distribution only)
+#   - AWS_REGION
+#   - S3_BUCKET                (wire.dplaax.dev)
+#   - CLOUDFRONT_DISTRIBUTION_ID
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One publish at a time; don't cancel an in-flight deploy.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: false # disabled — see infra/deploy.md before enabling
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble the served tree
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site/vc _site/schemas _site/oauth/grant-type
+          # hand-authored apex pages. CNAME/.nojekyll are Pages-only control
+          # files and are intentionally NOT shipped to S3.
+          cp site/index.html _site/index.html
+          cp site/404.html   _site/404.html
+          # identifier paths are served as extensionless objects (their frozen
+          # URIs carry no extension); Content-Type is set explicitly below.
+          cp site/oauth/grant-type/did/index.html _site/oauth/grant-type/did
+          cp contexts/v1.jsonld _site/vc/v1
+          cp schemas/*.json _site/schemas/
+
+      - name: Guard byte-exact context (must match the sha256 pin)
+        run: |
+          set -euo pipefail
+          expected=9716bca789bdb1042451746800cc463a616a57817008001a3a895e88c0aff25f
+          actual=$(sha256sum _site/vc/v1 | cut -d' ' -f1)
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::served /vc/v1 sha256 $actual != pinned $expected (contexts/v1.jsonld drifted from the signing-scope pin)"
+            exit 1
+          fi
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Sync to S3
+        run: |
+          set -euo pipefail
+          # Defense-in-depth for the highest-consequence failure: this step runs
+          # --delete, so refuse any bucket that is not a dedicated wire bucket. A
+          # secret misconfigured to an LP bucket (www.*) would otherwise erase the
+          # landing page — the exact catastrophe this migration exists to prevent.
+          case "$S3_BUCKET" in
+            wire.*) ;;
+            *) echo "::error::refusing to sync --delete a non-wire bucket: $S3_BUCKET"; exit 1 ;;
+          esac
+          # Bulk sync of the extension-bearing files; Content-Type maps from the
+          # extension (.html -> text/html, .json -> application/json). The
+          # extensionless identifier objects are EXCLUDED: sync would upload them
+          # as application/octet-stream and only a later step would repair the
+          # type — an interruption (or a CloudFront cache miss in that window)
+          # could serve or pin the wrong type. They are uploaded exactly once,
+          # below, with the right type. --exclude also applies to the delete
+          # scan, so --delete leaves the excluded keys alone.
+          aws s3 sync _site/ "s3://${S3_BUCKET}/" --delete \
+            --exclude "vc/v1" \
+            --exclude "oauth/grant-type/did"
+
+      - name: Upload the extensionless identifier objects
+        run: |
+          set -euo pipefail
+          # Sole upload path for these keys (excluded from the sync above): a
+          # single write carrying the correct media type, so the origin never
+          # holds them as application/octet-stream, even transiently.
+          aws s3 cp _site/vc/v1 "s3://${S3_BUCKET}/vc/v1" \
+            --content-type application/ld+json
+          aws s3 cp _site/oauth/grant-type/did "s3://${S3_BUCKET}/oauth/grant-type/did" \
+            --content-type text/html
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
