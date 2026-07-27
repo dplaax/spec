@@ -80,6 +80,7 @@ rules:
       presence enforcement: an absent successor inputHash cannot satisfy the
       equality (chain-008).
       Source: drafts/v1_001 conformance section, L2 verification rule
-      "Input-output binding"; baked into provin.oss packages/vc as a contract
-      (the chain invariant in credential.go / VerifyChain). Resolved the
+      "Input-output binding"; baked into provin.oss's vc package as a contract
+      — the invariant is stated on the credential type in vc/credential.go and
+      enforced by Verifier.VerifyChain in vc/verifier.go. Resolved the
       unsourced-normativization ledger item on 2026-06-11.
