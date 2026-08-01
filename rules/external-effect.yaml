@@ -8,7 +8,7 @@
 rules:
   - id: effect.sink.classification
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A sink deployment MUST be classified under a versioned sink profile —
       external-effect-sink@1 or archive-observation-sink@1 — and an archive
@@ -27,7 +27,7 @@ rules:
 
   - id: effect.gate.verified-scopes
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       An external-effect-sink@1 deployment MUST execute an irreversible
       external effect only after every scope required by its claim contract is
@@ -43,7 +43,7 @@ rules:
 
   - id: effect.gate.full-spine
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       Full chain for an external-effect release MUST mean the complete
       previousCredential spine from head to origin; every additional scope the
@@ -59,7 +59,7 @@ rules:
 
   - id: effect.gate.no-bare-verdict
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A release decision MUST NOT be derived from an overall or aggregate
       verdict, a body-level latest verdict, or an adjacent-only verdict; the
@@ -76,7 +76,7 @@ rules:
 
   - id: effect.state.closed-machine
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       Effect state MUST use only the ten states and the transition table
       fixed by effect-status.json; a deployment MUST NOT add states or
@@ -98,7 +98,7 @@ rules:
 
   - id: effect.authorization.artifact
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A release MUST be authorized by an immutable, integrity-protected
       ReleaseAuthorization committing to the field set fixed by
@@ -118,7 +118,7 @@ rules:
 
   - id: effect.authorization.wire-artifact
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       The authorization path from evidence evaluation to release MUST cross a
       versioned wire artifact; a release worker MUST NOT consume
@@ -135,7 +135,7 @@ rules:
 
   - id: effect.release.exact-bytes
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A release worker MUST match the ReleaseAuthorization against the exact
       stored quarantine bytes (payload digest and wire variant) and MUST NOT
@@ -150,7 +150,7 @@ rules:
 
   - id: effect.release.freshness
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A ReleaseAuthorization past valid_until, or whose policy, lifecycle
       freshness, or input snapshots no longer match, MUST NOT dispatch; the
@@ -166,7 +166,7 @@ rules:
 
   - id: effect.quarantine.atomic-entry
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A quarantine entry MUST atomically persist the credential wire variant,
       payload bytes, payload digest, delivery metadata, and sink profile id; a
@@ -183,7 +183,7 @@ rules:
 
   - id: effect.quarantine.structural-pregate
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       Decidable structural gates — payload binding, wire decode, allow-list —
       MUST run before quarantine admission; their failure MUST reject the
@@ -198,7 +198,7 @@ rules:
 
   - id: effect.verdict.mapping
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       Adjacent FAILED MUST map to DENIED; adjacent or full-evidence
       INDETERMINATE MUST map to bounded quarantine; a required scope FAILED
@@ -214,7 +214,7 @@ rules:
 
   - id: effect.expiry.deny-expired
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       Quarantine TTL or attempt exhaustion MUST NOT alter the evidence
       verdict: the record keeps evidence INDETERMINATE and the policy decision
@@ -234,7 +234,7 @@ rules:
 
   - id: effect.dispatch.single-flight
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       State transitions MUST be protected by compare-and-swap or generation
       fencing so that concurrent release workers MUST NOT dispatch the same
@@ -249,7 +249,7 @@ rules:
 
   - id: effect.state.confirmed-only
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A local write attempt MUST NOT be recorded as release success; the only
       success state is EFFECT_CONFIRMED, a pre-existing effect-complete
@@ -266,7 +266,7 @@ rules:
 
   - id: effect.state.unknown-no-retry
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       An ambiguous external write MUST transition to EFFECT_UNKNOWN; it MUST
       NOT be guessed into failure, and automatic retry from EFFECT_UNKNOWN
@@ -282,7 +282,7 @@ rules:
 
   - id: effect.writer.capability
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       An external-effect-sink@1 writer MUST provide at least one of:
       put-if-absent on an idempotency key, a keyed command with effect
@@ -299,7 +299,7 @@ rules:
 
   - id: effect.writer.limited-profile
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A writer lacking every idempotency capability MUST be declared a
       limited profile; after EFFECT_UNKNOWN it MUST NOT retry automatically
@@ -314,7 +314,7 @@ rules:
 
   - id: effect.delivery.identity
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A delivery identity MUST include at least the sink contract, sink
       instance, target namespace, quarantine entry or delivery occurrence,
@@ -330,7 +330,7 @@ rules:
 
   - id: effect.claim.no-local-exactly-once
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       Local sink state alone MUST NOT ground an EXACTLY_ONCE or an end-to-end
       AT_MOST_ONCE claim; those are independent delivery claims and MUST be
@@ -346,7 +346,7 @@ rules:
 
   - id: effect.receipt.confirmed-only
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A delivery receipt MUST be issued only after EFFECT_CONFIRMED and MUST
       bind the delivery identity, the ReleaseAuthorization digest, and the
@@ -361,7 +361,7 @@ rules:
 
   - id: effect.receipt.limited-claim
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A receipt MUST claim only that the sink observed an effect
       confirmation; it MUST NOT be promoted to target-side truth,
@@ -376,7 +376,7 @@ rules:
 
   - id: effect.archive.observation-record
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       Pre-verification archival MUST write an append-only ObservationRecord
       carrying the exact variant and payload with coverage NOT_EVALUATED; an
@@ -392,7 +392,7 @@ rules:
 
   - id: effect.archive.decision-record
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       An actionable consumer MUST read archived data only through a
       DecisionRecord whose decision is RELEASE, referencing the
@@ -408,7 +408,7 @@ rules:
 
   - id: effect.quarantine.capacity
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A quarantine store MUST enforce global and per-principal byte quotas,
       retention, backpressure, disk alerts, crash recovery, and an
@@ -424,7 +424,7 @@ rules:
 
   - id: effect.quarantine.no-fallback
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       Quarantine capacity exhaustion MUST surface as rejection or
       backpressure; it MUST NOT fall back to an unverified external write.
@@ -438,7 +438,7 @@ rules:
 
   - id: effect.migration.exclusive-writers
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A legacy synchronous writer and the release worker MUST NOT be enabled
       for the same delivery target concurrently; the cutover feature gate
@@ -454,7 +454,7 @@ rules:
 
   - id: effect.transport.possible-loss
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       While the inbound transport can drop a delivery before the quarantine
       entry is durably committed, the deployment MUST surface that window as

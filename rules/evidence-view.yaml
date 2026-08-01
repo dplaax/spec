@@ -27,7 +27,7 @@ rules:
       be the digest of that manifest.
     uses: [evidence.manifest.persisted, identity.variant.immutable-set]
     schemas: [evidence-view.json]
-    vectors: []
+    vectors: [evidence-view-001, evidence-view-002]
     notes: >-
       The EvidenceViewID is the single handle that binds a verdict to the exact
       spine, contract, and snapshots it was computed under. The id is computed

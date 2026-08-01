@@ -67,7 +67,7 @@ rules:
 
   - id: audit.release.synthesis
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A ReleaseAuthorization issuer MUST synthesize the decision from the
       per-scope evidence vector committed for the exact EvidenceViewID and
