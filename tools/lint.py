@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 RFC2119 = re.compile(r"\b(?:MUST|SHALL|SHOULD|REQUIRED|RECOMMENDED|OPTIONAL|MAY)\b")
 ID_RE = re.compile(r"^[a-z0-9]+(\.[a-z0-9-]+){1,3}$")
 STATUSES = {"todo", "draft", "stable"}
-CLASSES = {"core", "audit-reachable"}
+CLASSES = {"core", "audit-reachable", "effect-gated"}
 MD_EXCLUDE = {"STATUS.md"}
 # 0.1 タグの vector カバレッジ床 (VERSIONING.md「0.1 タグの条件」と対)。
 # 列挙された family は全 rule が 1 本以上の vector を持たなければならない。

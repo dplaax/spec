@@ -324,7 +324,7 @@ rules:
 
   - id: claims.profile.external-effect
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       The external-effect profile MUST require the provenance-release and
       current-authorization scopes (KEY_AUTHORIZATION_AT_STATE,
@@ -464,7 +464,7 @@ rules:
 
   - id: claims.effect.contracts
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       The external-effect contract identifiers MUST be exactly the set
       enumerated in scope-catalog.json, and a consumer MUST derive effect
@@ -480,7 +480,7 @@ rules:
 
   - id: claims.effect.legacy-receipt
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       A pre-B2 sink receipt MUST be projected only to LEGACY_SINK_RECEIPT@1;
       it MUST NOT be re-projected to EFFECT_CONFIRMED@1 or any release or
@@ -496,7 +496,7 @@ rules:
 
   - id: claims.effect.scope-mapping
     status: draft
-    class: core
+    class: effect-gated
     statement: >-
       The RECEIPT_EXTERNAL_EFFECT@1 scope MUST be evaluated only from an
       EFFECT_CONFIRMED@1 record bound to the delivery identity; a receipt

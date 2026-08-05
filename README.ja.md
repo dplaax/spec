@@ -36,7 +36,7 @@ markdown（本書、concept.md、GLOSSARY.md 等）はすべて non-normative。
 | --- | --- |
 | `id` | `<domain>.<topic>[.<name>]`。`status: todo` の間は仮 id、`draft` 昇格で凍結。ただし最初の consumed release までは、台帳記録を伴う意図的な rename + タグ切り直しを許す（VERSIONING.md と STATUS ledger 参照）— consumed release 以降は draft 昇格が hard freeze |
 | `status` | `todo`（転記前 stub）/ `draft` / `stable` |
-| `class` | `core`（既定）/ `audit-reachable`。conformance class の所属 |
+| `class` | `core`（既定）/ `audit-reachable` / `effect-gated`。conformance class の所属。後二者は opt-in |
 | `statement` | 規範文。`draft` 以上で必須、256 文字以内、RFC 2119 の規範語を 1 つ以上含む。1 rule = 1 表現で、他所での再表現は禁止 |
 | `uses` | 依存する rule id の列。規範の再掲の代わりに参照する |
 | `schemas` / `vectors` | 対応する artifact ファイルへの参照 |

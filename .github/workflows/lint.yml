@@ -25,3 +25,5 @@ jobs:
         run: python tools/lint.py
       - name: vector-vs-schema validation
         run: python tools/validate_vectors.py
+      - name: independent EvidenceView vectors
+        run: python tools/verify_evidence_vectors.py
