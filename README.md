@@ -9,9 +9,11 @@ the resulting chain can be independently verified by third parties
 > **Status: v0.1 (draft).** All rules are in `draft` state and will continue to
 > evolve based on implementation feedback (→ [VERSIONING.md](VERSIONING.md)).
 > **Public review and contributions are welcome** —
-> see [CONTRIBUTING.md](CONTRIBUTING.md). Governance will be formalized
-> incrementally as the contributor base grows (current state: maintainer
-> discretion; discussions are public in Issues).
+> see [CONTRIBUTING.md](CONTRIBUTING.md). Governance — who decides, change
+> classes, draft→stable promotion, succession — is documented in
+> [GOVERNANCE.md](GOVERNANCE.md). Known implementation:
+> [provin-line/oss](https://github.com/provin-line/oss) (v0.3.0 tracks spec
+> v0.1 draft; vendors and CI-gates this repo's `vectors/`).
 
 The normative spec for dPLaaX. **The source of truth for all normative content
 is exactly the following three artifacts**; prose is non-normative.
