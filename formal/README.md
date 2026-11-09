@@ -47,14 +47,30 @@ ones `chain.spthy` makes; the model's header comment says the same.
 | --- | --- | --- | --- |
 | `executable_chain` | exists-trace | an origin and a successor are accepted with no key compromised (reachability) | — |
 | `executable_fan_out` | exists-trace | two successors of one predecessor are both accepted | `chain.trigger.fan-out` |
-| `executable_after_reissue` | exists-trace | a successor links to a predecessor whose proof was issued again | `identity.body-address` |
+| `executable_after_reissue` | exists-trace | a chain still proceeds after a re-signing event (that the address is the body's and not the proof's holds by construction, `h(b)`) | `identity.body-address` |
 | `signer_authenticity` | all-traces | a credential accepted as `P`'s was issued by `P`, or `P`'s key was compromised first | `signer.proof.structure`; provin.oss `vc.Verifier.Verify` (signer-authenticity axis) |
-| `compromise_bounded_to_signer` | all-traces | a successor accepted as an uncompromised `P2`'s was issued by `P2`, whatever was done with the predecessor's key | provin.oss `vc.VerifyChain` (per-credential verification) |
-| `link_integrity` | all-traces | a linked successor's `previousCredential` is the predecessor's address and its `inputHash` the predecessor's `outputHash` | `chain.data-flow.continuity`, `credential.subject.input-hash`, `credential.subject.output-hash`, `credential.subject.previous-credential`, `credential.prev.content-hash`; provin.oss `vc.ValidateChainLinks` |
+| `forgery_after_compromise` | exists-trace | with `P`'s key, the attacker has a credential accepted as `P`'s that `P` never issued: the exception in `signer_authenticity` is live | — |
+| `forged_predecessor_extended` | exists-trace | a forged origin under a leaked key is accepted and an uncompromised process's successor is linked to it: the reach of the exception | — |
+| `no_repointing` | all-traces | a successor linked as an uncompromised `P2`'s names the predecessor's address as `previousCredential`, its `outputHash` as `inputHash`, and was issued so by `P2`; needs the signature check and the link check together | `chain.data-flow.continuity`, `credential.subject.input-hash`, `credential.subject.output-hash`, `credential.subject.previous-credential`, `credential.prev.content-hash`; provin.oss `vc.ValidateChainLinks` within `vc.VerifyChain` |
+| `link_integrity` | all-traces | the verifier's link check is present: structural, the pattern of `VerifyNext`, proved without attacker reasoning; the `SkipLinkCheck` control removes it | provin.oss `vc.ValidateChainLinks` |
 
 The exists-trace lemmas are there so that the all-traces lemmas are not
 vacuous: a safety property holds trivially of a model in which nothing is ever
-accepted.
+accepted, and an exception nobody can reach is no exception. `link_integrity`
+on its own establishes nothing against an attacker; re-pointing is ruled out
+by `no_repointing`, which rests on `signer_authenticity` and on that check.
+
+### In the code
+
+provin.oss's `vc.VerifyChain` returns a graded verdict, not accept or
+reject. `Accepted(b, P)` is a credential whose per-credential verification
+reports the signer-authenticity axis verified, with `P` the issuer the proof's
+verification method resolves to; `Linked(b2, a1, out1)` is a chain whose
+`firstBrokenLink` is nil at `b2`, with `a1` the predecessor's content address
+and `out1` its `outputHash`. The model's `!Chain` keeps every credential the
+verifier ever accepted, so a successor may be linked to any of them; the code
+links only within the chain it is handed. That is an over-approximation of
+the code, sound for the properties here.
 
 ## Results
 
@@ -71,9 +87,9 @@ from the file is expected to be proved.
 
 | build | lemma | state |
 | --- | --- | --- |
-| default | all six | proved |
-| `SkipLinkCheck` (the verifier reads neither `previousCredential` nor `inputHash` against the credential it extends) | `link_integrity` | refuted as expected |
-| `SkipLinkCheck` | the other five | proved |
+| default | all eight | proved |
+| `SkipLinkCheck` (the verifier reads neither `previousCredential` nor `inputHash` against the credential it extends) | `no_repointing`, `link_integrity` | refuted as expected |
+| `SkipLinkCheck` | the other six | proved |
 
 Unresolved: none.
 
@@ -109,5 +125,6 @@ and the outcome is recorded in the rule or in the decision record.
 
 provin.4s-intent keeps its own Tamarin model of the pre-execution decision
 (`verification/tamarin/intent.spthy`), which abstracts stage records in the
-same shape as the credentials here. That model cites this one; the dependency
-runs one way, from 4s-intent to dPLaaX and provin, never back.
+same shape as the credentials here. That model is to cite this one, once this
+one is merged; the dependency runs one way, from 4s-intent to dPLaaX and
+provin, never back.

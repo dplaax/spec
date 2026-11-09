@@ -150,21 +150,43 @@ lemma signer_authenticity:
      (Ex #j. Issued(P, b) @ #j & #j < #i)
      | (Ex #r. Compromised(P) @ #r & #r < #i)"
 
-// The bound of a compromised key: whatever the attacker does with a
-// predecessor's key, a successor accepted as an uncompromised P2's was issued
-// by P2 (the per-credential verification of vc.VerifyChain).
-lemma compromise_bounded_to_signer:
-  "All P2 inp2 out2 a1 out1 #i.
-     Linked(<'cred', P2, inp2, out2, a1>, a1, out1) @ #i
-     & not (Ex #r. Compromised(P2) @ #r & #r < #i) ==>
-     (Ex #j. Issued(P2, <'cred', P2, inp2, out2, a1>) @ #j & #j < #i)"
+// The compromised-key exception, made explicit: with a process's key the
+// attacker has a credential accepted as that process's that the process never
+// issued (the disjunct of signer_authenticity is live).
+lemma forgery_after_compromise:
+  exists-trace
+  "Ex b P #i #r. Accepted(b, P) @ #i & Compromised(P) @ #r & #r < #i
+     & not (Ex #j. Issued(P, b) @ #j)"
 
-// Link integrity: a successor the verifier links to an accepted credential
-// names that credential's address as previousCredential and its outputHash
-// as inputHash, so no link can be re-pointed (chain.data-flow.continuity,
-// credential.subject.input-hash, credential.subject.output-hash,
-// credential.subject.previous-credential, credential.prev.content-hash).
-// Falsified with -D=SkipLinkCheck.
+// The reach of the exception: a forged origin under a leaked key is accepted,
+// and an uncompromised process's successor is linked to it. Verification
+// does not, and cannot, tell a forged predecessor from a genuine one; what it
+// bounds is the forgery to the compromised process (no_repointing).
+lemma forged_predecessor_extended:
+  exists-trace
+  "Ex b1 P1 b2 P2 out1 #k #i #r.
+     Accepted(b1, P1) @ #k & Compromised(P1) @ #r & #r < #k
+     & not (Ex #j. Issued(P1, b1) @ #j)
+     & Linked(b2, h(b1), out1) @ #i & Accepted(b2, P2) @ #i
+     & not (Ex #q. Compromised(P2) @ #q)"
+
+// No re-pointing: a successor the verifier links to an accepted credential,
+// as an uncompromised P2's, names that credential's address as
+// previousCredential, takes its outputHash as inputHash, and was issued so by
+// P2. Needs both the signature check and the link check: falsified with
+// -D=SkipLinkCheck (chain.data-flow.continuity, credential.subject.input-hash,
+// credential.subject.output-hash, credential.subject.previous-credential,
+// credential.prev.content-hash).
+lemma no_repointing:
+  "All P2 inp2 out2 prev2 a1 out1 #i.
+     Linked(<'cred', P2, inp2, out2, prev2>, a1, out1) @ #i
+     & not (Ex #r. Compromised(P2) @ #r & #r < #i) ==>
+     prev2 = a1 & inp2 = out1
+     & (Ex #j. Issued(P2, <'cred', P2, inp2, out2, prev2>) @ #j & #j < #i)"
+
+// The verifier's link check is present: structural (the pattern of
+// VerifyNext), proved without attacker reasoning, and there so that the
+// -D=SkipLinkCheck control shows the check is what no_repointing rests on.
 lemma link_integrity:
   "All P2 inp2 out2 prev2 a1 out1 #i.
      Linked(<'cred', P2, inp2, out2, prev2>, a1, out1) @ #i ==>

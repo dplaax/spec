@@ -26,6 +26,9 @@ jobs:
       TAMARIN_SHA256: 201be06f469e47cff554df6ca93db8366fc2c69d70c61fcbd1370a1074b469c6
       MAUDE_VERSION: 3.5.1
       MAUDE_SHA256: 72ed1ca87e3b3d0dfc6ee1436baf154bf04c45ff97d521bec040c5e8dfc8f92c
+      # Per lemma, so that a lemma that does not finish is reported by check.sh
+      # as unresolved before the job's own timeout ends the run.
+      TIMEOUT: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
