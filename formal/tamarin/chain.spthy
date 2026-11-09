@@ -57,6 +57,27 @@ rule IssueOrigin:
   --[ Issued(P, b) ]->
     [ Out(<b, sign(b, sk)>), !Body(P, b) ]
 
+// A successor: its inputHash is the predecessor's outputHash and its
+// previousCredential is the predecessor's body address (chain.data-flow.
+// continuity, credential.prev.content-hash). The issuer reads the
+// predecessor from the network and does not check its signature: the
+// weakest assumption, since verification is the verifier's duty. Nothing
+// stops a second successor of the same predecessor (chain.trigger.fan-out).
+rule IssueNext:
+    let b1 = <'cred', P1, inp1, out1, prev1>
+        b2 = <'cred', P, out1, out2, h(b1)>
+    in
+    [ !Sk(P, sk), In(<b1, out2>) ]
+  --[ Issued(P, b2) ]->
+    [ Out(<b2, sign(b2, sk)>), !Body(P, b2) ]
+
+// A proof issued again for a body the process issued: the body, and so its
+// address, is unchanged (identity.body-address).
+rule ReSign:
+    [ !Sk(P, sk), !Body(P, b) ]
+  --[ ReSigned(P, b) ]->
+    [ Out(<b, sign(b, sk)>) ]
+
 /* ---------- Verification ---------- */
 
 // The verifier accepts a chain origin: a body with no predecessor, signed by
@@ -68,11 +89,39 @@ rule VerifyOrigin:
   --[ Eq(verify(s, b, pk), true), Accepted(b, P) ]->
     [ !Chain(h(b), P, out) ]
 
+// The verifier accepts a successor of a credential it accepted: the body
+// names that credential's address as previousCredential, takes its
+// outputHash as inputHash, and is signed by the key of the process it names
+// (what provin.oss's vc.ValidateChainLinks checks, read by vc.VerifyChain).
+rule VerifyNext:
+    let b2 = <'cred', P2, out1, out2, a1>
+    in
+    [ In(<b2, s2>), !Pk(P2, pk2), !Chain(a1, P1, out1) ]
+  --[ Eq(verify(s2, b2, pk2), true), Accepted(b2, P2), Linked(b2, a1, out1) ]->
+    [ !Chain(h(b2), P2, out2) ]
+
 /* ---------- Lemmas ---------- */
 
-// An origin can be accepted without any key taken over (reachability).
-lemma executable_origin:
+// Reachability: a successor can be accepted without any key taken over.
+lemma executable_chain:
   exists-trace
-  "Ex b P #i. Accepted(b, P) @ #i & not (Ex Q #r. Compromised(Q) @ #r)"
+  "Ex b2 a1 out1 #i. Linked(b2, a1, out1) @ #i
+     & not (Ex Q #r. Compromised(Q) @ #r)"
+
+// Reachability: two successors of one predecessor can both be accepted
+// (chain.trigger.fan-out: linearity bounds predecessors, not successors).
+lemma executable_fan_out:
+  exists-trace
+  "Ex b2 b3 a1 out1 #i #j. Linked(b2, a1, out1) @ #i & Linked(b3, a1, out1) @ #j
+     & not (b2 = b3)
+     & not (Ex Q #r. Compromised(Q) @ #r)"
+
+// Reachability: a successor links to a predecessor whose proof was issued
+// again (identity.body-address: the address is the body's, not the proof's).
+lemma executable_after_reissue:
+  exists-trace
+  "Ex P1 b1 b2 out1 #i #j. ReSigned(P1, b1) @ #i & Linked(b2, h(b1), out1) @ #j
+     & #i < #j
+     & not (Ex Q #r. Compromised(Q) @ #r)"
 
 end
