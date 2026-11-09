@@ -124,4 +124,21 @@ lemma executable_after_reissue:
      & #i < #j
      & not (Ex Q #r. Compromised(Q) @ #r)"
 
+// Signer authenticity: a credential the verifier accepts as P's was issued
+// by P, unless P's key had been taken over (signer.proof.structure; the
+// signer-authenticity axis of provin.oss's vc.Verifier).
+lemma signer_authenticity:
+  "All b P #i. Accepted(b, P) @ #i ==>
+     (Ex #j. Issued(P, b) @ #j & #j < #i)
+     | (Ex #r. Compromised(P) @ #r & #r < #i)"
+
+// The bound of a compromised key: whatever the attacker does with a
+// predecessor's key, a successor accepted as an uncompromised P2's was issued
+// by P2 (the per-credential verification of vc.VerifyChain).
+lemma compromise_bounded_to_signer:
+  "All P2 inp2 out2 a1 out1 #i.
+     Linked(<'cred', P2, inp2, out2, a1>, a1, out1) @ #i
+     & not (Ex #r. Compromised(P2) @ #r & #r < #i) ==>
+     (Ex #j. Issued(P2, <'cred', P2, inp2, out2, a1>) @ #j & #j < #i)"
+
 end
