@@ -1,0 +1,78 @@
+/*
+ * The authentication of a provenance chain, as a Tamarin model.
+ *
+ * A credential's body is <'cred', P, inp, out, prev>: its issuer P (a process),
+ * its inputHash, its outputHash, and its previousCredential, which is 'origin'
+ * for a chain origin and otherwise the predecessor's body address h(b1), the
+ * hash of the proof-excluded body (identity.body-address). The wire form is
+ * the body with a signature over it; the signature is outside the body, so a
+ * body signed again keeps its address.
+ *
+ * Contract (formal/README.md says the same):
+ *   - the network is the attacker's (Dolev-Yao);
+ *   - trusted: the verifier (never taken over), hashing (no collisions),
+ *     signatures (no forgery without the key);
+ *   - any process key can be taken over (CompromiseProcess), and the model
+ *     records it;
+ *   - no persistence and no time: clocks and proof.created are outside the
+ *     model, and so are delegation, the source commitment, DID resolution
+ *     (public keys reach the verifier directly), key rotation, the wire
+ *     variant id, and the data behind the hashes (in and out are the
+ *     attacker's to choose);
+ *   - the acceptance events are Accepted(b, P), the verifier accepted body b
+ *     as signed by P, and Linked(b2, a1, out1), the verifier accepted b2 as
+ *     the successor of the accepted credential at address a1 whose
+ *     outputHash is out1.
+ */
+theory Chain
+begin
+
+builtins: hashing, signing
+
+restriction Equality:
+  "All x y #i. Eq(x, y) @ #i ==> x = y"
+
+/* ---------- Processes ---------- */
+
+// A process with its signing key. The public key is public.
+rule Process:
+    [ Fr(~sk) ]
+  --[ Process($P) ]->
+    [ !Sk($P, ~sk), !Pk($P, pk(~sk)), Out(pk(~sk)) ]
+
+// The attacker takes a process's key.
+rule CompromiseProcess:
+    [ !Sk(P, sk) ]
+  --[ Compromised(P) ]->
+    [ Out(sk) ]
+
+/* ---------- Issuance ---------- */
+
+// A chain origin: no predecessor. The input and output hashes are whatever
+// the environment hands the process; the data behind them is not modelled.
+rule IssueOrigin:
+    let b = <'cred', P, inp, out, 'origin'>
+    in
+    [ !Sk(P, sk), In(<inp, out>) ]
+  --[ Issued(P, b) ]->
+    [ Out(<b, sign(b, sk)>), !Body(P, b) ]
+
+/* ---------- Verification ---------- */
+
+// The verifier accepts a chain origin: a body with no predecessor, signed by
+// the key of the process it names.
+rule VerifyOrigin:
+    let b = <'cred', P, inp, out, 'origin'>
+    in
+    [ In(<b, s>), !Pk(P, pk) ]
+  --[ Eq(verify(s, b, pk), true), Accepted(b, P) ]->
+    [ !Chain(h(b), P, out) ]
+
+/* ---------- Lemmas ---------- */
+
+// An origin can be accepted without any key taken over (reachability).
+lemma executable_origin:
+  exists-trace
+  "Ex b P #i. Accepted(b, P) @ #i & not (Ex Q #r. Compromised(Q) @ #r)"
+
+end
