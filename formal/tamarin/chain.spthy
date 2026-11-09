@@ -23,6 +23,10 @@
  *     as signed by P, and Linked(b2, a1, out1), the verifier accepted b2 as
  *     the successor of the accepted credential at address a1 whose
  *     outputHash is out1.
+ *
+ * Builds: the default build is the protocol; -D=SkipLinkCheck is the negative
+ * control, a verifier without the link check, under which link_integrity is
+ * expected to be falsified (formal/tamarin/expected.tsv).
  */
 theory Chain
 begin
@@ -93,12 +97,26 @@ rule VerifyOrigin:
 // names that credential's address as previousCredential, takes its
 // outputHash as inputHash, and is signed by the key of the process it names
 // (what provin.oss's vc.ValidateChainLinks checks, read by vc.VerifyChain).
+// -D=SkipLinkCheck models a verifier that reads neither previousCredential
+// nor inputHash against the credential it extends (the negative control):
+// link_integrity is falsified with it.
+#ifdef SkipLinkCheck
+rule VerifyNext:
+    let b2 = <'cred', P2, inp2, out2, prev2>
+    in
+    [ In(<b2, s2>), !Pk(P2, pk2), !Chain(a1, P1, out1) ]
+  --[ Eq(verify(s2, b2, pk2), true), Accepted(b2, P2), Linked(b2, a1, out1) ]->
+    [ !Chain(h(b2), P2, out2) ]
+
+#else
 rule VerifyNext:
     let b2 = <'cred', P2, out1, out2, a1>
     in
     [ In(<b2, s2>), !Pk(P2, pk2), !Chain(a1, P1, out1) ]
   --[ Eq(verify(s2, b2, pk2), true), Accepted(b2, P2), Linked(b2, a1, out1) ]->
     [ !Chain(h(b2), P2, out2) ]
+
+#endif
 
 /* ---------- Lemmas ---------- */
 
@@ -140,5 +158,16 @@ lemma compromise_bounded_to_signer:
      Linked(<'cred', P2, inp2, out2, a1>, a1, out1) @ #i
      & not (Ex #r. Compromised(P2) @ #r & #r < #i) ==>
      (Ex #j. Issued(P2, <'cred', P2, inp2, out2, a1>) @ #j & #j < #i)"
+
+// Link integrity: a successor the verifier links to an accepted credential
+// names that credential's address as previousCredential and its outputHash
+// as inputHash, so no link can be re-pointed (chain.data-flow.continuity,
+// credential.subject.input-hash, credential.subject.output-hash,
+// credential.subject.previous-credential, credential.prev.content-hash).
+// Falsified with -D=SkipLinkCheck.
+lemma link_integrity:
+  "All P2 inp2 out2 prev2 a1 out1 #i.
+     Linked(<'cred', P2, inp2, out2, prev2>, a1, out1) @ #i ==>
+     prev2 = a1 & inp2 = out1"
 
 end
