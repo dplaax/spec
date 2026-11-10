@@ -26,16 +26,22 @@
  *     it (!Anchor(V, I, pk), the issuer's issuance key), and holds one list
  *     per id, which a later list replaces: Held(~sid, ...) is the state of
  *     that list, made once per V and id and carried through every step under
- *     the same ~sid, so that one state at a time exists;
+ *     the same ~sid, so that one state at a time exists; V looks a list up by
+ *     its id (keybinding.status.entry);
+ *   - the held list is never lost: nothing in the model drops it, and
+ *     keeping it so across a restart is the relying party's, outside the
+ *     model;
  *   - no clock: the binding's period, the list's freshness and the clock
  *     skew (keybinding.validity, keybinding.status-list.fresh,
- *     keybinding.status-list.period) are outside the model, and so are
- *     keeping the held list across restarts, DID resolution (public keys
- *     reach the verifier directly) and the issuer's scope; receiving the held
- *     list again changes nothing and is not modelled;
- *   - the acceptance event is Accepted(V, I, S, k, A, L): V accepted I's
- *     binding of k to S for A under L. St(sid, V, L, J, vf, mark) records
- *     each state of the list V holds under L, signed by J.
+ *     keybinding.status-list.period) are outside the model, and so are DID
+ *     resolution (public keys reach the verifier directly), key rotation and
+ *     the issuer's scope; receiving the held list again changes nothing and
+ *     is not modelled;
+ *   - events: Accepted(V, I, S, k, A, L), V accepted I's binding of k to S
+ *     for A under L; JudgedUnder(V, I, L, J), under the list V holds under L
+ *     in J's name; AcceptedUnder(sid, m), under the held state sid, whose
+ *     mark was m; Holds(V, L, I, vf, m), V took I's list as the one it holds
+ *     under L; St(sid, V, L, J, vf, mark), each state of that list.
  */
 theory KeyBinding
 begin
@@ -165,15 +171,15 @@ rule Accept:
     [ In(<body, sig>), !Anchor(V, I, pk), Held(~sid, V, L, J, %vf, 'active', c),
       !ListOwner(V, L, J) ]
   --[ Eq(verify(sig, body, pk), true), Accepted(V, I, S, k, V, L),
-      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active') ]->
+      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active'),
+      AcceptedUnder(~sid, 'active') ]->
     [ Held(~sid, V, L, J, %vf, 'active', c) ]
 
 /* ---------- Negative controls ---------- */
 
-// Each control adds a rule beside a default rule of the relying party: the
-// added rule contains the default one as its special case and keeps every
-// other check, so the two together are the relying party with that one
-// check dropped or relaxed.
+// Each control adds a rule beside a default rule of the relying party and
+// keeps every other check, so that the added rule together with the default
+// one is the relying party with that one check dropped or relaxed.
 //   -D=SkipAnchorCheck         a binding and a first list are taken under
 //                              any issuer's issuance key, anchored or not;
 //   -D=AnyIssuerKey            a binding is taken under any key of the
@@ -182,10 +188,15 @@ rule Accept:
 //   -D=AnyEntryList            a binding may name a list of another issuer;
 //   -D=AnyListIssuer           a list is held under an id that is not a DID
 //                              URL of its issuer;
+//   -D=AnyListKey              a first list is taken under any key of the
+//                              anchored issuer, not only its issuance key;
+//   -D=AcceptAnyMark           a binding is accepted whatever the held list
+//                              marks;
 //   -D=AcceptClearedMark       a later list may leave active an entry the
 //                              held list marks;
 //   -D=SameValidFromAnyContent a list of the held one's validFrom replaces
-//                              it whatever its content hash.
+//                              it whatever its content hash (a revoked entry
+//                              still stays revoked).
 
 #ifdef SkipAnchorCheck
 rule AcceptUnanchored:
@@ -195,7 +206,8 @@ rule AcceptUnanchored:
     [ In(<body, sig>), !IssuancePk(I, pk), Held(~sid, V, L, J, %vf, 'active', c),
       !ListOwner(V, L, J) ]
   --[ Eq(verify(sig, body, pk), true), Accepted(V, I, S, k, V, L),
-      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active') ]->
+      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active'),
+      AcceptedUnder(~sid, 'active') ]->
     [ Held(~sid, V, L, J, %vf, 'active', c) ]
 
 rule HoldListUnanchored:
@@ -218,7 +230,8 @@ rule AcceptAnyIssuerKey:
     [ In(<body, sig>), !Anchor(V, I, apk), !OtherPk(I, pk),
       Held(~sid, V, L, J, %vf, 'active', c), !ListOwner(V, L, J) ]
   --[ Eq(verify(sig, body, pk), true), Accepted(V, I, S, k, V, L),
-      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active') ]->
+      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active'),
+      AcceptedUnder(~sid, 'active') ]->
     [ Held(~sid, V, L, J, %vf, 'active', c) ]
 
 #endif
@@ -231,7 +244,8 @@ rule AcceptAnyAudience:
     [ In(<body, sig>), !Anchor(V, I, pk), Held(~sid, V, L, J, %vf, 'active', c),
       !ListOwner(V, L, J) ]
   --[ Eq(verify(sig, body, pk), true), Accepted(V, I, S, k, A, L),
-      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active') ]->
+      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active'),
+      AcceptedUnder(~sid, 'active') ]->
     [ Held(~sid, V, L, J, %vf, 'active', c) ]
 
 #endif
@@ -244,7 +258,8 @@ rule AcceptAnyEntryList:
     [ In(<body, sig>), !Anchor(V, I, pk), Held(~sid, V, L, J, %vf, 'active', c),
       !ListOwner(V, L, J) ]
   --[ Eq(verify(sig, body, pk), true), Accepted(V, I, S, k, V, L),
-      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active') ]->
+      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active'),
+      AcceptedUnder(~sid, 'active') ]->
     [ Held(~sid, V, L, J, %vf, 'active', c) ]
 
 #endif
@@ -261,6 +276,34 @@ rule HoldListAnyName:
 
 #endif
 
+#ifdef AnyListKey
+// The first list checked under the issuer's other key.
+rule HoldListAnyKey:
+    let L = <I, f>
+        body = <'list', I, L, %vf, mark>
+    in
+    [ Empty(V, L), In(<body, sig>), !Anchor(V, I, apk), !OtherPk(I, pk), Fr(~sid) ]
+  --[ Eq(verify(sig, body, pk), true), Holds(V, L, I, %vf, mark),
+      St(~sid, V, L, I, %vf, mark) ]->
+    [ Held(~sid, V, L, I, %vf, mark, h(body)), !ListOwner(V, L, I) ]
+
+#endif
+
+#ifdef AcceptAnyMark
+// A binding accepted under the held list whatever its mark.
+rule AcceptAnyMark:
+    let L = <I, f>
+        body = <'binding', I, S, k, V, L>
+    in
+    [ In(<body, sig>), !Anchor(V, I, pk), Held(~sid, V, L, J, %vf, mark, c),
+      !ListOwner(V, L, J) ]
+  --[ Eq(verify(sig, body, pk), true), Accepted(V, I, S, k, V, L),
+      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, mark),
+      AcceptedUnder(~sid, mark) ]->
+    [ Held(~sid, V, L, J, %vf, mark, c) ]
+
+#endif
+
 #ifdef AcceptClearedMark
 rule ReplaceClearing:
     let body = <'list', I, L, %new, 'active'>
@@ -274,13 +317,23 @@ rule ReplaceClearing:
 #endif
 
 #ifdef SameValidFromAnyContent
-rule ReplaceSameValidFrom:
+// A list of the held one's validFrom, whatever its content hash; as for a
+// later list, a revoked entry stays revoked.
+rule ReplaceSameValidFromActive:
     let body = <'list', I, L, %vf, mark>
     in
-    [ Held(~sid, V, L, I, %vf, held, c), In(<body, sig>), !Anchor(V, I, pk) ]
+    [ Held(~sid, V, L, I, %vf, 'active', c), In(<body, sig>), !Anchor(V, I, pk) ]
   --[ Eq(verify(sig, body, pk), true), Replaced(V, L, %vf, c, %vf, h(body)),
       Holds(V, L, I, %vf, mark), St(~sid, V, L, I, %vf, mark) ]->
     [ Held(~sid, V, L, I, %vf, mark, h(body)) ]
+
+rule ReplaceSameValidFromRevoked:
+    let body = <'list', I, L, %vf, 'revoked'>
+    in
+    [ Held(~sid, V, L, I, %vf, 'revoked', c), In(<body, sig>), !Anchor(V, I, pk) ]
+  --[ Eq(verify(sig, body, pk), true), Replaced(V, L, %vf, c, %vf, h(body)),
+      Holds(V, L, I, %vf, 'revoked'), St(~sid, V, L, I, %vf, 'revoked') ]->
+    [ Held(~sid, V, L, I, %vf, 'revoked', h(body)) ]
 
 #endif
 
@@ -322,8 +375,22 @@ lemma bound_to_audience:
      (Ex #j. Bound(I, S, k, V, L) @ #j & #j < #i)
      | (Ex #r. Compromised(I) @ #r & #r < #i)"
 
-// A binding of I is judged only under a list I signed, whoever else's key
-// is taken over.
+// Reachability: V holds a list that marks the entry, with no key taken
+// over, so that revocation_not_cleared is not vacuous.
+lemma executable_revocation:
+  exists-trace
+  "Ex sid V L J vf #i. St(sid, V, L, J, vf, 'revoked') @ #i
+     & not (Ex D #r. Compromised(D) @ #r)"
+
+// A list V holds was issued by its issuer as V holds it, unless the
+// issuer's issuance key had been taken over first.
+lemma list_authentic:
+  "All V L I vf m #i. Holds(V, L, I, vf, m) @ #i ==>
+     (Ex #j. IssuedList(I, L, vf, m) @ #j & #j < #i)
+     | (Ex #r. Compromised(I) @ #r & #r < #i)"
+
+// A binding of I is judged only under a list held in I's name: the list's
+// id is I's (its signature is list_authentic's).
 lemma list_of_its_issuer:
   "All V I L J #i. JudgedUnder(V, I, L, J) @ #i ==> J = I"
 
@@ -332,10 +399,16 @@ lemma list_of_its_issuer:
 // or an earlier one, and since Accept is a step that needs the entry active,
 // no binding under L is accepted after it. sid is the one state V holds
 // under L (OneList).
-lemma revocation_not_cleared [use_induction]:
+lemma revocation_not_cleared [use_induction, heuristic=S]:
   "All sid V L J1 J2 vf1 vf2 m2 #i #j.
      St(sid, V, L, J1, vf1, 'revoked') @ #i & St(sid, V, L, J2, vf2, m2) @ #j & #i < #j
      ==> m2 = 'revoked'"
+
+// A binding is accepted only under a held list that leaves the entry
+// active. With revocation_not_cleared, no binding under L is accepted once V
+// has held a list under L that marks the entry.
+lemma accept_needs_active:
+  "All sid m #i. AcceptedUnder(sid, m) @ #i ==> m = 'active'"
 
 // A list replaces the held one only when it is later; a list of the same
 // validFrom is the held one only with the same content hash (and changes

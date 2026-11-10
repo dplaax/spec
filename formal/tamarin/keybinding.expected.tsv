@@ -7,5 +7,6 @@ SkipAudienceCheck	bound_to_audience	falsified
 AnyListIssuer	list_of_its_issuer	falsified
 AnyEntryList	list_of_its_issuer	falsified
 AcceptClearedMark	revocation_not_cleared	falsified
-SameValidFromAnyContent	revocation_not_cleared	falsified
 SameValidFromAnyContent	same_validfrom_same_content	falsified
+AnyListKey	list_authentic	falsified
+AcceptAnyMark	accept_needs_active	falsified
