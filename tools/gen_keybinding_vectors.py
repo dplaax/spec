@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate vectors/keybinding-0{01..43}.json from the rule text.
+"""Regenerate vectors/keybinding-0{01..46}.json from the rule text.
 
 Run: python3 tools/gen_keybinding_vectors.py [--check]
 
@@ -59,6 +59,11 @@ BASE_MARKS = (3, 131071)
 V2 = "https://www.w3.org/ns/credentials/v2"
 DPLAAX_V1 = "https://dplaax.dev/vc/v1"
 UNDEFINED_TERMS = "https://www.w3.org/ns/credentials/undefined-terms/v2"
+# The key-binding branch context's first snapshot, and the form of any.
+BRANCH = "https://dplaax.dev/vc/branches/v1/keybinding/202611101543"
+BRANCH_LATER = "https://dplaax.dev/vc/branches/v1/keybinding/202701010000"
+# Bindings without the branch context are accepted only before this.
+LEGACY_CUTOFF = "2027-01-01T00:00:00Z"
 
 # RFC 8037 A.2's Ed25519 public key.
 JWK = {"kty": "OKP", "crv": "Ed25519", "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"}
@@ -139,7 +144,7 @@ def status_list(valid_from: str, valid_until: str, marks=BASE_MARKS, *, issuer=I
 def binding(*, issuer=ISSUER, valid_from=t("00:00:00"), valid_until=t("00:00:00", 7),
             audience=AUDIENCE, index="7", list_id=None, vm=None, extra=None) -> dict:
     out = {
-        "@context": ["https://www.w3.org/ns/credentials/v2", "https://dplaax.dev/vc/v1"],
+        "@context": [V2, DPLAAX_V1, BRANCH],
         "type": ["VerifiableCredential", "KeyBindingCredential"],
         "issuer": issuer,
         "validFrom": valid_from,
@@ -377,21 +382,21 @@ def build() -> list[dict]:
     # issuer that uses undefined members adds undefined-terms/v2 last.
     def contexts(*urls):
         return lambda c: c.update({"@context": list(urls)})
-    add("keybinding.shape",
+    add("keybinding.context",
         "A key binding with a member no context defines, and the undefined-terms context last in its @context, is accepted",
-        binding_case(edited(binding(extra="undefined"), contexts(V2, DPLAAX_V1, UNDEFINED_TERMS))), "accept")
+        binding_case(edited(binding(extra="undefined"), contexts(V2, DPLAAX_V1, BRANCH, UNDEFINED_TERMS))), "accept")
     add("keybinding.status-list.id",
         "A revocation list with a member no context defines, and the undefined-terms context last in its @context, is accepted",
         list_case(edited(status_list(LIST_FROM, LIST_UNTIL),
                          lambda c: (c["credentialSubject"].update(issuerNote="kept for audit"),
                                     c.update({"@context": [V2, UNDEFINED_TERMS]})))),
         "accept")
-    add("keybinding.shape",
+    add("keybinding.context",
         "A key binding whose @context does not open with the credentials v2 context is rejected",
-        binding_case(edited(binding(), contexts(DPLAAX_V1, V2))), "reject")
-    add("keybinding.shape",
+        binding_case(edited(binding(), contexts(DPLAAX_V1, V2, BRANCH))), "reject")
+    add("keybinding.context",
         "A key binding whose @context does not hold the dplaax context is rejected",
-        binding_case(edited(binding(), contexts(V2, UNDEFINED_TERMS))), "reject")
+        binding_case(edited(binding(), contexts(V2, BRANCH))), "reject")
     add("keybinding.status-list.id",
         "A revocation list whose @context does not open with the credentials v2 context is rejected",
         list_case(edited(status_list(LIST_FROM, LIST_UNTIL), contexts(UNDEFINED_TERMS, V2))), "reject")
@@ -399,6 +404,20 @@ def build() -> list[dict]:
     add("keybinding.status-list.fresh",
         "A revocation list valid only from after the time it is taken plus the clock skew is not held",
         list_case(status_list(t("01:01:01"), t("02:01:01"))), "reject")
+    # A binding without the branch context: accepted only before the cut-off.
+    add("keybinding.context",
+        "A key binding without the key-binding branch context, valid from before the cut-off, is accepted",
+        binding_case(edited(binding(), contexts(V2, DPLAAX_V1))), "accept")
+    add("keybinding.context",
+        "A key binding without the key-binding branch context, valid from the cut-off, is rejected",
+        binding_case(edited(binding(valid_from=LEGACY_CUTOFF, valid_until="2027-01-02T00:00:00Z"),
+                            contexts(V2, DPLAAX_V1)),
+                     at="2027-01-01T01:00:00Z",
+                     held=status_list("2027-01-01T00:59:00Z", "2027-01-01T01:59:00Z")),
+        "reject")
+    add("keybinding.context",
+        "A key binding naming a later snapshot of the key-binding branch context is accepted by the snapshot URI's form",
+        binding_case(edited(binding(), contexts(V2, DPLAAX_V1, BRANCH_LATER))), "accept")
     return v
 
 

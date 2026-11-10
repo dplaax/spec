@@ -7,12 +7,12 @@ rules:
     class: core
     statement: >-
       A key binding MUST be a KeyBindingCredential with an issuer, validFrom
-      and a later validUntil, a credentialStatus, a credentialSubject with
-      id, kind, roles, audience, keyClass and key, and an @context opening
-      with credentials v2 and holding dplaax v1.
-    uses: [credential.field.context, credential.field.valid-from, signer.proof.structure]
+      and a later validUntil, a revocation credentialStatus, and a
+      credentialSubject with id, kind, roles, audience, keyClass and key, as
+      its schema fixes.
+    uses: [credential.field.valid-from, signer.proof.structure]
     schemas: [key-binding-credential.json]
-    vectors: [keybinding-001, keybinding-002, keybinding-024, keybinding-035, keybinding-036, keybinding-038, keybinding-040, keybinding-041]
+    vectors: [keybinding-001, keybinding-002, keybinding-024, keybinding-035, keybinding-036]
     notes: >-
       A key binding states that a key (credentialSubject.key, its keyId and
       public JWK) is the subject's, a subject of the issuer's namespace, for
@@ -25,15 +25,38 @@ rules:
       and credentialSubject may carry members this catalog does not define;
       they are kept with the signed body (credential.body-sot) and decide
       nothing. credentialStatus, key and its JWK have exactly their members
-      (keybinding.status.entry). The schema fixes the members' forms: the
-      credentialStatus is a revocation BitstringStatusListEntry. credentials
-      v2 is https://www.w3.org/ns/credentials/v2 and dplaax v1 is
-      https://dplaax.dev/vc/v1, which defines the binding's terms; other
-      contexts may follow. An issuer that uses members neither defines adds a
-      context that defines them or, last, the undefined-terms context
+      (keybinding.status.entry). Its @context is keybinding.context's.
+
+  - id: keybinding.context
+    status: draft
+    class: core
+    statement: >-
+      A key binding's @context MUST open with credentials v2 and hold dplaax
+      v1 and a URI of https://dplaax.dev/vc/branches/v1/keybinding/ and 12
+      digits; a verifier MUST NOT accept one without such a URI unless its
+      validFrom is before 2027-01-01T00:00:00Z.
+    uses: [credential.field.context, keybinding.shape]
+    schemas: [key-binding-credential.json]
+    vectors: [keybinding-038, keybinding-040, keybinding-041, keybinding-044, keybinding-045, keybinding-046]
+    notes: >-
+      credentials v2 is https://www.w3.org/ns/credentials/v2 and dplaax v1 is
+      https://dplaax.dev/vc/v1. The key-binding terms are defined by the
+      key-binding branch context (contexts/README.md, Branch contexts), whose
+      snapshots are https://dplaax.dev/vc/branches/v1/keybinding/ followed by
+      the UTC time each was frozen, YYYYMMDDHHmm. Any snapshot is accepted by
+      its URI's form, since a later snapshot of a branch only adds terms. Other
+      contexts may follow; an issuer that uses members no context defines adds
+      a context for them or, last, the undefined-terms context
       (https://www.w3.org/ns/credentials/undefined-terms/v2, VC Data Model 2.0
-      §5.2). A revocation list's @context opens with credentials v2, which
-      defines its terms.
+      §5.2). A binding issued before the branch existed carries only
+      credentials v2 and dplaax v1; it is accepted while its validFrom is
+      before the cut-off, so that issuers have until then to add the branch.
+      The proof (eddsa-jcs-2022) signs @context as written and reads no
+      context document. A verifier that expands a binding as JSON-LD reads
+      only the snapshots it embeds (signer.suite.rdfc-expansion-guard), so a
+      binding naming a snapshot it does not embed cannot be expanded there. A
+      revocation list's @context opens with credentials v2, which defines its
+      terms; other contexts may follow.
 
   - id: keybinding.issuer
     status: draft

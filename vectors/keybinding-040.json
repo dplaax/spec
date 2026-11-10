@@ -1,12 +1,13 @@
 {
   "id": "keybinding-040",
-  "rule": "keybinding.shape",
+  "rule": "keybinding.context",
   "description": "A key binding whose @context does not open with the credentials v2 context is rejected",
   "input": {
     "credential": {
       "@context": [
         "https://dplaax.dev/vc/v1",
-        "https://www.w3.org/ns/credentials/v2"
+        "https://www.w3.org/ns/credentials/v2",
+        "https://dplaax.dev/vc/branches/v1/keybinding/202611101543"
       ],
       "type": [
         "VerifiableCredential",

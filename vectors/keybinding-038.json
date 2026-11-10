@@ -1,12 +1,13 @@
 {
   "id": "keybinding-038",
-  "rule": "keybinding.shape",
+  "rule": "keybinding.context",
   "description": "A key binding with a member no context defines, and the undefined-terms context last in its @context, is accepted",
   "input": {
     "credential": {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
         "https://dplaax.dev/vc/v1",
+        "https://dplaax.dev/vc/branches/v1/keybinding/202611101543",
         "https://www.w3.org/ns/credentials/undefined-terms/v2"
       ],
       "type": [
