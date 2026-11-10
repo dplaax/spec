@@ -6,12 +6,12 @@
 # not well-formed, so its summary is read, not its exit code.
 #
 # Usage: check.sh [--all-builds] [MODEL [FLAG]]
-#   MODEL         the model's file name without .spthy (chain, ...); without
-#                 it, every model in this directory.
+#   MODEL         the model's file name without .spthy; without it, every
+#                 model in this directory.
 #   FLAG          a build: a preprocessor flag passed as -D=FLAG (a negative
-#                 control, such as SkipLinkCheck), or default, the model
-#                 without a flag, which is also what no FLAG means. A FLAG
-#                 that MODEL.expected.tsv does not name as a build is refused.
+#                 control), or default, the model without a flag, which is
+#                 also what no FLAG means. A FLAG that MODEL.expected.tsv
+#                 does not name as a build is refused.
 #   --all-builds  every build of the model (or of every model): default and
 #                 each build MODEL.expected.tsv names. A build whose results
 #                 are not the expected ones does not stop the others; the
@@ -65,17 +65,24 @@ expected() {
 }
 
 # expectation_lines FILE prints the file's expectation lines: neither a
-# comment (a line starting with #) nor blank.
+# comment (a line starting with #) nor blank. A file with none, or no file,
+# is not an error: every lemma is then expected to be verified.
 expectation_lines() {
 	[ -f "$1" ] || return 0
 	grep -Ev '^#|^[[:space:]]*$' "$1"
+	[ "$?" -le 1 ]
 }
 
+# has NAME LIST reports whether LIST, one name a line, holds NAME exactly
+# (names are compared as strings, never as patterns).
+has() { grep -qxF -e "$1" <<<"$2"; }
+
 # lemmas_of MODEL.spthy, flags_of MODEL.spthy and builds_of MODEL.expected.tsv
-# print one name a line.
-lemmas_of() { sed -nE 's/^lemma ([A-Za-z0-9_]+).*/\1/p' "$1"; }
-flags_of() { sed -nE 's/^#ifdef[[:space:]]+([A-Za-z0-9_]+)[[:space:]]*$/\1/p' "$1" | sort -u; }
-builds_of() { expectation_lines "$1" | cut -f1 | grep -vx 'default' | sort -u; }
+# print one name a line. tamarin-prover reads a lemma and an #ifdef indented
+# as well as at the start of the line, so these do too.
+lemmas_of() { sed -nE 's/^[[:space:]]*lemma ([A-Za-z0-9_]+).*/\1/p' "$1"; }
+flags_of() { sed -nE 's/^[[:space:]]*#ifdef[[:space:]]+([A-Za-z0-9_]+)[[:space:]]*$/\1/p' "$1" | sort -u; }
+builds_of() { expectation_lines "$1" | cut -f1 | grep -vxF -e default | sort -u; }
 
 # agree NAME checks NAME.spthy and NAME.expected.tsv against each other,
 # prints each disagreement on a line of its own, and returns 1 when there is
@@ -87,11 +94,11 @@ agree() {
 	while IFS= read -r line; do
 		echo "check.sh: $model: #ifdef takes one flag here: $line"
 		bad=1
-	done < <(grep -E '^#ifdef([[:space:]]|$)' "$model" | grep -Ev '^#ifdef[[:space:]]+[A-Za-z0-9_]+[[:space:]]*$')
+	done < <(grep -E '^[[:space:]]*#ifdef([[:space:]]|$)' "$model" | grep -Ev '^[[:space:]]*#ifdef[[:space:]]+[A-Za-z0-9_]+[[:space:]]*$')
 	if ! awk -v m="$model" '
-		/^#ifdef/ { inside = 1; flag = $2; next }
-		/^#endif/ { inside = 0; next }
-		inside && /^lemma [A-Za-z0-9_]+/ {
+		/^[ \t]*#ifdef/ { inside = 1; flag = $2; next }
+		/^[ \t]*#endif/ { inside = 0; next }
+		inside && /^[ \t]*lemma [A-Za-z0-9_]+/ {
 			n = $2; sub(/[^A-Za-z0-9_].*/, "", n)
 			print "check.sh: " m ": lemma " n " is inside #ifdef " flag; bad = 1
 		}
@@ -110,19 +117,19 @@ agree() {
 	flags=$(flags_of "$model")
 	builds=$(builds_of "$expected_file")
 	for lemma in $(expectation_lines "$expected_file" | cut -f2 | sort -u); do
-		if ! grep -qx "$lemma" <<<"$lemmas"; then
+		if ! has "$lemma" "$lemmas"; then
 			echo "check.sh: $lemma is in $expected_file but is not a lemma of $model"
 			bad=1
 		fi
 	done
 	for flag in $flags; do
-		if ! grep -qx "$flag" <<<"$builds"; then
+		if ! has "$flag" "$builds"; then
 			echo "check.sh: $flag is an #ifdef of $model but not a build in $expected_file"
 			bad=1
 		fi
 	done
 	for build in $builds; do
-		if ! grep -qx "$build" <<<"$flags"; then
+		if ! has "$build" "$flags"; then
 			echo "check.sh: $build is a build in $expected_file but not an #ifdef of $model"
 			bad=1
 		fi
@@ -201,7 +208,7 @@ check_model() {
 	# tamarin-prover ignores a -D flag the model does not use and checks the
 	# default model, so a misspelled FLAG would pass as a build in which every
 	# lemma holds. A FLAG is a build only when the expectations name it.
-	if [ -n "$flag" ] && ! grep -qx "$flag" <<<"$(builds_of "$name.expected.tsv")"; then
+	if [ -n "$flag" ] && ! has "$flag" "$(builds_of "$name.expected.tsv")"; then
 		echo "check.sh: $flag is not a build in $name.expected.tsv"
 		return 1
 	fi
