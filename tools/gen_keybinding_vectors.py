@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate vectors/keybinding-0{01..37}.json from the rule text.
+"""Regenerate vectors/keybinding-0{01..43}.json from the rule text.
 
 Run: python3 tools/gen_keybinding_vectors.py [--check]
 
@@ -55,6 +55,10 @@ ENTRIES = 131072  # the W3C Bitstring Status List minimum, 16 KiB of bits
 GO126 = "uH4sIAAAAAAAA_-zAMQEAAAgCMG1A_7TE4NlyAAAAAAAAAAAAAAAAAAAAwNg3AAD__-xSDbMAQAAA"
 GO127 = "uH4sIAAAAAAAA_-zAMQEAAAgCMG1A_7TE4NlyAAAAAAAAAAAAAAAAAAAAwNh3AOxSDbMAQAAA"
 BASE_MARKS = (3, 131071)
+
+V2 = "https://www.w3.org/ns/credentials/v2"
+DPLAAX_V1 = "https://dplaax.dev/vc/v1"
+UNDEFINED_TERMS = "https://www.w3.org/ns/credentials/undefined-terms/v2"
 
 # RFC 8037 A.2's Ed25519 public key.
 JWK = {"kty": "OKP", "crv": "Ed25519", "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"}
@@ -365,6 +369,32 @@ def build() -> list[dict]:
     add("keybinding.status-list.fresh",
         "A key binding under a list decided at its validUntil plus the clock skew is rejected",
         binding_case(binding(), held=status_list(t("23:30:00", 5), t("00:59:00"))), "reject")
+    # @context: credentials v2 first; a binding also holds dplaax v1; an
+    # issuer that uses undefined members adds undefined-terms/v2 last.
+    def contexts(*urls):
+        return lambda c: c.update({"@context": list(urls)})
+    add("keybinding.shape",
+        "A key binding with a member no context defines, and the undefined-terms context last in its @context, is accepted",
+        binding_case(edited(binding(extra=True), contexts(V2, DPLAAX_V1, UNDEFINED_TERMS))), "accept")
+    add("keybinding.status-list.id",
+        "A revocation list with a member no context defines, and the undefined-terms context last in its @context, is accepted",
+        list_case(edited(status_list(LIST_FROM, LIST_UNTIL),
+                         lambda c: (c["credentialSubject"].update(issuerNote="kept for audit"),
+                                    c.update({"@context": [V2, UNDEFINED_TERMS]})))),
+        "accept")
+    add("keybinding.shape",
+        "A key binding whose @context does not open with the credentials v2 context is rejected",
+        binding_case(edited(binding(), contexts(DPLAAX_V1, V2))), "reject")
+    add("keybinding.shape",
+        "A key binding whose @context does not hold the dplaax context is rejected",
+        binding_case(edited(binding(), contexts(V2, UNDEFINED_TERMS))), "reject")
+    add("keybinding.status-list.id",
+        "A revocation list whose @context does not open with the credentials v2 context is rejected",
+        list_case(edited(status_list(LIST_FROM, LIST_UNTIL), contexts(UNDEFINED_TERMS, V2))), "reject")
+    # A list not yet valid when it is taken is not held.
+    add("keybinding.status-list.fresh",
+        "A revocation list valid only from after the time it is taken plus the clock skew is not held",
+        list_case(status_list(t("01:01:01"), t("02:01:01"))), "reject")
     return v
 
 

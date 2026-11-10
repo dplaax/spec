@@ -7,12 +7,12 @@ rules:
     class: core
     statement: >-
       A key binding MUST be a KeyBindingCredential with an issuer, validFrom
-      and a later validUntil, a revocation BitstringStatusListEntry as
-      credentialStatus, and a credentialSubject with id, kind, roles,
-      audience, keyClass and key, as its schema fixes.
+      and a later validUntil, a credentialStatus, a credentialSubject with
+      id, kind, roles, audience, keyClass and key, and an @context opening
+      with credentials v2 and holding dplaax v1.
     uses: [credential.field.valid-from, signer.proof.structure]
     schemas: [key-binding-credential.json]
-    vectors: [keybinding-001, keybinding-002, keybinding-024, keybinding-035, keybinding-036]
+    vectors: [keybinding-001, keybinding-002, keybinding-024, keybinding-035, keybinding-036, keybinding-038, keybinding-040, keybinding-041]
     notes: >-
       A key binding states that a key (credentialSubject.key, its keyId and
       public JWK) is the subject's, a subject of the issuer's namespace, for
@@ -25,7 +25,15 @@ rules:
       and credentialSubject may carry members this catalog does not define;
       they are kept with the signed body (credential.body-sot) and decide
       nothing. credentialStatus, key and its JWK have exactly their members
-      (keybinding.status.entry).
+      (keybinding.status.entry). The schema fixes the members' forms: the
+      credentialStatus is a revocation BitstringStatusListEntry. credentials
+      v2 is https://www.w3.org/ns/credentials/v2 and dplaax v1 is
+      https://dplaax.dev/vc/v1, which defines the binding's terms; other
+      contexts may follow. An issuer that uses members neither defines adds a
+      context that defines them or, last, the undefined-terms context
+      (https://www.w3.org/ns/credentials/undefined-terms/v2, VC Data Model 2.0
+      §5.2). A revocation list's @context opens with credentials v2, which
+      defines its terms.
 
   - id: keybinding.issuer
     status: draft
@@ -105,13 +113,14 @@ rules:
       another DID's URL included.
     uses: [keybinding.issuer]
     schemas: [status-list-credential.json]
-    vectors: [keybinding-011, keybinding-012, keybinding-013]
+    vectors: [keybinding-011, keybinding-012, keybinding-013, keybinding-039, keybinding-042]
     notes: >-
       The id ties a list to its issuer's namespace, so a binding cannot name a
       list in another issuer's name and an issuer cannot issue one. The
       fragment grammar is the one key references use, so that every reader
       reads an id alike. The list is signed with one of the issuance keys of
-      its issuer's trust anchor (keybinding.issuer).
+      its issuer's trust anchor (keybinding.issuer), and its @context opens
+      with credentials v2, as its schema fixes.
 
   - id: keybinding.status-list.period
     status: draft
@@ -170,18 +179,22 @@ rules:
     status: draft
     class: core
     statement: >-
-      A verifier MUST NOT accept a key binding under a status list that at the
-      decision is not yet valid or is at or after its validUntil, each widened
-      by the clock skew, or whose validFrom is more than the anchor's maximum
-      age before the decision.
+      A verifier MUST NOT accept a binding under a list that at the decision
+      is not yet valid or is at or after its validUntil, each widened by the
+      skew, or whose age exceeds the anchor's maximum, and MUST NOT hold a
+      list not yet valid when it takes it.
     uses: [keybinding.status.entry, keybinding.issuer]
     schemas: []
-    vectors: [keybinding-022, keybinding-023, keybinding-031, keybinding-032, keybinding-037]
+    vectors: [keybinding-022, keybinding-023, keybinding-031, keybinding-032, keybinding-037, keybinding-043]
     notes: >-
       The verifier decides from the list it holds, without asking the issuer
       at the decision; the bound on the list's age bounds how long a
-      revocation takes to reach it. The clock skew widens the list's period,
-      not its age. A list the verifier holds past its
+      revocation takes to reach it. A list's age at the decision is the time
+      since its validFrom; the clock skew widens the list's period, not its
+      age. Taking a list includes restoring the held one after a restart: a
+      list dated ahead, once held, would leave every correct list after it
+      refused as earlier (keybinding.status-list.monotonic), so it is never
+      held. A list the verifier holds past its
       freshness still guards its marks against a later list
       (keybinding.status-list.monotonic), though no binding is accepted under
       it.

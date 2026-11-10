@@ -249,7 +249,10 @@ The model's header comment says the same.
   `keybinding.status-list.fresh`) and the clock skew are outside the model,
   and so are DID resolution (public keys reach the verifier directly), key
   rotation, the issuer's scope, and how a list's bits are compressed.
-  Receiving the held list again changes nothing and is not modelled.
+  Receiving the held list again changes nothing and is not modelled. So
+  `keybinding.status-list.fresh`'s refusal to hold a list not yet valid when
+  it is taken, which keeps a list dated ahead from blocking every correct
+  list after it, rests on its vectors alone.
 - **Events.** `Accepted(V, I, S, k, A, L)`: `V` accepted `I`'s binding of `k`
   to `S` for `A` under `L`. `JudgedUnder(V, I, L, J)`: it was judged under
   the list `V` holds under `L`, held in `J`'s name. `AcceptedUnder(sid, m)`:
