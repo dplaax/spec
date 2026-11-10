@@ -179,6 +179,36 @@ rule VerifyProcessByController:
 
 #endif
 
+/* ---------- The consumer (oss didregistry.issue) ---------- */
+
+// A consumer puts T on record under its Owner on the strength of an
+// accepted delegation whose subject is T. No catalog rule states this
+// binding; the registry makes it (the delegation must name exactly the
+// target it registers).
+rule Register:
+    [ !Valid(T, O) ]
+  --[ Registered(T, O) ]->
+    [ ]
+
+#ifdef SkipTargetBinding
+// -D=SkipTargetBinding: a consumer that takes any accepted delegation as
+// authority for any target T, recorded under T's own Owner OT.
+rule RegisterPipelineAnyDelegation:
+    let T = <'pipeline', OT, pt>
+    in
+    [ !Valid(X, O), In(T) ]
+  --[ Registered(T, OT) ]->
+    [ ]
+
+rule RegisterProcessAnyDelegation:
+    let T = <'process', OT, pt, qt>
+    in
+    [ !Valid(X, O), In(T) ]
+  --[ Registered(T, OT) ]->
+    [ ]
+
+#endif
+
 /* ---------- Lemmas ---------- */
 
 // Reachability: a Pipeline's delegation is accepted with no key taken over.
@@ -210,6 +240,24 @@ lemma owner_compromise_exception:
   exists-trace
   "Ex X O #i #r. Authorized(X, O) @ #i & Compromised(O) @ #r & #r < #i
      & not (Ex #j. Delegated(O, X) @ #j)"
+
+// Reachability: a delegation puts its subject on record with no key taken
+// over.
+lemma executable_registration:
+  exists-trace
+  "Ex T O #i. Registered(T, O) @ #i
+     & not (Ex D #r. Compromised(D) @ #r)"
+
+// A delegation is used only for the subject it names, under that subject's
+// Owner: T is on record under O only if O signed a delegation of T, unless
+// O's key had been taken over first. Rests on authority_from_own_owner and on
+// the consumer's binding, which no catalog rule states. Falsified with
+// -D=SkipTargetBinding and with each control that falsifies
+// authority_from_own_owner.
+lemma registered_only_as_delegated:
+  "All T O #i. Registered(T, O) @ #i ==>
+     (Ex #j. Delegated(O, T) @ #j & #j < #i)
+     | (Ex #r. Compromised(O) @ #r & #r < #i)"
 
 // A delegation is accepted only for a Pipeline or a Process of its Owner,
 // never for an Owner (delegation.binding): structural, the verifier's
