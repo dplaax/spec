@@ -81,9 +81,11 @@ unresolved lemma does not count as proved. It is recorded here and the model
 is still merged; by the next release it is proved, weakened, or dropped. A
 refutation that is not expected fails CI.
 
-[`tamarin/expected.tsv`](tamarin/expected.tsv) is the record of what each
-build is expected to give; `check.sh` compares against it, and a lemma absent
-from the file is expected to be proved.
+Each model keeps the record of what each of its builds is expected to give
+beside it, in `<model>.expected.tsv` (here
+[`tamarin/chain.expected.tsv`](tamarin/chain.expected.tsv)); `check.sh`
+compares against it, and a lemma absent from the file is expected to be
+proved.
 
 | build | lemma | state |
 | --- | --- | --- |
@@ -96,15 +98,18 @@ Unresolved: none.
 ## Running the checks
 
 ```sh
-formal/tamarin/check.sh                 # the default build: every lemma proved
-formal/tamarin/check.sh SkipLinkCheck   # the negative control
-TIMEOUT=120 formal/tamarin/check.sh     # seconds per lemma (600 by default)
+formal/tamarin/check.sh                       # every model, its default build
+formal/tamarin/check.sh chain                 # one model, its default build
+formal/tamarin/check.sh chain SkipLinkCheck   # one model, a negative control
+TIMEOUT=120 formal/tamarin/check.sh chain     # seconds per lemma (600 by default)
 ```
 
-`check.sh` runs `tamarin-prover` on each lemma in a process of its own, reads
-the prover's summary (its exit code is 0 for a refuted lemma too), classes the
-result, and exits 0 only when every lemma has the result `expected.tsv` names.
-A lemma that runs out of time is unresolved, not refuted.
+`check.sh [MODEL [FLAG]]` runs `tamarin-prover` on each lemma of
+`MODEL.spthy` in a process of its own, with `-D=FLAG` when a flag is given,
+reads the prover's summary (its exit code is 0 for a refuted lemma too),
+classes the result, and exits 0 only when every lemma has the result
+`MODEL.expected.tsv` names. A lemma that runs out of time is unresolved, not
+refuted.
 
 Tools: Tamarin 1.12.0 and Maude 3.5.1, the versions CI pins by SHA-256
 (`.github/workflows/formal.yml`). On macOS:
