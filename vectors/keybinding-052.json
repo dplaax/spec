@@ -1,6 +1,6 @@
 {
   "id": "keybinding-052",
-  "rule": "keybinding.status-list.id",
+  "rule": "keybinding.status-list.shape",
   "description": "A revocation list whose @context carries a relative reference is rejected",
   "input": {
     "credential": {

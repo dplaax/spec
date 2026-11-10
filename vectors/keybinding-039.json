@@ -1,6 +1,6 @@
 {
   "id": "keybinding-039",
-  "rule": "keybinding.status-list.id",
+  "rule": "keybinding.status-list.shape",
   "description": "A revocation list with a member no context defines, and the undefined-terms context last in its @context, is accepted",
   "input": {
     "credential": {

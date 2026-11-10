@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate vectors/keybinding-0{01..52}.json from the rule text.
+"""Regenerate vectors/keybinding-0{01..54}.json from the rule text.
 
 Run: python3 tools/gen_keybinding_vectors.py [--check]
 
@@ -364,7 +364,7 @@ def build() -> list[dict]:
     add("keybinding.status.entry",
         "A key binding whose index lies past the end of the issuer's current list is rejected",
         binding_case(binding(index=str(ENTRIES))), "reject")
-    add("keybinding.status.entry",
+    add("keybinding.shape",
         "A key binding whose credentialStatus carries a statusSize is rejected",
         binding_case(edited(binding(), lambda b: b["credentialStatus"].update(statusSize="1"))), "reject")
     add("keybinding.shape",
@@ -385,7 +385,7 @@ def build() -> list[dict]:
     add("keybinding.context",
         "A key binding with a member no context defines, and the undefined-terms context last in its @context, is accepted",
         binding_case(edited(binding(extra="undefined"), contexts(V2, DPLAAX_V1, BRANCH, UNDEFINED_TERMS))), "accept")
-    add("keybinding.status-list.id",
+    add("keybinding.status-list.shape",
         "A revocation list with a member no context defines, and the undefined-terms context last in its @context, is accepted",
         list_case(edited(status_list(LIST_FROM, LIST_UNTIL),
                          lambda c: (c["credentialSubject"].update(issuerNote="kept for audit"),
@@ -397,7 +397,7 @@ def build() -> list[dict]:
     add("keybinding.context",
         "A key binding whose @context does not hold the dplaax context is rejected",
         binding_case(edited(binding(), contexts(V2, BRANCH))), "reject")
-    add("keybinding.status-list.id",
+    add("keybinding.status-list.shape",
         "A revocation list whose @context does not open with the credentials v2 context is rejected",
         list_case(edited(status_list(LIST_FROM, LIST_UNTIL), contexts(UNDEFINED_TERMS, V2))), "reject")
     # A list not yet valid when it is taken is not held.
@@ -436,9 +436,20 @@ def build() -> list[dict]:
     add("keybinding.context",
         "A key binding whose @context carries a string that is not an absolute URI is rejected",
         binding_case(edited(binding(), contexts(V2, DPLAAX_V1, BRANCH, "note"))), "reject")
-    add("keybinding.status-list.id",
+    add("keybinding.status-list.shape",
         "A revocation list whose @context carries a relative reference is rejected",
         list_case(edited(status_list(LIST_FROM, LIST_UNTIL), contexts(V2, "/ctx/v1"))), "reject")
+    # The list's type and purpose.
+    add("keybinding.status-list.shape",
+        "A revocation list whose type is not BitstringStatusListCredential is rejected",
+        list_case(edited(status_list(LIST_FROM, LIST_UNTIL),
+                         lambda c: c.update({"type": ["VerifiableCredential", "StatusListCredential"]}))),
+        "reject")
+    add("keybinding.status-list.shape",
+        "A revocation list whose statusPurpose is not revocation is rejected",
+        list_case(edited(status_list(LIST_FROM, LIST_UNTIL),
+                         lambda c: c["credentialSubject"].update(statusPurpose="suspension"))),
+        "reject")
     return v
 
 

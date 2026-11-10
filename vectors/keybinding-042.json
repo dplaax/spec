@@ -1,6 +1,6 @@
 {
   "id": "keybinding-042",
-  "rule": "keybinding.status-list.id",
+  "rule": "keybinding.status-list.shape",
   "description": "A revocation list whose @context does not open with the credentials v2 context is rejected",
   "input": {
     "credential": {

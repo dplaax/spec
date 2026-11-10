@@ -1,6 +1,6 @@
 {
   "id": "keybinding-034",
-  "rule": "keybinding.status.entry",
+  "rule": "keybinding.shape",
   "description": "A key binding whose credentialStatus carries a statusSize is rejected",
   "input": {
     "credential": {
