@@ -19,7 +19,7 @@ change breaks) and [CONTRIBUTING.md](CONTRIBUTING.md) (how to propose one).
 | Editorial | prose clarification, typo, link | PR; maintainer merge |
 | Additive | new rule (`status: todo`/`draft`), new vectors | Issue describing the norm, then a PR carrying the rule and its vectors; maintainer merge |
 | Semantic | changing what an existing rule id asserts | Public proposal issue stating the compatibility impact per [VERSIONING.md](VERSIONING.md); explicit maintainer approval recorded on the issue |
-| Namespace | anything under the published `site/` paths | Frozen once shipped — a semantic change requires a NEW path (`/v2`, a new grant name), never mutation of an existing one |
+| Namespace | anything under the published `site/` paths | Frozen once shipped — a semantic change requires a NEW path (`/v2`, a new grant name), never mutation of an existing one. A branch context (`/vc/branches/<base>/<feature>/<stamp>`, see contexts/README.md) is a new path per snapshot: each is frozen once shipped, a branch only adds terms across its snapshots, and its latest is folded into the next base version |
 
 ## Rule promotion: draft → stable
 

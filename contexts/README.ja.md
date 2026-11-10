@@ -37,3 +37,42 @@ claim 値（`provin:filter` 等）は wire 上の文字列値であり context �
   JSON-LD/RDF 層でも機械的に成立する（→ `credential.claim.grounding`）。
 - 文書を変更したら本表の sha256 を更新し、vendoring 先
   （provin.oss `vc/contexts/`）へ byte-exact で同期する。
+- この file は自身の URI `https://dplaax.dev/vc/v1` でも byte-exact で**配信**される:
+  deploy の workflow（`.github/workflows/deploy.yml`）が deploy 時に `/vc/v1` へ
+  写し、配信する bytes の sha256 が上の pin と違えば build を落とす。よって
+  `contexts/v1.jsonld` は、この repo が配信する識別子、provin.oss の vendor の写し、
+  これを埋め込むすべての実装という 3 つの利用者の唯一の元で、sha256 も 1 つ。
+
+## branch の context（`/vc/branches/`）
+
+branch の context は、protocol の context のある版（base）の上に、1 つの機能の語を
+置く。base を凍結したまま、機能の語を定義して試せるようにするため。
+
+- **path.** `contexts/branches/<base>/<feature>/<stamp>.jsonld` を
+  `https://dplaax.dev/vc/branches/<base>/<feature>/<stamp>` で byte-exact に配信する。
+  `<stamp>` は snapshot を凍結した UTC の時刻（`YYYYMMDDHHmm`）。stamp の無い path は配信しない。
+- **凍結.** 各 snapshot は `v1.jsonld` と同じく、一度出したら凍結。変えるときは新しい
+  stamp の snapshot を出す。sha256 は `contexts/branches/SHA256SUMS` に固定し、deploy の
+  workflow が配信する bytes を照らす。
+- **branch の中は足すだけ.** 後の snapshot は前の snapshot のすべての語を同じ定義のまま
+  保ち、語を足すだけ。どの snapshot の下の文書も最新の下で同じ意味になる。意味の変わる
+  語は別の名前の branch に置く。
+- **base と並べる.** branch の語は base の語を定義し直さない。文書は base の context、
+  次に branch の context を並べる（key binding の `@context` は
+  `[credentials v2, dplaax v1, …/vc/branches/v1/keybinding/<stamp>]`）。
+- **次の base へ.** branch の規則が確かめられたら（規則の `stable` への昇格が目安）、
+  最新の snapshot を同じ IRI のまま次の base（`/vc/v2`）にまとめる。出した snapshot は
+  配信を続け、実装は埋め込んだ写しを保つので、それを指す credential の意味は変わらない。
+- **vendoring.** branch の語を処理する実装は、読む snapshot をそれぞれ byte-exact に
+  埋め込み、`SHA256SUMS` で固定する。
+
+| branch | snapshot | 最初の URI | sha256 |
+|---|---|---|---|
+| `v1/keybinding` | `202611101543` | `https://dplaax.dev/vc/branches/v1/keybinding/202611101543` | `cc07379a021cad29b2e8f5c137a2d6c185e283cc523c7d59ef360b58f6594916` |
+
+key binding の branch は `KeyBindingCredential` と、その subject の `kind`、`roles`
+（`@set`。役割が 1 つでも配列のまま）、`audience`（`@id`。relying party の DID）、
+`keyClass`、`key`、`keyId`、`publicKeyJwk`（`@json`。JWK をそのまま保つ）を定義する。
+`kind`・`roles`・`keyClass`・`keyId` の値は文字列のまま（IRI として読まない）。前の 3 つの
+語彙は profile のもの、key id は名前だから。語は base と同じく
+`https://dplaax.dev/vocab#` の下の完全な IRI。
