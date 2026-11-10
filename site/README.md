@@ -6,7 +6,8 @@ URL path: `site/oauth/grant-type/did/index.html` serves
 
 The apex `dplaax.dev` serves the protocol's **wire identifiers** — the OAuth
 grant-type namespace document (`/oauth/grant-type/did`), the JSON-LD context
-(`/vc/v1`), and the JSON Schemas (`/schemas/*.json`). The identifiers
+(`/vc/v1`) and its branch contexts (`/vc/branches/…`), and the JSON Schemas
+(`/schemas/*.json`). The identifiers
 themselves are compared byte-for-byte and never dereferenced at runtime;
 these pages exist so that a URI a developer encounters on the wire resolves
 to its own documentation.
@@ -36,10 +37,12 @@ redirect.
 `infra/deploy.md`). It **assembles** the served tree rather than serving
 `site/` verbatim: it copies the hand-authored pages, then copies the
 machine-readable identifiers in byte-for-byte from their canonical sources —
-`contexts/v1.jsonld` → `/vc/v1`, `schemas/*.json` → `/schemas/*.json` — so
-those payloads live in exactly one place and cannot drift. A guard step fails
-the deploy if the served `/vc/v1` sha256 ever diverges from the signing-scope
-pin (`9716bca…`).
+`contexts/v1.jsonld` → `/vc/v1`, `contexts/branches/<base>/<feature>/<stamp>.jsonld`
+→ `/vc/branches/<base>/<feature>/<stamp>`, `schemas/*.json` → `/schemas/*.json`
+— so those payloads live in exactly one place and cannot drift. A guard step
+fails the deploy if the served `/vc/v1` sha256 ever diverges from the
+signing-scope pin (`9716bca…`), or a served branch snapshot from its pin in
+`contexts/branches/SHA256SUMS`.
 
 S3 object metadata is what lets the extensionless identifier paths carry
 their correct media types (`/vc/v1` → `application/ld+json`) — the reason

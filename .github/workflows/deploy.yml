@@ -62,7 +62,8 @@ jobs:
           cp contexts/v1.jsonld _site/vc/v1
           # branch contexts: each snapshot at its frozen URI, without the
           # .jsonld extension.
-          (cd contexts/branches && find . -name '*.jsonld' -type f) | while read -r f; do
+          mkdir -p _site/vc/branches
+          (cd contexts/branches && find . -name '*.jsonld' -type f) | while IFS= read -r f; do
             dest="_site/vc/branches/${f#./}"
             mkdir -p "$(dirname "$dest")"
             cp "contexts/branches/${f#./}" "${dest%.jsonld}"
@@ -80,7 +81,7 @@ jobs:
           fi
           # every served branch snapshot has its pin in
           # contexts/branches/SHA256SUMS and matches it, and every pin has its
-          # snapshot: a snapshot is frozen once shipped.
+          # snapshot (tools/lint.py keeps a shipped snapshot's pin unchanged).
           (cd _site/vc/branches && sha256sum -c --strict "$GITHUB_WORKSPACE/contexts/branches/SHA256SUMS")
           served=$(cd _site/vc/branches && find . -type f | sed 's|^\./||' | sort)
           pinned=$(awk '{print $2}' contexts/branches/SHA256SUMS | sort)
@@ -129,7 +130,8 @@ jobs:
           # branch snapshots: uploaded, never deleted (the sync above leaves
           # vc/branches/ alone), so every snapshot once shipped stays served.
           aws s3 cp _site/vc/branches "s3://${S3_BUCKET}/vc/branches" --recursive \
-            --content-type application/ld+json
+            --content-type application/ld+json \
+            --cache-control "public, max-age=31536000, immutable"
           aws s3 cp _site/oauth/grant-type/did "s3://${S3_BUCKET}/oauth/grant-type/did" \
             --content-type text/html
 
