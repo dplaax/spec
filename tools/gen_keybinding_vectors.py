@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate vectors/keybinding-0{01..50}.json from the rule text.
+"""Regenerate vectors/keybinding-0{01..52}.json from the rule text.
 
 Run: python3 tools/gen_keybinding_vectors.py [--check]
 
@@ -432,6 +432,13 @@ def build() -> list[dict]:
     add("keybinding.context",
         "A key binding whose @context has another context between the dplaax context and the branch context is rejected",
         binding_case(edited(binding(), contexts(V2, DPLAAX_V1, UNDEFINED_TERMS, BRANCH))), "reject")
+    # What follows the required contexts is absolute URIs only.
+    add("keybinding.context",
+        "A key binding whose @context carries a string that is not an absolute URI is rejected",
+        binding_case(edited(binding(), contexts(V2, DPLAAX_V1, BRANCH, "note"))), "reject")
+    add("keybinding.status-list.id",
+        "A revocation list whose @context carries a relative reference is rejected",
+        list_case(edited(status_list(LIST_FROM, LIST_UNTIL), contexts(V2, "/ctx/v1"))), "reject")
     return v
 
 
