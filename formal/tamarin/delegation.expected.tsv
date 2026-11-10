@@ -1,0 +1,12 @@
+# build	lemma	result   (build = default or a -D flag; result = verified | falsified | unresolved; a lemma absent here is expected verified)
+SkipSubjectOwnerCheck	authority_from_own_owner	falsified
+AcceptControllerIssuer	authority_from_own_owner	falsified
+AnyProofPurpose	authority_from_own_owner	falsified
+SkipSubjectOwnerCheck	registered_only_as_delegated	falsified
+AcceptControllerIssuer	registered_only_as_delegated	falsified
+AnyProofPurpose	registered_only_as_delegated	falsified
+SkipTargetBinding	registered_only_as_delegated	falsified
+UntaggedOwnerSignature	authority_from_own_owner	falsified
+UntaggedOwnerSignature	registered_only_as_delegated	falsified
+AnyVerificationMethod	authority_from_own_owner	falsified
+AnyVerificationMethod	registered_only_as_delegated	falsified
