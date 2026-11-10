@@ -8,11 +8,11 @@ rules:
     statement: >-
       A key binding MUST be a KeyBindingCredential with an issuer, validFrom
       and a later validUntil, a revocation BitstringStatusListEntry as
-      credentialStatus, and a credentialSubject of id, kind, roles, audience,
-      keyClass and key, as its schema fixes.
+      credentialStatus, and a credentialSubject with id, kind, roles,
+      audience, keyClass and key, as its schema fixes.
     uses: [credential.field.valid-from, signer.proof.structure]
     schemas: [key-binding-credential.json]
-    vectors: [keybinding-001, keybinding-002, keybinding-024]
+    vectors: [keybinding-001, keybinding-002, keybinding-024, keybinding-035, keybinding-036]
     notes: >-
       A key binding states that a key (credentialSubject.key, its keyId and
       public JWK) is the subject's, a subject of the issuer's namespace, for
@@ -31,20 +31,20 @@ rules:
     status: draft
     class: core
     statement: >-
-      A verifier MUST accept a key binding only when its trust anchor names the
-      binding's issuer and the proof verifies under one of the issuance keys
-      the anchor names for that issuer, and MUST reject one signed with any
-      other key.
+      A verifier MUST accept a key binding or a status list only when its
+      trust anchor names the issuer and the proof verifies under one of the
+      issuance keys the anchor names for that issuer, and MUST reject one
+      signed with any other key.
     uses: [keybinding.shape]
     schemas: []
-    vectors: [keybinding-003, keybinding-004]
+    vectors: [keybinding-003, keybinding-004, keybinding-026, keybinding-027]
     notes: >-
       A trust anchor is the relying party's configuration for one issuer: the
       issuer's DID, the verification methods it issues bindings and status
       lists with, the longest validity it may give a binding, and how old its
       status list may be. Another key of the same issuer, one it signs other
-      credentials with, does not bind keys. The same anchor governs the
-      issuer's status lists (keybinding.status-list.id).
+      credentials with, neither binds keys nor issues lists. A list signed
+      otherwise could leave unmarked what the issuer revoked.
 
   - id: keybinding.validity
     status: draft
@@ -56,7 +56,7 @@ rules:
       trust anchor allows the issuer.
     uses: [keybinding.shape, keybinding.issuer]
     schemas: []
-    vectors: [keybinding-005, keybinding-006]
+    vectors: [keybinding-005, keybinding-006, keybinding-028, keybinding-029, keybinding-030]
     notes: >-
       The period is half-open: a binding is valid at its validFrom and not at
       its validUntil. The bound on its length keeps a binding's revocation
@@ -82,17 +82,16 @@ rules:
     statement: >-
       A key binding's statusListIndex MUST be a decimal string without leading
       zeros and its statusListCredential the id of a list of its issuer; a
-      verifier MUST reject the binding when the list held under that id marks
-      the index or ends before it.
+      verifier MUST reject it when it holds no list under that id, or that
+      list marks the index or lacks it.
     uses: [keybinding.shape, keybinding.status-list.id]
     schemas: [key-binding-credential.json]
-    vectors: [keybinding-008, keybinding-009, keybinding-010]
+    vectors: [keybinding-008, keybinding-009, keybinding-010, keybinding-033, keybinding-034]
     notes: >-
       An entry is marked when its bit is set: index i is bit 7 - (i mod 8) of
       byte i div 8 of the expanded list, the first entry the most significant
-      bit of the first byte (W3C Bitstring Status List). A binding whose list
-      the verifier does not hold is not accepted (keybinding.status-list.fresh).
-      credentialStatus has exactly type, statusPurpose, statusListIndex and
+      bit of the first byte (W3C Bitstring Status List); a list lacks an index
+      at or past its number of entries. credentialStatus has exactly type, statusPurpose, statusListIndex and
       statusListCredential: a statusSize or statusMessage would change what
       the entry's bits mean, so an entry carrying one is not this entry.
 
@@ -171,17 +170,18 @@ rules:
     status: draft
     class: core
     statement: >-
-      A verifier MUST NOT accept a key binding under a status list that, at the
-      decision and widened by the verifier's clock skew, is not yet valid or is
-      past its validUntil, or whose validFrom lies further back than its trust
-      anchor allows the issuer.
+      A verifier MUST NOT accept a key binding under a status list that at the
+      decision is not yet valid or is at or after its validUntil, each widened
+      by the clock skew, or whose validFrom is more than the anchor's maximum
+      age before the decision.
     uses: [keybinding.status.entry, keybinding.issuer]
     schemas: []
-    vectors: [keybinding-022, keybinding-023]
+    vectors: [keybinding-022, keybinding-023, keybinding-031, keybinding-032, keybinding-037]
     notes: >-
       The verifier decides from the list it holds, without asking the issuer
       at the decision; the bound on the list's age bounds how long a
-      revocation takes to reach it. A list the verifier holds past its
+      revocation takes to reach it. The clock skew widens the list's period,
+      not its age. A list the verifier holds past its
       freshness still guards its marks against a later list
       (keybinding.status-list.monotonic), though no binding is accepted under
       it.

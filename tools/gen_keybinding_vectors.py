@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate vectors/keybinding-0{01..25}.json from the rule text.
+"""Regenerate vectors/keybinding-0{01..37}.json from the rule text.
 
 Run: python3 tools/gen_keybinding_vectors.py [--check]
 
@@ -162,6 +162,13 @@ def binding(*, issuer=ISSUER, valid_from=t("00:00:00"), valid_until=t("00:00:00"
     return out
 
 
+def edited(cred: dict, edit) -> dict:
+    """A copy of cred that edit has changed."""
+    out = copy.deepcopy(cred)
+    edit(out)
+    return out
+
+
 def content_hash(lst: dict) -> str:
     view = copy.deepcopy(lst)
     del view["proof"]
@@ -314,17 +321,65 @@ def build() -> list[dict]:
     add("keybinding.status-list.content-hash",
         "A revocation list's content hash covers the members the catalog does not define, as it covers every other member but encodedList's compression",
         {"credential": extended}, {"contentHash": content_hash(extended)})
+    # A list is signed under the trust anchor as a binding is.
+    add("keybinding.issuer",
+        "A revocation list signed with a key of its issuer that the trust anchor does not name as an issuance key is rejected",
+        list_case(status_list(LIST_FROM, LIST_UNTIL, vm=ISSUER + "#signing")), "reject")
+    add("keybinding.issuer",
+        "A revocation list of an issuer no trust anchor names, signed with that issuer's own key, is rejected",
+        list_case(status_list(LIST_FROM, LIST_UNTIL, issuer=OTHER, list_id=OTHER + "#key-binding-status-list")),
+        "reject")
+    # The clock skew and the bounds, on the accepting side.
+    add("keybinding.validity",
+        "A key binding decided 30 seconds before its validFrom, within the clock skew, is accepted",
+        binding_case(binding(valid_from=t("01:00:30"), valid_until=t("01:00:30", 7))), "accept")
+    add("keybinding.validity",
+        "A key binding decided 59 seconds after its validUntil, within the clock skew, is accepted",
+        binding_case(binding(), at=t("00:00:59", 7),
+                     held=status_list(t("00:00:00", 7), t("01:00:00", 7))),
+        "accept")
+    add("keybinding.validity",
+        "A key binding valid for exactly the longest its trust anchor allows the issuer is accepted",
+        binding_case(binding(valid_until=t("00:00:00", 8))), "accept")
+    add("keybinding.status-list.fresh",
+        "A key binding under a list valid from 59 seconds after the decision, within the clock skew, is accepted",
+        binding_case(binding(), held=status_list(t("01:00:59"), t("02:00:59"))), "accept")
+    add("keybinding.status-list.fresh",
+        "A key binding under a list whose validFrom is exactly the trust anchor's maximum age before the decision is accepted",
+        binding_case(binding(), held=status_list(t("23:00:00", 5), t("01:59:00"))), "accept")
+    # The entry and the members kept exact.
+    add("keybinding.status.entry",
+        "A key binding whose index lies past the end of the issuer's current list is rejected",
+        binding_case(binding(index=str(ENTRIES))), "reject")
+    add("keybinding.status.entry",
+        "A key binding whose credentialStatus carries a statusSize is rejected",
+        binding_case(edited(binding(), lambda b: b["credentialStatus"].update(statusSize="1"))), "reject")
+    add("keybinding.shape",
+        "A key binding whose key carries a member other than keyId and publicKeyJwk is rejected",
+        binding_case(edited(binding(), lambda b: b["credentialSubject"]["key"].update(purpose="approval"))),
+        "reject")
+    add("keybinding.shape",
+        "A key binding whose public JWK carries a member other than those its key type has is rejected",
+        binding_case(edited(binding(), lambda b: b["credentialSubject"]["key"]["publicKeyJwk"].update(kid="credential-1"))),
+        "reject")
+    add("keybinding.status-list.fresh",
+        "A key binding under a list decided at its validUntil plus the clock skew is rejected",
+        binding_case(binding(), held=status_list(t("23:30:00", 5), t("00:59:00"))), "reject")
     return v
 
 
+PINNED = {GO126, GO127}
+
+
 def normalized(vector: dict) -> dict:
-    """The vector with every encodedList replaced by the digest of its bits."""
+    """The vector with every encodedList replaced by the digest of its bits,
+    but for the two pinned encodings, which are compared as written."""
     out = copy.deepcopy(vector)
 
     def walk(x):
         if isinstance(x, dict):
             for k, val in x.items():
-                if k == "encodedList" and isinstance(val, str):
+                if k == "encodedList" and isinstance(val, str) and val not in PINNED:
                     x[k] = "bits:" + hashlib.sha256(expand(val)).hexdigest()
                 else:
                     walk(val)
@@ -342,7 +397,7 @@ def keep_committed_encodings(new: dict, old: dict) -> dict:
     if isinstance(new, dict) and isinstance(old, dict):
         for k, val in new.items():
             if k == "encodedList" and isinstance(val, str) and isinstance(old.get(k), str):
-                if expand(val) == expand(old[k]):
+                if val not in PINNED and expand(val) == expand(old[k]):
                     new[k] = old[k]
             elif k in old:
                 keep_committed_encodings(val, old[k])
