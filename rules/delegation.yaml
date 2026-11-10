@@ -73,3 +73,23 @@ rules:
       credentials, a Pipeline contains processes). A profile that needs to
       restrict authority below the level default populates scope against its
       own token registry; the provin profile does not use scope.
+
+  - id: delegation.use.subject-bound
+    status: draft
+    class: core
+    statement: >-
+      A consumer MUST treat a delegation as authority only for the identity
+      whose DID is byte-identical to its credentialSubject.id, and MUST reject
+      it when presented as authority for any other identity, even one under the
+      same Owner.
+    uses: [delegation.shape, delegation.binding, delegation.proof]
+    schemas: [delegation-credential.json]
+    vectors: [delegation-006, delegation-007, delegation-008]
+    notes: >-
+      delegation.binding ties the subject to the issuer's Owner, not to the
+      identity a consumer acts for: without this rule a delegation of one
+      Process would serve as authority for any other identity under the same
+      Owner, and a Pipeline's delegation for the Processes under it.
+      Registering the delegated identity is one such use. did:dplaax segments
+      are case-sensitive, so a comparison that normalizes would merge distinct
+      identities.

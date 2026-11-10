@@ -21,6 +21,11 @@ declared when the specification goes public.
   Owner to its Pipelines and Processes (who can delegate, over what, and
   what a delegation is used for), with six negative controls. Non-normative;
   the rules are unchanged.
+- `delegation.use.subject-bound`: a consumer treats a delegation as authority
+  only for the identity whose DID is byte-identical to its
+  `credentialSubject.id`, not for another identity under the same Owner nor
+  for a Process under a delegated Pipeline. Vectors `delegation-006`
+  (accepted), `delegation-007` and `delegation-008` (rejected).
 
 ### Changed
 
