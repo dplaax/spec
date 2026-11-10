@@ -101,7 +101,15 @@ rule OwnerAuthenticates:
 // A delegation of a Pipeline or a Process is accepted when its issuer is
 // the subject's own Owner (delegation.binding), delegatedBy restates the
 // issuer (delegation.shape), and the proof is for assertionMethod and
-// verifies under the issuer's key (delegation.proof).
+// verifies under the issuer's key (delegation.proof). Authorized and !Valid
+// name the subject's own Owner O, whoever the issuer was.
+//
+// Negative controls, each a verifier without one of the checks: it accepts
+// what the rule below accepts and also what that check would refuse.
+//   -D=SkipSubjectOwnerCheck  the issuer is any Owner, not the subject's;
+//   -D=AcceptControllerIssuer a Process may also be delegated by its
+//                             Pipeline, its controller in the registry;
+//   -D=AnyProofPurpose        the proof's purpose is not checked.
 rule VerifyPipeline:
     let X = <'pipeline', O, p>
         body = <'delegation', O, X, O>
@@ -118,6 +126,59 @@ rule VerifyProcess:
   --[ Eq(verify(s, <'assertionMethod', body>, pk), true), Authorized(X, O) ]->
     [ !Valid(X, O) ]
 
+#ifdef SkipSubjectOwnerCheck
+// Any Owner I as issuer of an identity under O.
+rule VerifyPipelineAnyOwner:
+    let X = <'pipeline', O, p>
+        body = <'delegation', I, X, I>
+    in
+    [ In(<body, s>), !OwnerPk(I, pk) ]
+  --[ Eq(verify(s, <'assertionMethod', body>, pk), true), Authorized(X, O) ]->
+    [ !Valid(X, O) ]
+
+rule VerifyProcessAnyOwner:
+    let X = <'process', O, p, q>
+        body = <'delegation', I, X, I>
+    in
+    [ In(<body, s>), !OwnerPk(I, pk) ]
+  --[ Eq(verify(s, <'assertionMethod', body>, pk), true), Authorized(X, O) ]->
+    [ !Valid(X, O) ]
+
+#endif
+
+#ifdef AnyProofPurpose
+// A proof of any purpose.
+rule VerifyPipelineAnyPurpose:
+    let X = <'pipeline', O, p>
+        body = <'delegation', O, X, O>
+    in
+    [ In(<body, purpose, s>), !OwnerPk(O, pk) ]
+  --[ Eq(verify(s, <purpose, body>, pk), true), Authorized(X, O) ]->
+    [ !Valid(X, O) ]
+
+rule VerifyProcessAnyPurpose:
+    let X = <'process', O, p, q>
+        body = <'delegation', O, X, O>
+    in
+    [ In(<body, purpose, s>), !OwnerPk(O, pk) ]
+  --[ Eq(verify(s, <purpose, body>, pk), true), Authorized(X, O) ]->
+    [ !Valid(X, O) ]
+
+#endif
+
+#ifdef AcceptControllerIssuer
+// The Process's Pipeline as issuer: the chain of authority extended one hop.
+rule VerifyProcessByController:
+    let X = <'process', O, p, q>
+        C = <'pipeline', O, p>
+        body = <'delegation', C, X, C>
+    in
+    [ In(<body, s>), !Pk(C, pk) ]
+  --[ Eq(verify(s, <'assertionMethod', body>, pk), true), Authorized(X, O) ]->
+    [ !Valid(X, O) ]
+
+#endif
+
 /* ---------- Lemmas ---------- */
 
 // Reachability: a Pipeline's delegation is accepted with no key taken over.
@@ -131,6 +192,24 @@ lemma executable_process:
   exists-trace
   "Ex O p q #i. Authorized(<'process', O, p, q>, O) @ #i
      & not (Ex D #r. Compromised(D) @ #r)"
+
+// Authority comes from the subject's own Owner: a delegation of X accepted
+// under X's Owner O was signed by O, unless O's key had been taken over. No
+// other Owner, no Pipeline (the chain of authority does not extend) and no
+// signature O made for another purpose yields one (delegation.binding,
+// delegation.proof, delegation.shape). Falsified with -D=SkipSubjectOwnerCheck,
+// -D=AcceptControllerIssuer and -D=AnyProofPurpose.
+lemma authority_from_own_owner:
+  "All X O #i. Authorized(X, O) @ #i ==>
+     (Ex #j. Delegated(O, X) @ #j & #j < #i)
+     | (Ex #r. Compromised(O) @ #r & #r < #i)"
+
+// The exception, made explicit: with O's key the attacker has a delegation
+// of one of O's identities accepted that O never signed.
+lemma owner_compromise_exception:
+  exists-trace
+  "Ex X O #i #r. Authorized(X, O) @ #i & Compromised(O) @ #r & #r < #i
+     & not (Ex #j. Delegated(O, X) @ #j)"
 
 // A delegation is accepted only for a Pipeline or a Process of its Owner,
 // never for an Owner (delegation.binding): structural, the verifier's

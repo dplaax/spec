@@ -1,1 +1,4 @@
 # build	lemma	result   (build = default or a -D flag; result = verified | falsified | unresolved; a lemma absent here is expected verified)
+SkipSubjectOwnerCheck	authority_from_own_owner	falsified
+AcceptControllerIssuer	authority_from_own_owner	falsified
+AnyProofPurpose	authority_from_own_owner	falsified
