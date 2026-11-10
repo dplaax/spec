@@ -9,7 +9,8 @@
 #   MODEL     the model's file name without .spthy (chain, ...); without it,
 #             every model in this directory is checked in its default build.
 #   FLAG      a preprocessor flag passed as -D=FLAG (a negative control, such
-#             as SkipLinkCheck); without it the default build is checked.
+#             as SkipLinkCheck); without it the default build is checked. A
+#             FLAG that MODEL.expected.tsv does not name as a build is refused.
 #   TIMEOUT   seconds per lemma (600 by default); a lemma that runs out of
 #             time is unresolved, not falsified. GNU timeout is used when on
 #             PATH; otherwise the run is killed from the shell.
@@ -62,6 +63,13 @@ check_model() {
 	local build="${flag:-default}"
 	if [ ! -f "$model" ]; then
 		echo "check.sh: no model $model"
+		return 1
+	fi
+	# tamarin-prover ignores a -D flag the model does not use and checks the
+	# default model, so a misspelled FLAG would pass as a build in which every
+	# lemma holds. A FLAG is a build only when the expectations name it.
+	if [ -n "$flag" ] && ! awk -F'\t' -v b="$flag" '$1 == b { found = 1 } END { exit !found }' "$expected_file" 2>/dev/null; then
+		echo "check.sh: $flag is not a build in $expected_file"
 		return 1
 	fi
 	local lemmas

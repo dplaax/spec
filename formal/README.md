@@ -109,7 +109,9 @@ TIMEOUT=120 formal/tamarin/check.sh chain     # seconds per lemma (600 by defaul
 reads the prover's summary (its exit code is 0 for a refuted lemma too),
 classes the result, and exits 0 only when every lemma has the result
 `MODEL.expected.tsv` names. A lemma that runs out of time is unresolved, not
-refuted.
+refuted. A `FLAG` that `MODEL.expected.tsv` does not name as a build is
+refused: `tamarin-prover` ignores a flag the model does not use, so a
+misspelled negative control would otherwise pass as the default model.
 
 Tools: Tamarin 1.12.0 and Maude 3.5.1, the versions CI pins by SHA-256
 (`.github/workflows/formal.yml`). On macOS:
