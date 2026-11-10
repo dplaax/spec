@@ -212,21 +212,37 @@ check.
 ## Running the checks
 
 ```sh
+formal/tamarin/check.sh --all-builds                     # every build of every model, as CI runs it
+formal/tamarin/check.sh --all-builds delegation          # every build of one model
 formal/tamarin/check.sh                                  # every model, its default build
-formal/tamarin/check.sh chain                            # one model, its default build
+formal/tamarin/check.sh chain                            # one model, its default build (also: chain default)
 formal/tamarin/check.sh chain SkipLinkCheck              # one model, a negative control
-formal/tamarin/check.sh delegation SkipTargetBinding     # another
 TIMEOUT=120 formal/tamarin/check.sh chain                # seconds per lemma (600 by default)
 ```
 
-`check.sh [MODEL [FLAG]]` runs `tamarin-prover` on each lemma of
-`MODEL.spthy` in a process of its own, with `-D=FLAG` when a flag is given,
-reads the prover's summary (its exit code is 0 for a refuted lemma too),
-classes the result, and exits 0 only when every lemma has the result
-`MODEL.expected.tsv` names. A lemma that runs out of time is unresolved, not
-refuted. A `FLAG` that `MODEL.expected.tsv` does not name as a build is
-refused: `tamarin-prover` ignores a flag the model does not use, so a
-misspelled negative control would otherwise pass as the default model.
+`check.sh [--all-builds] [MODEL [FLAG]]` runs `tamarin-prover` on each lemma
+of `MODEL.spthy` in a process of its own, with `-D=FLAG` when a flag other
+than `default` is given, reads the prover's summary (its exit code is 0 for a
+refuted lemma too), classes the result, and exits 0 only when every lemma has
+the result `MODEL.expected.tsv` names. A lemma that runs out of time is
+unresolved, not refuted. `--all-builds` runs the default build and every
+build the expectations name; a build whose results are not the expected ones
+does not stop the others, and the last line lists every such build.
+
+Before any lemma is proved, the model and its expectations are checked
+against each other, so that neither can drift from the other unnoticed:
+
+- each `#ifdef` names one flag (`tamarin-prover` would read `#ifdef A & B`
+  as a condition, not as the build `A`);
+- no lemma is inside an `#ifdef` (it would vanish from the other builds);
+- every expected result is `verified`, `falsified` or `unresolved`;
+- every lemma the expectations name is a lemma of the model;
+- the model's `#ifdef` flags are exactly the builds the expectations name
+  other than `default`, which may hold lines of its own for a design gap.
+
+A `FLAG` the expectations do not name as a build is refused:
+`tamarin-prover` ignores a flag the model does not use, so a misspelled
+negative control would otherwise pass as the default model.
 
 Tools: Tamarin 1.12.0 and Maude 3.5.1, the versions CI pins by SHA-256
 (`.github/workflows/formal.yml`). On macOS:
