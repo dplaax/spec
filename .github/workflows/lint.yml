@@ -39,5 +39,11 @@ jobs:
           python tools/lint.py
       - name: vector-vs-schema validation
         run: python tools/validate_vectors.py
+      # The generated vectors are re-derived from the rule text and compared
+      # with what is committed, so a hand edit to one fails here.
+      - name: key-binding vectors match their derivation
+        run: python tools/gen_keybinding_vectors.py --check
+      - name: identity vectors match their derivation
+        run: python tools/gen_identity_vectors.py --check
       - name: independent EvidenceView vectors
         run: python tools/verify_evidence_vectors.py
