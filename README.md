@@ -72,8 +72,11 @@ What is enforced: normative keywords outside rule statements fail the lint
 (this covers the full markdown text and `notes` fields) / cross-file id
 uniqueness / resolution of `uses`, `schemas`, and `vectors` references /
 `status` and `class` enum values / statement length and normative keyword
-presence. `STATUS.md` is excluded from scanning as it is a temporary working
-document.
+presence / the branch contexts under `contexts/branches/` (their paths and
+UTC stamps, their pins in `SHA256SUMS`, add-only within a branch, no term
+redefining the base or another branch's, and, given `DPLAAX_BASE_REF`, no
+shipped snapshot changed). `STATUS.md` is excluded from scanning as it is a
+temporary working document.
 
 The structure (shape) of rule entries is defined by `tools/rule.schema.json`
 and is bound to IDE validation via a modeline at the top of each `rules/*.yaml`

@@ -13,6 +13,17 @@ declared when the specification goes public.
 
 ### Added
 
+- Branch contexts: the terms of a feature on a base version of the
+  protocol context, each snapshot frozen at
+  `https://dplaax.dev/vc/branches/<base>/<feature>/<stamp>` (UTC
+  `YYYYMMDDHHmm`), only adding terms within a branch, and folded into the
+  next base version once confirmed (`contexts/README.md`). The first is
+  `https://dplaax.dev/vc/branches/v1/keybinding/202611101543`, the key-binding
+  terms; sha256 `cc07379a021cad29b2e8f5c137a2d6c185e283cc523c7d59ef360b58f6594916`, pinned in
+  `contexts/branches/SHA256SUMS`. `https://dplaax.dev/vc/v1` is unchanged.
+  `tools/lint.py` checks the branch contexts: their paths and stamps, their
+  pins, add-only within a branch, one definition per term name on a base,
+  and, against the base ref CI passes, that no shipped snapshot changed.
 - `formal/`: a Tamarin model of provenance-chain authentication
   (`formal/tamarin/chain.spthy`) with its contract, the lemma-to-rule table
   (`formal/README.md`), a negative control (`-D=SkipLinkCheck`) and CI
