@@ -1,0 +1,195 @@
+/*
+ * The authentication of a provenance chain, as a Tamarin model.
+ *
+ * A credential's body is <'cred', P, inp, out, prev>: its issuer P (a process),
+ * its inputHash, its outputHash, and its previousCredential, which is 'origin'
+ * for a chain origin and otherwise the predecessor's body address h(b1), the
+ * hash of the proof-excluded body (identity.body-address). The wire form is
+ * the body with a signature over it; the signature is outside the body, so a
+ * body signed again keeps its address.
+ *
+ * Contract (formal/README.md says the same):
+ *   - the network is the attacker's (Dolev-Yao);
+ *   - trusted: the verifier (never taken over), hashing (no collisions),
+ *     signatures (no forgery without the key);
+ *   - any process key can be taken over (CompromiseProcess), and the model
+ *     records it;
+ *   - no persistence and no time: clocks and proof.created are outside the
+ *     model, and so are delegation, the source commitment, DID resolution
+ *     (public keys reach the verifier directly), key rotation, the wire
+ *     variant id, and the data behind the hashes (in and out are the
+ *     attacker's to choose);
+ *   - the acceptance events are Accepted(b, P), the verifier accepted body b
+ *     as signed by P, and Linked(b2, a1, out1), the verifier accepted b2 as
+ *     the successor of the accepted credential at address a1 whose
+ *     outputHash is out1.
+ *
+ * Builds: the default build is the protocol; -D=SkipLinkCheck is the negative
+ * control, a verifier without the link check, under which link_integrity is
+ * expected to be falsified (formal/tamarin/chain.expected.tsv).
+ */
+theory Chain
+begin
+
+builtins: hashing, signing
+
+restriction Equality:
+  "All x y #i. Eq(x, y) @ #i ==> x = y"
+
+/* ---------- Processes ---------- */
+
+// A process with its signing key. The public key is public.
+rule Process:
+    [ Fr(~sk) ]
+  --[ Process($P) ]->
+    [ !Sk($P, ~sk), !Pk($P, pk(~sk)), Out(pk(~sk)) ]
+
+// The attacker takes a process's key.
+rule CompromiseProcess:
+    [ !Sk(P, sk) ]
+  --[ Compromised(P) ]->
+    [ Out(sk) ]
+
+/* ---------- Issuance ---------- */
+
+// A chain origin: no predecessor. The input and output hashes are whatever
+// the environment hands the process; the data behind them is not modelled.
+rule IssueOrigin:
+    let b = <'cred', P, inp, out, 'origin'>
+    in
+    [ !Sk(P, sk), In(<inp, out>) ]
+  --[ Issued(P, b) ]->
+    [ Out(<b, sign(b, sk)>), !Body(P, b) ]
+
+// A successor: its inputHash is the predecessor's outputHash and its
+// previousCredential is the predecessor's body address (chain.data-flow.
+// continuity, credential.prev.content-hash). The issuer reads the
+// predecessor from the network and does not check its signature: the
+// weakest assumption, since verification is the verifier's duty. Nothing
+// stops a second successor of the same predecessor (chain.trigger.fan-out).
+rule IssueNext:
+    let b1 = <'cred', P1, inp1, out1, prev1>
+        b2 = <'cred', P, out1, out2, h(b1)>
+    in
+    [ !Sk(P, sk), In(<b1, out2>) ]
+  --[ Issued(P, b2) ]->
+    [ Out(<b2, sign(b2, sk)>), !Body(P, b2) ]
+
+// A proof issued again for a body the process issued: the body, and so its
+// address, is unchanged (identity.body-address).
+rule ReSign:
+    [ !Sk(P, sk), !Body(P, b) ]
+  --[ ReSigned(P, b) ]->
+    [ Out(<b, sign(b, sk)>) ]
+
+/* ---------- Verification ---------- */
+
+// The verifier accepts a chain origin: a body with no predecessor, signed by
+// the key of the process it names.
+rule VerifyOrigin:
+    let b = <'cred', P, inp, out, 'origin'>
+    in
+    [ In(<b, s>), !Pk(P, pk) ]
+  --[ Eq(verify(s, b, pk), true), Accepted(b, P) ]->
+    [ !Chain(h(b), P, out) ]
+
+// The verifier accepts a successor of a credential it accepted: the body
+// names that credential's address as previousCredential, takes its
+// outputHash as inputHash, and is signed by the key of the process it names
+// (what provin.oss's vc.ValidateChainLinks checks, read by vc.VerifyChain).
+// -D=SkipLinkCheck models a verifier that reads neither previousCredential
+// nor inputHash against the credential it extends (the negative control):
+// link_integrity is falsified with it.
+#ifdef SkipLinkCheck
+rule VerifyNext:
+    let b2 = <'cred', P2, inp2, out2, prev2>
+    in
+    [ In(<b2, s2>), !Pk(P2, pk2), !Chain(a1, P1, out1) ]
+  --[ Eq(verify(s2, b2, pk2), true), Accepted(b2, P2), Linked(b2, a1, out1) ]->
+    [ !Chain(h(b2), P2, out2) ]
+
+#else
+rule VerifyNext:
+    let b2 = <'cred', P2, out1, out2, a1>
+    in
+    [ In(<b2, s2>), !Pk(P2, pk2), !Chain(a1, P1, out1) ]
+  --[ Eq(verify(s2, b2, pk2), true), Accepted(b2, P2), Linked(b2, a1, out1) ]->
+    [ !Chain(h(b2), P2, out2) ]
+
+#endif
+
+/* ---------- Lemmas ---------- */
+
+// Reachability: a successor can be accepted without any key taken over.
+lemma executable_chain:
+  exists-trace
+  "Ex b2 a1 out1 #i. Linked(b2, a1, out1) @ #i
+     & not (Ex Q #r. Compromised(Q) @ #r)"
+
+// Reachability: two successors of one predecessor can both be accepted
+// (chain.trigger.fan-out: linearity bounds predecessors, not successors).
+lemma executable_fan_out:
+  exists-trace
+  "Ex b2 b3 a1 out1 #i #j. Linked(b2, a1, out1) @ #i & Linked(b3, a1, out1) @ #j
+     & not (b2 = b3)
+     & not (Ex Q #r. Compromised(Q) @ #r)"
+
+// Reachability: a successor links to a predecessor whose proof was issued
+// again (identity.body-address: the address is the body's, not the proof's).
+lemma executable_after_reissue:
+  exists-trace
+  "Ex P1 b1 b2 out1 #i #j. ReSigned(P1, b1) @ #i & Linked(b2, h(b1), out1) @ #j
+     & #i < #j
+     & not (Ex Q #r. Compromised(Q) @ #r)"
+
+// Signer authenticity: a credential the verifier accepts as P's was issued
+// by P, unless P's key had been taken over (signer.proof.structure; the
+// signer-authenticity axis of provin.oss's vc.Verifier).
+lemma signer_authenticity:
+  "All b P #i. Accepted(b, P) @ #i ==>
+     (Ex #j. Issued(P, b) @ #j & #j < #i)
+     | (Ex #r. Compromised(P) @ #r & #r < #i)"
+
+// The compromised-key exception, made explicit: with a process's key the
+// attacker has a credential accepted as that process's that the process never
+// issued (the disjunct of signer_authenticity is live).
+lemma forgery_after_compromise:
+  exists-trace
+  "Ex b P #i #r. Accepted(b, P) @ #i & Compromised(P) @ #r & #r < #i
+     & not (Ex #j. Issued(P, b) @ #j)"
+
+// The reach of the exception: a forged origin under a leaked key is accepted,
+// and an uncompromised process's successor is linked to it. Verification
+// does not, and cannot, tell a forged predecessor from a genuine one; what it
+// bounds is the forgery to the compromised process (no_repointing).
+lemma forged_predecessor_extended:
+  exists-trace
+  "Ex b1 P1 b2 P2 out1 #k #i #r.
+     Accepted(b1, P1) @ #k & Compromised(P1) @ #r & #r < #k
+     & not (Ex #j. Issued(P1, b1) @ #j)
+     & Linked(b2, h(b1), out1) @ #i & Accepted(b2, P2) @ #i
+     & not (Ex #q. Compromised(P2) @ #q)"
+
+// No re-pointing: a successor the verifier links to an accepted credential,
+// as an uncompromised P2's, names that credential's address as
+// previousCredential, takes its outputHash as inputHash, and was issued so by
+// P2. Needs both the signature check and the link check: falsified with
+// -D=SkipLinkCheck (chain.data-flow.continuity, credential.subject.input-hash,
+// credential.subject.output-hash, credential.subject.previous-credential,
+// credential.prev.content-hash).
+lemma no_repointing:
+  "All P2 inp2 out2 prev2 a1 out1 #i.
+     Linked(<'cred', P2, inp2, out2, prev2>, a1, out1) @ #i
+     & not (Ex #r. Compromised(P2) @ #r & #r < #i) ==>
+     prev2 = a1 & inp2 = out1
+     & (Ex #j. Issued(P2, <'cred', P2, inp2, out2, prev2>) @ #j & #j < #i)"
+
+// The verifier's link check is present: structural (the pattern of
+// VerifyNext), proved without attacker reasoning, and there so that the
+// -D=SkipLinkCheck control shows the check is what no_repointing rests on.
+lemma link_integrity:
+  "All P2 inp2 out2 prev2 a1 out1 #i.
+     Linked(<'cred', P2, inp2, out2, prev2>, a1, out1) @ #i ==>
+     prev2 = a1 & inp2 = out1"
+
+end

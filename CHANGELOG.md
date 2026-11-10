@@ -11,6 +11,13 @@ declared when the specification goes public.
 
 ## [Unreleased]
 
+### Added
+
+- `formal/`: a Tamarin model of provenance-chain authentication
+  (`formal/tamarin/chain.spthy`) with its contract, the lemma-to-rule table
+  (`formal/README.md`), a negative control (`-D=SkipLinkCheck`) and CI
+  (`.github/workflows/formal.yml`). Non-normative; the rules are unchanged.
+
 ### Changed
 
 - `auth.grant.exact-method`: a signed absolute method id is required of the
