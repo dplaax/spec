@@ -1,0 +1,347 @@
+/*
+ * Key bindings and their revocation lists, as a Tamarin model.
+ *
+ * An issuer $I binds a subject's key to the subject for one relying party
+ * (keybinding.shape): a binding's body is <'binding', I, S, k, A, L>, its
+ * issuer I, subject S, bound key k, audience A and revocation list L, signed
+ * with the issuer's issuance key. A list's id is a DID URL of its issuer,
+ * <I, f> for <I>#f (keybinding.status-list.id). A list is abstracted to the
+ * one entry a binding has in it: its body is <'list', I, L, vf, mark>, its
+ * issuer, id, validFrom (a natural number, so that lists are ordered) and the
+ * entry's mark, 'active' or 'revoked'. Its content hash is h(body)
+ * (keybinding.status-list.content-hash).
+ *
+ * Contract (formal/README.md says the same):
+ *   - the network is the attacker's (Dolev-Yao);
+ *   - trusted: the relying party's verifier (never taken over), signatures
+ *     (no forgery without the key);
+ *   - an issuer's issuance key can be taken over (CompromiseIssuer), and the
+ *     model records it; its other key, which it signs other credentials
+ *     with, signs whatever the attacker asks (OtherKeySigns);
+ *   - an issuer issues lists of any validFrom and any mark: its state may be
+ *     restored to an older one, so nothing rests on its lists only moving
+ *     forward; what is shown is that the list the verifier holds guards its
+ *     marks;
+ *   - a relying party $V trusts an issuer when it holds a trust anchor for
+ *     it (!Anchor(V, I, pk), the issuer's issuance key), and holds one list
+ *     per id, which a later list replaces: Held(~sid, ...) is the state of
+ *     that list, made once per V and id and carried through every step under
+ *     the same ~sid, so that one state at a time exists;
+ *   - no clock: the binding's period, the list's freshness and the clock
+ *     skew (keybinding.validity, keybinding.status-list.fresh,
+ *     keybinding.status-list.period) are outside the model, and so are
+ *     keeping the held list across restarts, DID resolution (public keys
+ *     reach the verifier directly) and the issuer's scope; receiving the held
+ *     list again changes nothing and is not modelled;
+ *   - the acceptance event is Accepted(V, I, S, k, A, L): V accepted I's
+ *     binding of k to S for A under L. St(sid, V, L, J, vf, mark) records
+ *     each state of the list V holds under L, signed by J.
+ */
+theory KeyBinding
+begin
+
+builtins: hashing, signing, natural-numbers
+
+restriction Equality:
+  "All x y #i. Eq(x, y) @ #i ==> x = y"
+
+// vf is later than old: old + z = vf for some natural number z.
+restriction Later:
+  "All x y #i. Later(x, y) @ #i ==> Ex z. x %+ z = y"
+
+// An issuer has one pair of keys (rotation is not modelled).
+restriction OneIssuer:
+  "All I #i #j. IssuerKeys(I) @ #i & IssuerKeys(I) @ #j ==> #i = #j"
+
+// A relying party starts holding a given list id once.
+restriction OneList:
+  "All V L #i #j. Start(V, L) @ #i & Start(V, L) @ #j ==> #i = #j"
+
+/* ---------- Issuers ---------- */
+
+// An issuer's issuance key, which a trust anchor names, and another key of
+// its own, which no anchor names.
+rule Issuer:
+    [ Fr(~ik), Fr(~ok) ]
+  --[ IssuerKeys($I) ]->
+    [ !IssuanceSk($I, ~ik), !IssuancePk($I, pk(~ik)),
+      !OtherSk($I, ~ok), !OtherPk($I, pk(~ok)),
+      Out(pk(~ik)), Out(pk(~ok)) ]
+
+rule CompromiseIssuer:
+    [ !IssuanceSk(I, ik) ]
+  --[ Compromised(I) ]->
+    [ Out(ik) ]
+
+// The other key signs credentials whose contents the attacker can choose.
+rule OtherKeySigns:
+    [ !OtherSk(I, ok), In(m) ]
+  --[ SignedOther(I, m) ]->
+    [ Out(sign(m, ok)) ]
+
+// An issuer binds a subject's key, for a relying party, under one of its
+// lists.
+rule Bind:
+    let L = <$I, $f>
+        body = <'binding', $I, $S, pk(~k), $A, L>
+    in
+    [ !IssuanceSk($I, ik), Fr(~k) ]
+  --[ Bound($I, $S, pk(~k), $A, L) ]->
+    [ Out(<body, sign(body, ik)>) ]
+
+// An issuer issues one of its lists, of any validFrom, with the entry
+// active or revoked.
+rule IssueActiveList:
+    let L = <$I, $f>
+        body = <'list', $I, L, %vf, 'active'>
+    in
+    [ !IssuanceSk($I, ik), In(%vf) ]
+  --[ IssuedList($I, L, %vf, 'active') ]->
+    [ Out(<body, sign(body, ik)>) ]
+
+rule IssueRevokedList:
+    let L = <$I, $f>
+        body = <'list', $I, L, %vf, 'revoked'>
+    in
+    [ !IssuanceSk($I, ik), In(%vf) ]
+  --[ IssuedList($I, L, %vf, 'revoked') ]->
+    [ Out(<body, sign(body, ik)>) ]
+
+/* ---------- The relying party (oss keybinding.Verifier) ---------- */
+
+// A trust anchor: V trusts I's issuance key.
+rule Anchor:
+    [ !IssuancePk($I, pk) ]
+  --[ Anchored($V, $I) ]->
+    [ !Anchor($V, $I, pk) ]
+
+rule StartList:
+    [ ]
+  --[ Start($V, <$D, $f>) ]->
+    [ Empty($V, <$D, $f>) ]
+
+// The first list V holds under an id: signed with the issuance key of the
+// issuer its trust anchor names (keybinding.issuer), and its id a DID URL
+// of that issuer (keybinding.status-list.id). !ListOwner records who signed
+// the list V holds under L.
+rule HoldList:
+    let L = <I, f>
+        body = <'list', I, L, %vf, mark>
+    in
+    [ Empty(V, L), In(<body, sig>), !Anchor(V, I, pk), Fr(~sid) ]
+  --[ Eq(verify(sig, body, pk), true), Holds(V, L, I, %vf, mark),
+      St(~sid, V, L, I, %vf, mark) ]->
+    [ Held(~sid, V, L, I, %vf, mark, h(body)), !ListOwner(V, L, I) ]
+
+// A later list of the same issuer and id replaces the held one
+// (keybinding.status-list.monotonic): later only, and a revoked entry stays
+// revoked.
+rule ReplaceActive:
+    let body = <'list', I, L, %new, mark>
+    in
+    [ Held(~sid, V, L, I, %old, 'active', c), In(<body, sig>), !Anchor(V, I, pk) ]
+  --[ Eq(verify(sig, body, pk), true), Later(%old, %new),
+      Replaced(V, L, %old, c, %new, h(body)), Holds(V, L, I, %new, mark),
+      St(~sid, V, L, I, %new, mark) ]->
+    [ Held(~sid, V, L, I, %new, mark, h(body)) ]
+
+rule ReplaceRevoked:
+    let body = <'list', I, L, %new, 'revoked'>
+    in
+    [ Held(~sid, V, L, I, %old, 'revoked', c), In(<body, sig>), !Anchor(V, I, pk) ]
+  --[ Eq(verify(sig, body, pk), true), Later(%old, %new),
+      Replaced(V, L, %old, c, %new, h(body)), Holds(V, L, I, %new, 'revoked'),
+      St(~sid, V, L, I, %new, 'revoked') ]->
+    [ Held(~sid, V, L, I, %new, 'revoked', h(body)) ]
+
+// V accepts a binding signed with the issuance key of the issuer its trust
+// anchor names (keybinding.issuer), for V (keybinding.audience), naming a
+// list of its own issuer (keybinding.status.entry) that V holds and that
+// leaves the entry active.
+rule Accept:
+    let L = <I, f>
+        body = <'binding', I, S, k, V, L>
+    in
+    [ In(<body, sig>), !Anchor(V, I, pk), Held(~sid, V, L, J, %vf, 'active', c),
+      !ListOwner(V, L, J) ]
+  --[ Eq(verify(sig, body, pk), true), Accepted(V, I, S, k, V, L),
+      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active') ]->
+    [ Held(~sid, V, L, J, %vf, 'active', c) ]
+
+/* ---------- Negative controls ---------- */
+
+// Each control adds a rule beside a default rule of the relying party: the
+// added rule contains the default one as its special case and keeps every
+// other check, so the two together are the relying party with that one
+// check dropped or relaxed.
+//   -D=SkipAnchorCheck         a binding and a first list are taken under
+//                              any issuer's issuance key, anchored or not;
+//   -D=AnyIssuerKey            a binding is taken under any key of the
+//                              anchored issuer, not only its issuance key;
+//   -D=SkipAudienceCheck       a binding for any relying party is taken;
+//   -D=AnyEntryList            a binding may name a list of another issuer;
+//   -D=AnyListIssuer           a list is held under an id that is not a DID
+//                              URL of its issuer;
+//   -D=AcceptClearedMark       a later list may leave active an entry the
+//                              held list marks;
+//   -D=SameValidFromAnyContent a list of the held one's validFrom replaces
+//                              it whatever its content hash.
+
+#ifdef SkipAnchorCheck
+rule AcceptUnanchored:
+    let L = <I, f>
+        body = <'binding', I, S, k, V, L>
+    in
+    [ In(<body, sig>), !IssuancePk(I, pk), Held(~sid, V, L, J, %vf, 'active', c),
+      !ListOwner(V, L, J) ]
+  --[ Eq(verify(sig, body, pk), true), Accepted(V, I, S, k, V, L),
+      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active') ]->
+    [ Held(~sid, V, L, J, %vf, 'active', c) ]
+
+rule HoldListUnanchored:
+    let L = <I, f>
+        body = <'list', I, L, %vf, mark>
+    in
+    [ Empty(V, L), In(<body, sig>), !IssuancePk(I, pk), Fr(~sid) ]
+  --[ Eq(verify(sig, body, pk), true), Holds(V, L, I, %vf, mark),
+      St(~sid, V, L, I, %vf, mark) ]->
+    [ Held(~sid, V, L, I, %vf, mark, h(body)), !ListOwner(V, L, I) ]
+
+#endif
+
+#ifdef AnyIssuerKey
+// The binding checked under the issuer's other key.
+rule AcceptAnyIssuerKey:
+    let L = <I, f>
+        body = <'binding', I, S, k, V, L>
+    in
+    [ In(<body, sig>), !Anchor(V, I, apk), !OtherPk(I, pk),
+      Held(~sid, V, L, J, %vf, 'active', c), !ListOwner(V, L, J) ]
+  --[ Eq(verify(sig, body, pk), true), Accepted(V, I, S, k, V, L),
+      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active') ]->
+    [ Held(~sid, V, L, J, %vf, 'active', c) ]
+
+#endif
+
+#ifdef SkipAudienceCheck
+rule AcceptAnyAudience:
+    let L = <I, f>
+        body = <'binding', I, S, k, A, L>
+    in
+    [ In(<body, sig>), !Anchor(V, I, pk), Held(~sid, V, L, J, %vf, 'active', c),
+      !ListOwner(V, L, J) ]
+  --[ Eq(verify(sig, body, pk), true), Accepted(V, I, S, k, A, L),
+      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active') ]->
+    [ Held(~sid, V, L, J, %vf, 'active', c) ]
+
+#endif
+
+#ifdef AnyEntryList
+// The binding's list L is any id, not one of its own issuer.
+rule AcceptAnyEntryList:
+    let body = <'binding', I, S, k, V, L>
+    in
+    [ In(<body, sig>), !Anchor(V, I, pk), Held(~sid, V, L, J, %vf, 'active', c),
+      !ListOwner(V, L, J) ]
+  --[ Eq(verify(sig, body, pk), true), Accepted(V, I, S, k, V, L),
+      JudgedUnder(V, I, L, J), St(~sid, V, L, J, %vf, 'active') ]->
+    [ Held(~sid, V, L, J, %vf, 'active', c) ]
+
+#endif
+
+#ifdef AnyListIssuer
+// The first list held under any id L, its issuer's or not.
+rule HoldListAnyName:
+    let body = <'list', I, L, %vf, mark>
+    in
+    [ Empty(V, L), In(<body, sig>), !Anchor(V, I, pk), Fr(~sid) ]
+  --[ Eq(verify(sig, body, pk), true), Holds(V, L, I, %vf, mark),
+      St(~sid, V, L, I, %vf, mark) ]->
+    [ Held(~sid, V, L, I, %vf, mark, h(body)), !ListOwner(V, L, I) ]
+
+#endif
+
+#ifdef AcceptClearedMark
+rule ReplaceClearing:
+    let body = <'list', I, L, %new, 'active'>
+    in
+    [ Held(~sid, V, L, I, %old, 'revoked', c), In(<body, sig>), !Anchor(V, I, pk) ]
+  --[ Eq(verify(sig, body, pk), true), Later(%old, %new),
+      Replaced(V, L, %old, c, %new, h(body)), Holds(V, L, I, %new, 'active'),
+      St(~sid, V, L, I, %new, 'active') ]->
+    [ Held(~sid, V, L, I, %new, 'active', h(body)) ]
+
+#endif
+
+#ifdef SameValidFromAnyContent
+rule ReplaceSameValidFrom:
+    let body = <'list', I, L, %vf, mark>
+    in
+    [ Held(~sid, V, L, I, %vf, held, c), In(<body, sig>), !Anchor(V, I, pk) ]
+  --[ Eq(verify(sig, body, pk), true), Replaced(V, L, %vf, c, %vf, h(body)),
+      Holds(V, L, I, %vf, mark), St(~sid, V, L, I, %vf, mark) ]->
+    [ Held(~sid, V, L, I, %vf, mark, h(body)) ]
+
+#endif
+
+/* ---------- Lemmas ---------- */
+
+// Reachability: a binding is accepted with no key taken over.
+lemma executable_binding:
+  exists-trace
+  "Ex V I S k L #i. Accepted(V, I, S, k, V, L) @ #i
+     & not (Ex D #r. Compromised(D) @ #r)"
+
+// Reachability: a later list replaces the held one with no key taken over.
+lemma executable_replace:
+  exists-trace
+  "Ex V L vf1 c1 vf2 c2 #i. Replaced(V, L, vf1, c1, vf2, c2) @ #i
+     & not (Ex D #r. Compromised(D) @ #r)"
+
+// A binding V accepts is of an issuer V's trust anchor names, and that
+// issuer bound the key to the subject, unless its issuance key had been
+// taken over first.
+lemma key_from_trusted_issuer:
+  "All V I S k A L #i. Accepted(V, I, S, k, A, L) @ #i ==>
+     (Ex #a. Anchored(V, I) @ #a & #a < #i)
+     & ((Ex #j. Bound(I, S, k, A, L) @ #j & #j < #i)
+        | (Ex #r. Compromised(I) @ #r & #r < #i))"
+
+// With I's issuance key, a binding I never made is accepted: the exception
+// in key_from_trusted_issuer is live.
+lemma issuer_compromise_exception:
+  exists-trace
+  "Ex V I S k A L #i #r. Accepted(V, I, S, k, A, L) @ #i
+     & Compromised(I) @ #r & #r < #i
+     & not (Ex #j. Bound(I, S, k, A, L) @ #j)"
+
+// A binding V accepts was bound for V: one for another relying party does
+// not serve, unless the issuer's key had been taken over first.
+lemma bound_to_audience:
+  "All V I S k A L #i. Accepted(V, I, S, k, A, L) @ #i ==>
+     (Ex #j. Bound(I, S, k, V, L) @ #j & #j < #i)
+     | (Ex #r. Compromised(I) @ #r & #r < #i)"
+
+// A binding of I is judged only under a list I signed, whoever else's key
+// is taken over.
+lemma list_of_its_issuer:
+  "All V I L J #i. JudgedUnder(V, I, L, J) @ #i ==> J = I"
+
+// Once V holds a list under L that marks the entry, every later state of the
+// list V holds under L marks it: a revocation is not undone, by a later list
+// or an earlier one, and since Accept is a step that needs the entry active,
+// no binding under L is accepted after it. sid is the one state V holds
+// under L (OneList).
+lemma revocation_not_cleared [use_induction]:
+  "All sid V L J1 J2 vf1 vf2 m2 #i #j.
+     St(sid, V, L, J1, vf1, 'revoked') @ #i & St(sid, V, L, J2, vf2, m2) @ #j & #i < #j
+     ==> m2 = 'revoked'"
+
+// A list replaces the held one only when it is later; a list of the same
+// validFrom is the held one only with the same content hash (and changes
+// nothing, which is not modelled).
+lemma same_validfrom_same_content:
+  "All V L vf1 c1 vf2 c2 #i. Replaced(V, L, vf1, c1, vf2, c2) @ #i ==>
+     (Ex z. vf1 %+ z = vf2) | (vf1 = vf2 & c1 = c2)"
+
+end
