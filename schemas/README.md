@@ -23,7 +23,10 @@ Schema-design facts (behavioral norms stay in `rules/` — each inline
 
 - `additionalProperties: true` everywhere — a design consequence of
   `credential.body-sot` and `credential.claim.open-world-accept`. A schema
-  here is a necessary condition for conformance, never the whole rule.
+  here is a necessary condition for conformance, never the whole rule. The
+  exceptions are sub-objects whose meaning another member would change:
+  `key-binding-credential.json`'s `credentialStatus` (a `statusSize` or
+  `statusMessage` changes what the entry's bits mean), `key` and its JWK.
 - Constraints JSON Schema cannot express (Unicode character classes,
   set-ordering, cross-field equalities, signature judgments) stay with their
   rules and vectors.

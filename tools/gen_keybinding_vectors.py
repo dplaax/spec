@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate vectors/keybinding-0{01..23}.json from the rule text.
+"""Regenerate vectors/keybinding-0{01..25}.json from the rule text.
 
 Run: python3 tools/gen_keybinding_vectors.py [--check]
 
@@ -110,8 +110,8 @@ def proof(vm: str, created: str) -> dict:
 
 
 def status_list(valid_from: str, valid_until: str, marks=BASE_MARKS, *, issuer=ISSUER,
-                list_id=LIST_ID, encoded=None, vm=None) -> dict:
-    return {
+                list_id=LIST_ID, encoded=None, vm=None, extra=False) -> dict:
+    out = {
         "@context": ["https://www.w3.org/ns/credentials/v2"],
         "type": ["VerifiableCredential", "BitstringStatusListCredential"],
         "id": list_id,
@@ -126,11 +126,15 @@ def status_list(valid_from: str, valid_until: str, marks=BASE_MARKS, *, issuer=I
         },
         "proof": proof(vm or issuer + "#issuer", valid_from),
     }
+    if extra:
+        out["name"] = "Key bindings of ACME staff"
+        out["credentialSubject"]["description"] = "Revocations of ACME staff key bindings"
+    return out
 
 
 def binding(*, issuer=ISSUER, valid_from=t("00:00:00"), valid_until=t("00:00:00", 7),
-            audience=AUDIENCE, index="7", list_id=None, vm=None) -> dict:
-    return {
+            audience=AUDIENCE, index="7", list_id=None, vm=None, extra=False) -> dict:
+    out = {
         "@context": ["https://www.w3.org/ns/credentials/v2", "https://dplaax.dev/vc/v1"],
         "type": ["VerifiableCredential", "KeyBindingCredential"],
         "issuer": issuer,
@@ -152,6 +156,10 @@ def binding(*, issuer=ISSUER, valid_from=t("00:00:00"), valid_until=t("00:00:00"
         },
         "proof": proof(vm or issuer + "#issuer", valid_from),
     }
+    if extra:
+        out["name"] = "Staff key of ACME"
+        out["credentialSubject"]["displayName"] = "Staff 42"
+    return out
 
 
 def content_hash(lst: dict) -> str:
@@ -297,6 +305,15 @@ def build() -> list[dict]:
     add("keybinding.status-list.fresh",
         "A key binding under a list not yet valid at the decision plus the clock skew is rejected",
         binding_case(binding(), held=status_list(t("01:01:01"), t("02:01:01"))), "reject")
+    # Members this catalog does not define, at the top level and in
+    # credentialSubject (the schemas keep those two open).
+    add("keybinding.shape",
+        "A key binding carrying members the catalog does not define, at its top level and in credentialSubject, is accepted",
+        binding_case(binding(extra=True)), "accept")
+    extended = status_list(LIST_FROM, LIST_UNTIL, encoded=GO126, extra=True)
+    add("keybinding.status-list.content-hash",
+        "A revocation list's content hash covers the members the catalog does not define, as it covers every other member but encodedList's compression",
+        {"credential": extended}, {"contentHash": content_hash(extended)})
     return v
 
 

@@ -12,7 +12,7 @@ rules:
       keyClass and key, as its schema fixes.
     uses: [credential.field.valid-from, signer.proof.structure]
     schemas: [key-binding-credential.json]
-    vectors: [keybinding-001, keybinding-002]
+    vectors: [keybinding-001, keybinding-002, keybinding-024]
     notes: >-
       A key binding states that a key (credentialSubject.key, its keyId and
       public JWK) is the subject's, a subject of the issuer's namespace, for
@@ -21,7 +21,11 @@ rules:
       and keyClass are the profile's, as delegation.scope's tokens are, and
       whether an issuer may bind a given kind, role or key class is the
       relying party's check of the issuer's scope, not this catalog's. The
-      wire carries no JSON number: statusListIndex is a string.
+      wire carries no JSON number: statusListIndex is a string. The top level
+      and credentialSubject may carry members this catalog does not define;
+      they are kept with the signed body (credential.body-sot) and decide
+      nothing. credentialStatus, key and its JWK have exactly their members
+      (keybinding.status.entry).
 
   - id: keybinding.issuer
     status: draft
@@ -88,6 +92,9 @@ rules:
       byte i div 8 of the expanded list, the first entry the most significant
       bit of the first byte (W3C Bitstring Status List). A binding whose list
       the verifier does not hold is not accepted (keybinding.status-list.fresh).
+      credentialStatus has exactly type, statusPurpose, statusListIndex and
+      statusListCredential: a statusSize or statusMessage would change what
+      the entry's bits mean, so an entry carrying one is not this entry.
 
   - id: keybinding.status-list.id
     status: draft
@@ -133,7 +140,7 @@ rules:
       SHA-256 of the expanded bits.
     uses: [canon.jcs.base]
     schemas: [status-list-credential.json]
-    vectors: [keybinding-015, keybinding-016]
+    vectors: [keybinding-015, keybinding-016, keybinding-025]
     notes: >-
       The hash covers the bits, not their compression: gzip writes other bytes
       in another implementation or version, and the same list compressed
