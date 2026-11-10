@@ -17,6 +17,10 @@ declared when the specification goes public.
   (`formal/tamarin/chain.spthy`) with its contract, the lemma-to-rule table
   (`formal/README.md`), a negative control (`-D=SkipLinkCheck`) and CI
   (`.github/workflows/formal.yml`). Non-normative; the rules are unchanged.
+- `formal/tamarin/delegation.spthy`: a Tamarin model of delegation from an
+  Owner to its Pipelines and Processes (who can delegate, over what, and
+  what a delegation is used for), with four negative controls. Non-normative;
+  the rules are unchanged.
 
 ### Changed
 

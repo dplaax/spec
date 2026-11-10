@@ -54,3 +54,9 @@ jobs:
         run: formal/tamarin/check.sh
       - name: chain, the negative control (SkipLinkCheck)
         run: formal/tamarin/check.sh chain SkipLinkCheck
+      - name: delegation, the negative controls
+        run: |
+          formal/tamarin/check.sh delegation SkipSubjectOwnerCheck
+          formal/tamarin/check.sh delegation AcceptControllerIssuer
+          formal/tamarin/check.sh delegation AnyProofPurpose
+          formal/tamarin/check.sh delegation SkipTargetBinding

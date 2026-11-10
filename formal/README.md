@@ -10,8 +10,29 @@ already say, it shows whether what the rules say holds against an attacker.
 | model | tool | subject |
 | --- | --- | --- |
 | [`tamarin/chain.spthy`](tamarin/chain.spthy) | Tamarin 1.12.0 (with Maude 3.5.1) | the authentication of a provenance chain: signatures, links, compromised keys |
+| [`tamarin/delegation.spthy`](tamarin/delegation.spthy) | Tamarin 1.12.0 (with Maude 3.5.1) | delegation from an Owner to its Pipelines and Processes: who can delegate, over what, and what a delegation is used for |
 
-## Contract of `chain.spthy`
+## Result states
+
+A lemma is in one of five states: **proved**; **refuted as expected** (a
+negative control); **refuted, a design gap**; **unresolved** (the search did
+not finish, timed out, or the model is ill-formed); **not started**. An
+unresolved lemma does not count as proved. It is recorded here and the model
+is still merged; by the next release it is proved, weakened, or dropped. A
+refutation that is not expected fails CI.
+
+Each model keeps the record of what each of its builds is expected to give
+beside it, in `<model>.expected.tsv`; `check.sh` compares against it, and a
+lemma absent from the file is expected to be proved. A build is the default
+model or a negative control, a preprocessor flag that removes one check.
+
+The exists-trace lemmas of each model are there so that its all-traces lemmas
+are not vacuous: a safety property holds trivially of a model in which nothing
+is ever accepted, and an exception nobody can reach is no exception.
+
+## `chain.spthy`
+
+### Contract
 
 A model is only as good as the assumptions it is read under. These are the
 ones `chain.spthy` makes; the model's header comment says the same.
@@ -34,14 +55,14 @@ ones `chain.spthy` makes; the model's header comment says the same.
   chain origin and otherwise the predecessor's body address `h(b1)`, the hash
   of the proof-excluded body. The signature is outside the body, so a body
   signed again keeps its address.
-- **Not modelled.** Delegation (Owner, Pipeline), time and ordering, the
+- **Not modelled.** Delegation (`delegation.spthy`), time and ordering, the
   source commitment, DID resolution (public keys reach the verifier
   directly), key rotation, the wire variant id, and the data behind the
   hashes (`inp` and `out` are the attacker's to choose). The issuer of a
   successor does not check its predecessor's signature: the weakest
   assumption, since verification is the verifier's duty.
 
-## Lemmas, rules and implementation
+### Lemmas, rules and implementation
 
 | lemma | kind | property | rule ids / implementation |
 | --- | --- | --- | --- |
@@ -54,11 +75,9 @@ ones `chain.spthy` makes; the model's header comment says the same.
 | `no_repointing` | all-traces | a successor linked as an uncompromised `P2`'s names the predecessor's address as `previousCredential`, its `outputHash` as `inputHash`, and was issued so by `P2`; needs the signature check and the link check together | `chain.data-flow.continuity`, `credential.subject.input-hash`, `credential.subject.output-hash`, `credential.subject.previous-credential`, `credential.prev.content-hash`; provin.oss `vc.ValidateChainLinks` within `vc.VerifyChain` |
 | `link_integrity` | all-traces | the verifier's link check is present: structural, the pattern of `VerifyNext`, proved without attacker reasoning; the `SkipLinkCheck` control removes it | provin.oss `vc.ValidateChainLinks` |
 
-The exists-trace lemmas are there so that the all-traces lemmas are not
-vacuous: a safety property holds trivially of a model in which nothing is ever
-accepted, and an exception nobody can reach is no exception. `link_integrity`
-on its own establishes nothing against an attacker; re-pointing is ruled out
-by `no_repointing`, which rests on `signer_authenticity` and on that check.
+`link_integrity` on its own establishes nothing against an attacker;
+re-pointing is ruled out by `no_repointing`, which rests on
+`signer_authenticity` and on that check.
 
 ### In the code
 
@@ -72,20 +91,9 @@ verifier ever accepted, so a successor may be linked to any of them; the code
 links only within the chain it is handed. That is an over-approximation of
 the code, sound for the properties here.
 
-## Results
+### Results
 
-A lemma is in one of five states: **proved**; **refuted as expected** (a
-negative control); **refuted, a design gap**; **unresolved** (the search did
-not finish, timed out, or the model is ill-formed); **not started**. An
-unresolved lemma does not count as proved. It is recorded here and the model
-is still merged; by the next release it is proved, weakened, or dropped. A
-refutation that is not expected fails CI.
-
-Each model keeps the record of what each of its builds is expected to give
-beside it, in `<model>.expected.tsv` (here
-[`tamarin/chain.expected.tsv`](tamarin/chain.expected.tsv)); `check.sh`
-compares against it, and a lemma absent from the file is expected to be
-proved.
+Expectations: [`tamarin/chain.expected.tsv`](tamarin/chain.expected.tsv).
 
 | build | lemma | state |
 | --- | --- | --- |
@@ -95,13 +103,95 @@ proved.
 
 Unresolved: none.
 
+## `delegation.spthy`
+
+### Contract
+
+The model's header comment says the same.
+
+- **Attacker.** The network is the attacker's (Dolev-Yao).
+- **Trusted.** The verifier and the consumer, which are never taken over;
+  signatures, which cannot be forged without the key.
+- **Open to compromise.** Any identity's key, an Owner's, a Pipeline's or a
+  Process's, through the rule `CompromiseIdentity`, which records
+  `Compromised(D)`.
+- **An Owner's key.** Listed for authentication as well as for assertion:
+  the Owner signs authentication challenges the attacker chooses
+  (`OwnerAuthenticates`). This is the worst case the proof-purpose check of
+  `delegation.proof` guards against. An Owner delegates whichever of its own
+  Pipelines and Processes the attacker asks for: what is modelled is who can
+  produce a delegation, not when an Owner chooses to.
+- **Persistence and time.** None. `validFrom`, `proof.created`, revocation
+  and the registry's liveness checks are outside the model.
+- **Acceptance events.** `Authorized(X, O)`: the verifier accepted a
+  delegation of `X`, whose Owner is `O`. `Registered(T, O)`: the consumer put
+  `T` on record under `O` on the strength of an accepted delegation.
+- **Shape.** Identities follow the did:dplaax structural hierarchy: an Owner
+  `$O`, a Pipeline `<'pipeline', $O, $p>`, a Process
+  `<'process', $O, $p, $q>`, so an identity's Owner is read from its DID. A
+  delegation's body is `<'delegation', I, X, B>`: issuer, subject,
+  `delegatedBy`. Its proof signs the body together with the proof's purpose,
+  `<purpose, body>`, as a Data Integrity proof covers its own options.
+- **Not modelled.** DID resolution (public keys reach the verifier
+  directly), key rotation, the scope tokens of `delegation.scope` (the
+  catalog fixes their shape, not their use, and the provin profile refuses a
+  scoped delegation), the provenance chain (`chain.spthy`), and the
+  registry's other checks (its own registry, liveness, duplicates).
+
+### Lemmas, rules and implementation
+
+| lemma | kind | property | rule ids / implementation |
+| --- | --- | --- | --- |
+| `executable_pipeline` | exists-trace | a Pipeline's delegation is accepted with no key compromised (reachability) | — |
+| `executable_process` | exists-trace | a Process's delegation is accepted with no key compromised | — |
+| `executable_registration` | exists-trace | a delegation puts its subject on record with no key compromised | — |
+| `authority_from_own_owner` | all-traces | a delegation of `X` accepted under `X`'s Owner `O` was signed by `O`, or `O`'s key was compromised first: no other Owner, no Pipeline (the chain of authority does not extend) and no signature `O` made for another purpose yields one | `delegation.binding`, `delegation.proof`, `delegation.shape`; provin.oss `delegation.Verify` |
+| `owner_compromise_exception` | exists-trace | with `O`'s key, a delegation `O` never signed is accepted: the exception in `authority_from_own_owner` is live | — |
+| `registered_only_as_delegated` | all-traces | `T` is on record under `O` only if `O` signed a delegation of `T`, or `O`'s key was compromised first: a delegation is used only for the subject it names, under that subject's Owner | no catalog rule states the consumer's binding of the delegation's subject to its target; provin.oss `didregistry` (the delegation names exactly the target it registers) |
+| `no_owner_subject` | all-traces | only a Pipeline or a Process of the Owner is accepted as a subject: structural, the verifier's patterns | `delegation.binding`; provin.oss `delegation.Verify` (`IsPipeline`, `IsProcess`) |
+
+`authority_from_own_owner` and `registered_only_as_delegated` are what the
+negative controls test; each control removes one check and refutes the lemma
+that rests on it.
+
+### In the code
+
+`Authorized(X, O)` is provin.oss's `delegation.Verify` returning nil for a
+credential whose `credentialSubject.id` is `X`, with `O` the Owner DID of `X`,
+which `Verify` requires to equal the issuer. The model's verifier takes the
+issuer's key from `!OwnerPk`, a key registered for an Owner DID, which stands
+for `dplaax.RequireOwner` and the resolution of the issuer's document with
+the key in its assertion relationship. `Registered(T, O)` is the registry's
+`issue` going past its binding of the delegation's subject to `T` and past
+`Verify`. `!Valid` hands the verifier's result to the consumer.
+
+### Results
+
+Expectations: [`tamarin/delegation.expected.tsv`](tamarin/delegation.expected.tsv).
+
+| build | lemma | state |
+| --- | --- | --- |
+| default | all seven | proved |
+| `SkipSubjectOwnerCheck` (any Owner is taken as issuer, not the subject's) | `authority_from_own_owner`, `registered_only_as_delegated` | refuted as expected |
+| `AcceptControllerIssuer` (a Process's Pipeline, its controller in the registry, may delegate it) | `authority_from_own_owner`, `registered_only_as_delegated` | refuted as expected |
+| `AnyProofPurpose` (the proof's purpose is not checked) | `authority_from_own_owner`, `registered_only_as_delegated` | refuted as expected |
+| `SkipTargetBinding` (the consumer takes any accepted delegation as authority for any target) | `registered_only_as_delegated` | refuted as expected |
+| each control | the other lemmas | proved |
+
+Unresolved: none.
+
+Each control adds, beside the default verifier or consumer rule, one that
+lacks the check; a verifier that accepts more refuses no less, so a refutation
+shows the check is what the lemma rests on.
+
 ## Running the checks
 
 ```sh
-formal/tamarin/check.sh                       # every model, its default build
-formal/tamarin/check.sh chain                 # one model, its default build
-formal/tamarin/check.sh chain SkipLinkCheck   # one model, a negative control
-TIMEOUT=120 formal/tamarin/check.sh chain     # seconds per lemma (600 by default)
+formal/tamarin/check.sh                                  # every model, its default build
+formal/tamarin/check.sh chain                            # one model, its default build
+formal/tamarin/check.sh chain SkipLinkCheck              # one model, a negative control
+formal/tamarin/check.sh delegation SkipTargetBinding     # another
+TIMEOUT=120 formal/tamarin/check.sh chain                # seconds per lemma (600 by default)
 ```
 
 `check.sh [MODEL [FLAG]]` runs `tamarin-prover` on each lemma of
@@ -120,9 +210,10 @@ Tools: Tamarin 1.12.0 and Maude 3.5.1, the versions CI pins by SHA-256
 ## Review
 
 A pull request that changes a model, or the code a model's contract describes
-(provin.oss `vc.VerifyChain`, `vc.ValidateChainLinks`), is reviewed for
-whether the contract above still holds of the code. CI runs the models only
-when `formal/` or the workflow changes; the review carries the rest.
+(provin.oss `vc.VerifyChain`, `vc.ValidateChainLinks`, `delegation.Verify`,
+the registry's use of a delegation), is reviewed for whether the contract
+above still holds of the code. CI runs the models only when `formal/` or the
+workflow changes; the review carries the rest.
 
 Where a model and a rule disagree, neither wins by default: the disagreement
 is judged, the rule, the model or the code is found to be the one in error,
