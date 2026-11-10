@@ -15,6 +15,8 @@ here (→ `rules/`).
 | --- | --- | --- |
 | `pipeline-pass-credential.json` | PipelinePassCredential (envelope, credentialSubject incl. the source-commitment triple, proof) | `credential.*` shape rules, `signer.proof.structure`, `commitment.class.definition` / `.derived-from` / `.source-root.encode` |
 | `delegation-credential.json` | DelegationCredential (owner-signed authority delegation) | `delegation.shape` / `.proof` / `.scope` |
+| `key-binding-credential.json` | KeyBindingCredential (an issuer's binding of a key to a subject, for one relying party) | `keybinding.shape` / `.status.entry` |
+| `status-list-credential.json` | BitstringStatusListCredential (a key-binding issuer's revocation list) | `keybinding.status-list.id` / `.period` / `.content-hash` / `.monotonic` |
 
 Schema-design facts (behavioral norms stay in `rules/` — each inline
 `$comment` points at its owning rule instead of paraphrasing it):
@@ -36,7 +38,9 @@ Schema-design facts (behavioral norms stay in `rules/` — each inline
   of a schema-referencing rule has its credential fixtures
   (`input.credential`, `input.sources[]`) validate against the schema — a
   successful vector yielding no fixture is an error, so coverage cannot
-  silently drop;
+  silently drop; the revocation lists a key-binding vector carries beside
+  its credential (`input.status_list`, `input.held`) validate against
+  `status-list-credential.json` whatever the rule references;
 - synthetic negative checks: deleting any `required` member from a
   known-good fixture has to make validation fail, so an under-strict edit to
   a schema cannot land silently.

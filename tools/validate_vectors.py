@@ -15,6 +15,10 @@ validated against that schema (JSON Schema 2020-12, format assertions on):
     A successful vector of a schema-referencing rule that yields NO fixture is
     an error (coverage cannot silently drop to zero), as is a non-object
     entry in `sources`.
+  - carriers of a fixed schema (CARRIER_SCHEMAS): in every successful vector,
+    whatever its rule references, `input.status_list` and `input.held` (the
+    revocation list a key-binding verifier holds) are validated against the
+    status-list schema.
 
 Additionally, synthetic negative checks guard against under-strict drift: for
 each schema, a known-good fixture is mutated by deleting each `required`
@@ -49,6 +53,15 @@ GOOD_FIXTURES = {
     "release-evidence-manifest.json": ("release-001", "input.credential"),
     "advisory-assessment.json": ("release-002", "input.credential"),
     "release-waiver.json": ("release-003", "input.credential"),
+    "key-binding-credential.json": ("keybinding-001", "input.credential"),
+    "status-list-credential.json": ("keybinding-011", "input.credential"),
+}
+
+# Input carriers that always hold the same kind of fixture, validated against
+# their schema in every successful vector that carries them.
+CARRIER_SCHEMAS = {
+    "status_list": "status-list-credential.json",
+    "held": "status-list-credential.json",
 }
 
 errors: list[str] = []
@@ -105,6 +118,25 @@ def fixtures_of(name: str, vector: dict) -> list[tuple[str, dict]]:
     return out
 
 
+def validate_carriers(name: str, vector: dict, validators) -> int:
+    """Validates each CARRIER_SCHEMAS carrier the vector's input holds and
+    returns how many it validated."""
+    checked = 0
+    inp = vector.get("input") or {}
+    for carrier, ref in CARRIER_SCHEMAS.items():
+        if carrier not in inp:
+            continue
+        fixture = inp[carrier]
+        if not isinstance(fixture, dict):
+            errors.append(f"{name}: input.{carrier} is not an object")
+            continue
+        for err in validators[ref].iter_errors(fixture):
+            where = "/".join(str(p) for p in err.absolute_path) or "(root)"
+            errors.append(f"{name}: input.{carrier} vs {ref}: at {where}: {err.message}")
+        checked += 1
+    return checked
+
+
 def validate_vectors(rule_schemas, validators) -> int:
     checked = 0
     for path in sorted((ROOT / "vectors").glob("*.json")):
@@ -113,8 +145,11 @@ def validate_vectors(rule_schemas, validators) -> int:
         except json.JSONDecodeError as e:
             errors.append(f"{path.name}: JSON parse error: {e}")
             continue
+        if not is_successful(v.get("expect")):
+            continue
+        checked += validate_carriers(path.name, v, validators)
         refs = rule_schemas.get(v.get("rule"), [])
-        if not refs or not is_successful(v.get("expect")):
+        if not refs:
             continue
         fixtures = fixtures_of(path.name, v)
         if not fixtures:
