@@ -262,8 +262,5 @@ and the outcome is recorded in the rule or in the decision record.
 
 ## Relation to provin.4s-intent
 
-provin.4s-intent keeps its own Tamarin model of the pre-execution decision
-(`verification/tamarin/intent.spthy`), which abstracts stage records in the
-same shape as the credentials here. That model is to cite this one, once this
-one is merged; the dependency runs one way, from 4s-intent to dPLaaX and
-provin, never back.
+provin.4s-intent, a product built on provin, can cite the models here. The
+dependency runs one way, from 4s-intent to dPLaaX and provin, never back.
