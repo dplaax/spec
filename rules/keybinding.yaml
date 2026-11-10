@@ -31,22 +31,25 @@ rules:
     status: draft
     class: core
     statement: >-
-      A key binding's @context MUST open with credentials v2 and hold dplaax
-      v1 and a URI of https://dplaax.dev/vc/branches/v1/keybinding/ and 12
-      digits; a verifier MUST NOT accept one without such a URI unless its
+      A key binding's @context MUST begin with credentials v2, dplaax v1 and
+      a URI https://dplaax.dev/vc/branches/v1/keybinding/<12 digits>, in that
+      order, then only URIs; one lacking that URI MUST be refused unless its
       validFrom is before 2027-01-01T00:00:00Z.
     uses: [credential.field.context, keybinding.shape]
     schemas: [key-binding-credential.json]
-    vectors: [keybinding-038, keybinding-040, keybinding-041, keybinding-044, keybinding-045, keybinding-046]
+    vectors: [keybinding-038, keybinding-040, keybinding-041, keybinding-044, keybinding-045, keybinding-046, keybinding-047, keybinding-048, keybinding-049, keybinding-050]
     notes: >-
       credentials v2 is https://www.w3.org/ns/credentials/v2 and dplaax v1 is
       https://dplaax.dev/vc/v1. The key-binding terms are defined by the
       key-binding branch context (contexts/README.md, Branch contexts), whose
       snapshots are https://dplaax.dev/vc/branches/v1/keybinding/ followed by
       the UTC time each was frozen, YYYYMMDDHHmm. Any snapshot is accepted by
-      its URI's form, since a later snapshot of a branch only adds terms. Other
-      contexts may follow; an issuer that uses members no context defines adds
-      a context for them or, last, the undefined-terms context
+      its URI's form, since a later snapshot of a branch only adds terms. The
+      three come first and in that order; what follows them is only URI
+      strings, never an inline context object. A binding lacking the branch
+      URI anywhere has the same form without it: credentials v2, dplaax v1,
+      then only URIs. An issuer that uses members no context defines adds a
+      context URI for them or, last, the undefined-terms context
       (https://www.w3.org/ns/credentials/undefined-terms/v2, VC Data Model 2.0
       §5.2). A binding issued before the branch existed carries only
       credentials v2 and dplaax v1; it is accepted while its validFrom is

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate vectors/keybinding-0{01..46}.json from the rule text.
+"""Regenerate vectors/keybinding-0{01..50}.json from the rule text.
 
 Run: python3 tools/gen_keybinding_vectors.py [--check]
 
@@ -418,6 +418,20 @@ def build() -> list[dict]:
     add("keybinding.context",
         "A key binding naming a later snapshot of the key-binding branch context is accepted by the snapshot URI's form",
         binding_case(edited(binding(), contexts(V2, DPLAAX_V1, BRANCH_LATER))), "accept")
+    # The three come first, in order, and only URIs follow.
+    add("keybinding.context",
+        "A key binding whose @context has the branch context before the dplaax context is rejected",
+        binding_case(edited(binding(), contexts(V2, BRANCH, DPLAAX_V1))), "reject")
+    add("keybinding.context",
+        "A key binding whose @context carries an inline context object is rejected",
+        binding_case(edited(binding(), lambda c: c.update({"@context": [V2, DPLAAX_V1, BRANCH, {"note": "https://example.org/note"}]}))),
+        "reject")
+    add("keybinding.context",
+        "A key binding whose @context has another context between credentials v2 and the dplaax context is rejected",
+        binding_case(edited(binding(), contexts(V2, UNDEFINED_TERMS, DPLAAX_V1, BRANCH))), "reject")
+    add("keybinding.context",
+        "A key binding whose @context has another context between the dplaax context and the branch context is rejected",
+        binding_case(edited(binding(), contexts(V2, DPLAAX_V1, UNDEFINED_TERMS, BRANCH))), "reject")
     return v
 
 
