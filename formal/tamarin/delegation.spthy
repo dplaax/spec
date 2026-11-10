@@ -1,0 +1,142 @@
+/*
+ * Delegation from an Owner to its Pipelines and Processes, as a Tamarin model.
+ *
+ * Identities follow the did:dplaax structural hierarchy: an Owner is a public
+ * name $O, a Pipeline is <'pipeline', $O, $p>, a Process is
+ * <'process', $O, $p, $q>, so an identity's Owner is read from its DID
+ * (delegation.binding). A delegation's body is <'delegation', I, X, B>: its
+ * issuer I, its subject X and its delegatedBy B (delegation.shape). Its proof
+ * signs the body together with the proof's purpose, sign(<purpose, body>, sk):
+ * a Data Integrity proof covers its own options (delegation.proof).
+ *
+ * Contract (formal/README.md says the same):
+ *   - the network is the attacker's (Dolev-Yao);
+ *   - trusted: the verifier and the consumer (never taken over), signatures
+ *     (no forgery without the key);
+ *   - any identity's key can be taken over (CompromiseIdentity), Owners',
+ *     Pipelines' and Processes' alike, and the model records it;
+ *   - an Owner's key is listed for authentication as well as for assertion,
+ *     and the Owner signs authentication challenges the attacker chooses
+ *     (OwnerAuthenticates): the worst case delegation.proof guards against;
+ *   - no time and no state: validFrom, proof.created, revocation and the
+ *     registry's liveness checks are outside the model, and so are DID
+ *     resolution (public keys reach the verifier directly), key rotation,
+ *     the scope tokens of delegation.scope (the catalog fixes their shape,
+ *     not their use; the provin profile refuses a scoped delegation), and
+ *     the provenance chain (chain.spthy);
+ *   - the acceptance events are Authorized(X, O), the verifier accepted a
+ *     delegation of X, whose Owner is O, and Registered(T, O), the consumer
+ *     put T on record under O on the strength of an accepted delegation.
+ */
+theory Delegation
+begin
+
+builtins: hashing, signing
+
+restriction Equality:
+  "All x y #i. Eq(x, y) @ #i ==> x = y"
+
+// One key per identity: a DID names one key here (rotation is not modelled).
+restriction OneKey:
+  "All D #i #j. Key(D) @ #i & Key(D) @ #j ==> #i = #j"
+
+/* ---------- Identities ---------- */
+
+// An Owner and its key. !OwnerPk is what lets a verifier take an issuer as
+// an Owner DID (oss dplaax.RequireOwner).
+rule Owner:
+    [ Fr(~sk) ]
+  --[ Key($O) ]->
+    [ !Sk($O, ~sk), !OwnerPk($O, pk(~sk)), Out(pk(~sk)) ]
+
+rule Pipeline:
+    let D = <'pipeline', $O, $p>
+    in
+    [ Fr(~sk) ]
+  --[ Key(D) ]->
+    [ !Sk(D, ~sk), !Pk(D, pk(~sk)), Out(pk(~sk)) ]
+
+rule Process:
+    let D = <'process', $O, $p, $q>
+    in
+    [ Fr(~sk) ]
+  --[ Key(D) ]->
+    [ !Sk(D, ~sk), !Pk(D, pk(~sk)), Out(pk(~sk)) ]
+
+// The attacker takes any identity's key.
+rule CompromiseIdentity:
+    [ !Sk(D, sk) ]
+  --[ Compromised(D) ]->
+    [ Out(sk) ]
+
+/* ---------- The Owner's signatures ---------- */
+
+// An Owner delegates to one of its Pipelines or Processes, whichever the
+// attacker asks for: what is modelled is who can produce a delegation, not
+// when an Owner chooses to.
+rule DelegatePipeline:
+    let X = <'pipeline', $O, $p>
+        body = <'delegation', $O, X, $O>
+    in
+    [ !Sk($O, sk) ]
+  --[ Delegated($O, X) ]->
+    [ Out(<body, sign(<'assertionMethod', body>, sk)>) ]
+
+rule DelegateProcess:
+    let X = <'process', $O, $p, $q>
+        body = <'delegation', $O, X, $O>
+    in
+    [ !Sk($O, sk) ]
+  --[ Delegated($O, X) ]->
+    [ Out(<body, sign(<'assertionMethod', body>, sk)>) ]
+
+// The same key signs authentication challenges the attacker chooses.
+rule OwnerAuthenticates:
+    [ !Sk($O, sk), In(m) ]
+  --[ Authenticated($O, m) ]->
+    [ Out(sign(<'authentication', m>, sk)) ]
+
+/* ---------- The verifier (oss delegation.Verify) ---------- */
+
+// A delegation of a Pipeline or a Process is accepted when its issuer is
+// the subject's own Owner (delegation.binding), delegatedBy restates the
+// issuer (delegation.shape), and the proof is for assertionMethod and
+// verifies under the issuer's key (delegation.proof).
+rule VerifyPipeline:
+    let X = <'pipeline', O, p>
+        body = <'delegation', O, X, O>
+    in
+    [ In(<body, s>), !OwnerPk(O, pk) ]
+  --[ Eq(verify(s, <'assertionMethod', body>, pk), true), Authorized(X, O) ]->
+    [ !Valid(X, O) ]
+
+rule VerifyProcess:
+    let X = <'process', O, p, q>
+        body = <'delegation', O, X, O>
+    in
+    [ In(<body, s>), !OwnerPk(O, pk) ]
+  --[ Eq(verify(s, <'assertionMethod', body>, pk), true), Authorized(X, O) ]->
+    [ !Valid(X, O) ]
+
+/* ---------- Lemmas ---------- */
+
+// Reachability: a Pipeline's delegation is accepted with no key taken over.
+lemma executable_pipeline:
+  exists-trace
+  "Ex O p #i. Authorized(<'pipeline', O, p>, O) @ #i
+     & not (Ex D #r. Compromised(D) @ #r)"
+
+// Reachability: a Process's delegation is accepted with no key taken over.
+lemma executable_process:
+  exists-trace
+  "Ex O p q #i. Authorized(<'process', O, p, q>, O) @ #i
+     & not (Ex D #r. Compromised(D) @ #r)"
+
+// A delegation is accepted only for a Pipeline or a Process of its Owner,
+// never for an Owner (delegation.binding): structural, the verifier's
+// patterns.
+lemma no_owner_subject:
+  "All X O #i. Authorized(X, O) @ #i ==>
+     (Ex p. X = <'pipeline', O, p>) | (Ex p q. X = <'process', O, p, q>)"
+
+end
