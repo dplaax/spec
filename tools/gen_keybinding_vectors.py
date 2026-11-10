@@ -137,7 +137,7 @@ def status_list(valid_from: str, valid_until: str, marks=BASE_MARKS, *, issuer=I
 
 
 def binding(*, issuer=ISSUER, valid_from=t("00:00:00"), valid_until=t("00:00:00", 7),
-            audience=AUDIENCE, index="7", list_id=None, vm=None, extra=False) -> dict:
+            audience=AUDIENCE, index="7", list_id=None, vm=None, extra=None) -> dict:
     out = {
         "@context": ["https://www.w3.org/ns/credentials/v2", "https://dplaax.dev/vc/v1"],
         "type": ["VerifiableCredential", "KeyBindingCredential"],
@@ -161,7 +161,11 @@ def binding(*, issuer=ISSUER, valid_from=t("00:00:00"), valid_until=t("00:00:00"
         "proof": proof(vm or issuer + "#issuer", valid_from),
     }
     if extra:
+        # members credentials v2 defines (schema.org's name), not the catalog
         out["name"] = "Staff key of ACME"
+        out["credentialSubject"]["name"] = "Staff 42"
+    if extra == "undefined":
+        # a member no context defines
         out["credentialSubject"]["displayName"] = "Staff 42"
     return out
 
@@ -319,7 +323,7 @@ def build() -> list[dict]:
     # Members this catalog does not define, at the top level and in
     # credentialSubject (the schemas keep those two open).
     add("keybinding.shape",
-        "A key binding carrying members the catalog does not define, at its top level and in credentialSubject, is accepted",
+        "A key binding carrying members the catalog does not define, at its top level and in credentialSubject, defined by credentials v2, is accepted",
         binding_case(binding(extra=True)), "accept")
     extended = status_list(LIST_FROM, LIST_UNTIL, encoded=GO126, extra=True)
     add("keybinding.status-list.content-hash",
@@ -375,7 +379,7 @@ def build() -> list[dict]:
         return lambda c: c.update({"@context": list(urls)})
     add("keybinding.shape",
         "A key binding with a member no context defines, and the undefined-terms context last in its @context, is accepted",
-        binding_case(edited(binding(extra=True), contexts(V2, DPLAAX_V1, UNDEFINED_TERMS))), "accept")
+        binding_case(edited(binding(extra="undefined"), contexts(V2, DPLAAX_V1, UNDEFINED_TERMS))), "accept")
     add("keybinding.status-list.id",
         "A revocation list with a member no context defines, and the undefined-terms context last in its @context, is accepted",
         list_case(edited(status_list(LIST_FROM, LIST_UNTIL),

@@ -1,7 +1,7 @@
 {
   "id": "keybinding-024",
   "rule": "keybinding.shape",
-  "description": "A key binding carrying members the catalog does not define, at its top level and in credentialSubject, is accepted",
+  "description": "A key binding carrying members the catalog does not define, at its top level and in credentialSubject, defined by credentials v2, is accepted",
   "input": {
     "credential": {
       "@context": [
@@ -37,7 +37,7 @@
             "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"
           }
         },
-        "displayName": "Staff 42"
+        "name": "Staff 42"
       },
       "proof": {
         "type": "DataIntegrityProof",

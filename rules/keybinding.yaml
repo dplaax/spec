@@ -10,7 +10,7 @@ rules:
       and a later validUntil, a credentialStatus, a credentialSubject with
       id, kind, roles, audience, keyClass and key, and an @context opening
       with credentials v2 and holding dplaax v1.
-    uses: [credential.field.valid-from, signer.proof.structure]
+    uses: [credential.field.context, credential.field.valid-from, signer.proof.structure]
     schemas: [key-binding-credential.json]
     vectors: [keybinding-001, keybinding-002, keybinding-024, keybinding-035, keybinding-036, keybinding-038, keybinding-040, keybinding-041]
     notes: >-
