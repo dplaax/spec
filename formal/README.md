@@ -24,7 +24,8 @@ refutation that is not expected fails CI.
 Each model keeps the record of what each of its builds is expected to give
 beside it, in `<model>.expected.tsv`; `check.sh` compares against it, and a
 lemma absent from the file is expected to be proved. A build is the default
-model or a negative control, a preprocessor flag that removes one check.
+model or a negative control, a preprocessor flag that drops or relaxes one
+check, or breaks one of the model's assumptions.
 
 The exists-trace lemmas of each model are there so that its all-traces lemmas
 are not vacuous: a safety property holds trivially of a model in which nothing
@@ -115,12 +116,20 @@ The model's header comment says the same.
 - **Open to compromise.** Any identity's key, an Owner's, a Pipeline's or a
   Process's, through the rule `CompromiseIdentity`, which records
   `Compromised(D)`.
-- **An Owner's key.** Listed for authentication as well as for assertion:
-  the Owner signs authentication challenges the attacker chooses
-  (`OwnerAuthenticates`). This is the worst case the proof-purpose check of
-  `delegation.proof` guards against. An Owner delegates whichever of its own
-  Pipelines and Processes the attacker asks for: what is modelled is who can
-  produce a delegation, not when an Owner chooses to.
+- **An Owner's key and the separation assumption.** Every signature an
+  Owner's key makes says, in the bytes it signs, what it is for. The model
+  has the key also sign authentication challenges the attacker chooses, as
+  `<'authentication', m>` (`OwnerAuthenticates`): the case the proof-purpose
+  check of `delegation.proof` guards against. Without the assumption no
+  verifier check helps: `UntaggedOwnerSignature`, a key that also signs
+  attacker-chosen bytes with no purpose in them, refutes both authority
+  lemmas. In provin.oss an Owner's keys make two other kinds of signature,
+  each separated by what it signs rather than by the purpose check: the
+  `#auth` key signs wireauth's canonical view, a format of its own, and the
+  `#signing` key makes assertion proofs over the Owner's own DID document,
+  separated from a delegation by the credential's type. An Owner delegates
+  whichever of its own Pipelines and Processes the attacker asks for: what is
+  modelled is who can produce a delegation, not when an Owner chooses to.
 - **Persistence and time.** None. `validFrom`, `proof.created`, revocation
   and the registry's liveness checks are outside the model.
 - **Acceptance events.** `Authorized(X, O)`: the verifier accepted a
@@ -145,14 +154,21 @@ The model's header comment says the same.
 | `executable_pipeline` | exists-trace | a Pipeline's delegation is accepted with no key compromised (reachability) | — |
 | `executable_process` | exists-trace | a Process's delegation is accepted with no key compromised | — |
 | `executable_registration` | exists-trace | a delegation puts its subject on record with no key compromised | — |
-| `authority_from_own_owner` | all-traces | a delegation of `X` accepted under `X`'s Owner `O` was signed by `O`, or `O`'s key was compromised first: no other Owner, no Pipeline (the chain of authority does not extend) and no signature `O` made for another purpose yields one | `delegation.binding`, `delegation.proof`, `delegation.shape`; provin.oss `delegation.Verify` |
+| `authority_from_own_owner` | all-traces | a delegation of `X` accepted under `X`'s Owner `O` was signed by `O`, or `O`'s key was compromised first: no other Owner and no Pipeline, even one whose key is compromised (the chain of authority does not extend), and no signature `O` made for another purpose yields one | `delegation.binding` (the issuer is the subject's Owner, and an Owner: `SkipSubjectOwnerCheck`, `AcceptControllerIssuer`), `delegation.proof` (the purpose: `AnyProofPurpose`; the verification method names the issuer: `AnyVerificationMethod`); provin.oss `delegation.Verify` |
 | `owner_compromise_exception` | exists-trace | with `O`'s key, a delegation `O` never signed is accepted: the exception in `authority_from_own_owner` is live | — |
 | `registered_only_as_delegated` | all-traces | `T` is on record under `O` only if `O` signed a delegation of `T`, or `O`'s key was compromised first: a delegation is used only for the subject it names, under that subject's Owner | no catalog rule states the consumer's binding of the delegation's subject to its target; provin.oss `didregistry` (the delegation names exactly the target it registers) |
 | `no_owner_subject` | all-traces | only a Pipeline or a Process of the Owner is accepted as a subject: structural, the verifier's patterns | `delegation.binding`; provin.oss `delegation.Verify` (`IsPipeline`, `IsProcess`) |
 
 `authority_from_own_owner` and `registered_only_as_delegated` are what the
-negative controls test; each control removes one check and refutes the lemma
-that rests on it.
+negative controls test; each control drops or relaxes one check, or breaks
+the separation assumption, and refutes the lemmas that rest on it. Some of
+what the rules ask is carried by the model's shape and tested by no control:
+`delegatedBy` restating the issuer (`delegation.shape`) is a pattern of the
+verifier, and no lemma depends on it, since the signature is the issuer's
+already; the credential's type is the `'delegation'` tag; the scope tokens of
+`delegation.scope` are not modelled. `no_owner_subject`, like chain's
+`link_integrity`, holds by the verifier's patterns and on its own establishes
+nothing against an attacker.
 
 ### In the code
 
@@ -160,8 +176,12 @@ that rests on it.
 credential whose `credentialSubject.id` is `X`, with `O` the Owner DID of `X`,
 which `Verify` requires to equal the issuer. The model's verifier takes the
 issuer's key from `!OwnerPk`, a key registered for an Owner DID, which stands
-for `dplaax.RequireOwner` and the resolution of the issuer's document with
-the key in its assertion relationship. `Registered(T, O)` is the registry's
+for `dplaax.RequireOwner`, for `Verify`'s check that the proof's
+verification method names the issuer, and for the resolution of the issuer's
+document with the key in its assertion relationship. `Verify`'s checks of
+the proof's type and cryptosuite, of the credential's type tokens and of
+`delegatedBy` are carried by the model's shape (see above), and its refusal
+of a scoped delegation is outside the model. `Registered(T, O)` is the registry's
 `issue` going past its binding of the delegation's subject to `T` and past
 `Verify`. `!Valid` hands the verifier's result to the consumer.
 
@@ -175,14 +195,19 @@ Expectations: [`tamarin/delegation.expected.tsv`](tamarin/delegation.expected.ts
 | `SkipSubjectOwnerCheck` (any Owner is taken as issuer, not the subject's) | `authority_from_own_owner`, `registered_only_as_delegated` | refuted as expected |
 | `AcceptControllerIssuer` (a Process's Pipeline, its controller in the registry, may delegate it) | `authority_from_own_owner`, `registered_only_as_delegated` | refuted as expected |
 | `AnyProofPurpose` (the proof's purpose is not checked) | `authority_from_own_owner`, `registered_only_as_delegated` | refuted as expected |
+| `AnyVerificationMethod` (the proof is checked under the key of whatever identity its verification method names) | `authority_from_own_owner`, `registered_only_as_delegated` | refuted as expected |
+| `UntaggedOwnerSignature` (the Owner's key also signs attacker-chosen bytes with no purpose in them: the separation assumption broken) | `authority_from_own_owner`, `registered_only_as_delegated` | refuted as expected |
 | `SkipTargetBinding` (the consumer takes any accepted delegation as authority for any target) | `registered_only_as_delegated` | refuted as expected |
 | each control | the other lemmas | proved |
 
 Unresolved: none.
 
-Each control adds, beside the default verifier or consumer rule, one that
-lacks the check; a verifier that accepts more refuses no less, so a refutation
-shows the check is what the lemma rests on.
+Each control adds a rule beside the default verifier or consumer rule, or
+beside the Owner's signing rules. An added verifier or consumer rule contains
+the default rule as its special case and keeps every other check, so the two
+together are exactly the verifier or consumer with that one check dropped or
+relaxed; a refutation under the control then shows the lemma rests on that
+check.
 
 ## Running the checks
 

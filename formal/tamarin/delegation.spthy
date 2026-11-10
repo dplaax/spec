@@ -15,9 +15,11 @@
  *     (no forgery without the key);
  *   - any identity's key can be taken over (CompromiseIdentity), Owners',
  *     Pipelines' and Processes' alike, and the model records it;
- *   - an Owner's key is listed for authentication as well as for assertion,
- *     and the Owner signs authentication challenges the attacker chooses
- *     (OwnerAuthenticates): the worst case delegation.proof guards against;
+ *   - every signature an Owner's key makes says, in the bytes it signs, what
+ *     it is for (the separation assumption): here the key also signs
+ *     authentication challenges the attacker chooses, as <'authentication',
+ *     m> (OwnerAuthenticates), the case delegation.proof's purpose check
+ *     guards against; -D=UntaggedOwnerSignature breaks the assumption;
  *   - no time and no state: validFrom, proof.created, revocation and the
  *     registry's liveness checks are outside the model, and so are DID
  *     resolution (public keys reach the verifier directly), key rotation,
@@ -37,17 +39,19 @@ restriction Equality:
   "All x y #i. Eq(x, y) @ #i ==> x = y"
 
 // One key per identity: a DID names one key here (rotation is not modelled).
+// No lemma rests on it: compromise is recorded per identity, so a second key
+// would give the attacker nothing the lemmas do not already excuse.
 restriction OneKey:
   "All D #i #j. Key(D) @ #i & Key(D) @ #j ==> #i = #j"
 
 /* ---------- Identities ---------- */
 
 // An Owner and its key. !OwnerPk is what lets a verifier take an issuer as
-// an Owner DID (oss dplaax.RequireOwner).
+// an Owner DID (oss dplaax.RequireOwner); !Pk is the key as any identity's.
 rule Owner:
     [ Fr(~sk) ]
   --[ Key($O) ]->
-    [ !Sk($O, ~sk), !OwnerPk($O, pk(~sk)), Out(pk(~sk)) ]
+    [ !Sk($O, ~sk), !OwnerPk($O, pk(~sk)), !Pk($O, pk(~sk)), Out(pk(~sk)) ]
 
 rule Pipeline:
     let D = <'pipeline', $O, $p>
@@ -90,11 +94,23 @@ rule DelegateProcess:
   --[ Delegated($O, X) ]->
     [ Out(<body, sign(<'assertionMethod', body>, sk)>) ]
 
-// The same key signs authentication challenges the attacker chooses.
+// The same key signs authentication challenges the attacker chooses, each
+// tagged with its purpose.
 rule OwnerAuthenticates:
     [ !Sk($O, sk), In(m) ]
   --[ Authenticated($O, m) ]->
     [ Out(sign(<'authentication', m>, sk)) ]
+
+#ifdef UntaggedOwnerSignature
+// -D=UntaggedOwnerSignature breaks the separation assumption: the Owner's
+// key also signs messages the attacker chooses, with nothing in the signed
+// bytes to say what they are for.
+rule OwnerSignsUntagged:
+    [ !Sk($O, sk), In(m) ]
+  --[ SignedUntagged($O, m) ]->
+    [ Out(sign(m, sk)) ]
+
+#endif
 
 /* ---------- The verifier (oss delegation.Verify) ---------- */
 
@@ -104,12 +120,20 @@ rule OwnerAuthenticates:
 // verifies under the issuer's key (delegation.proof). Authorized and !Valid
 // name the subject's own Owner O, whoever the issuer was.
 //
-// Negative controls, each a verifier without one of the checks: it accepts
-// what the rule below accepts and also what that check would refuse.
+// The verification method naming the issuer is folded into the key lookup:
+// the key is the issuer's (!OwnerPk(O, pk)). The 'delegation' tag stands for
+// the credential's type, carried by construction.
+//
+// Negative controls, each a verifier without one of the checks: each added
+// rule contains the default rule as its special case and keeps every other
+// check, so the two together are the verifier with that one check dropped
+// or relaxed.
 //   -D=SkipSubjectOwnerCheck  the issuer is any Owner, not the subject's;
 //   -D=AcceptControllerIssuer a Process may also be delegated by its
 //                             Pipeline, its controller in the registry;
-//   -D=AnyProofPurpose        the proof's purpose is not checked.
+//   -D=AnyProofPurpose        the proof's purpose is not checked;
+//   -D=AnyVerificationMethod  the proof is checked under the key of whatever
+//                             identity its verification method names.
 rule VerifyPipeline:
     let X = <'pipeline', O, p>
         body = <'delegation', O, X, O>
@@ -162,6 +186,27 @@ rule VerifyProcessAnyPurpose:
     in
     [ In(<body, purpose, s>), !OwnerPk(O, pk) ]
   --[ Eq(verify(s, <purpose, body>, pk), true), Authorized(X, O) ]->
+    [ !Valid(X, O) ]
+
+#endif
+
+#ifdef AnyVerificationMethod
+// A proof checked under the key of any identity D its verification method
+// names, the issuer's or not.
+rule VerifyPipelineAnyMethod:
+    let X = <'pipeline', O, p>
+        body = <'delegation', O, X, O>
+    in
+    [ In(<body, D, s>), !Pk(D, pk) ]
+  --[ Eq(verify(s, <'assertionMethod', body>, pk), true), Authorized(X, O) ]->
+    [ !Valid(X, O) ]
+
+rule VerifyProcessAnyMethod:
+    let X = <'process', O, p, q>
+        body = <'delegation', O, X, O>
+    in
+    [ In(<body, D, s>), !Pk(D, pk) ]
+  --[ Eq(verify(s, <'assertionMethod', body>, pk), true), Authorized(X, O) ]->
     [ !Valid(X, O) ]
 
 #endif
@@ -227,8 +272,9 @@ lemma executable_process:
 // under X's Owner O was signed by O, unless O's key had been taken over. No
 // other Owner, no Pipeline (the chain of authority does not extend) and no
 // signature O made for another purpose yields one (delegation.binding,
-// delegation.proof, delegation.shape). Falsified with -D=SkipSubjectOwnerCheck,
-// -D=AcceptControllerIssuer and -D=AnyProofPurpose.
+// delegation.proof). Falsified with -D=SkipSubjectOwnerCheck,
+// -D=AcceptControllerIssuer, -D=AnyProofPurpose, -D=AnyVerificationMethod and
+// -D=UntaggedOwnerSignature.
 lemma authority_from_own_owner:
   "All X O #i. Authorized(X, O) @ #i ==>
      (Ex #j. Delegated(O, X) @ #j & #j < #i)

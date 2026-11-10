@@ -19,7 +19,7 @@ declared when the specification goes public.
   (`.github/workflows/formal.yml`). Non-normative; the rules are unchanged.
 - `formal/tamarin/delegation.spthy`: a Tamarin model of delegation from an
   Owner to its Pipelines and Processes (who can delegate, over what, and
-  what a delegation is used for), with four negative controls. Non-normative;
+  what a delegation is used for), with six negative controls. Non-normative;
   the rules are unchanged.
 
 ### Changed
