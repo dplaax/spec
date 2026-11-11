@@ -42,7 +42,7 @@ LP build into `wire.dplaax.dev` — that would erase the identifier documents.
 | ---------------------------- | ---------------------- | --------------------- |
 | `/vc/v1`                     | `vc/v1`                | `application/ld+json` |
 | `/vc/branches/<base>/<feature>/<stamp>` | `vc/branches/<base>/<feature>/<stamp>` | `application/ld+json` |
-| `/schemas/<name>.json` (×16) | `schemas/<name>.json`  | `application/json`    |
+| `/schemas/<name>.json` (×18) | `schemas/<name>.json`  | `application/json`    |
 | `/oauth/grant-type/did`      | `oauth/grant-type/did` | `text/html`           |
 | `/` (root)                   | `index.html`           | `text/html`           |
 | 404                          | `404.html`             | `text/html`           |

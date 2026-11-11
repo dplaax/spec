@@ -21,8 +21,9 @@ redirect.
 
 - **Published documents are frozen.** Once a path has shipped in a release,
   its meaning never changes; editorial fixes are fine, semantic changes get a
-  NEW path (`/v2`, a new grant name). JSON-LD contexts, if ever hosted here,
-  are byte-frozen outright — they enter signature scopes.
+  NEW path (`/v2`, a new grant name). JSON-LD contexts (`/vc/v1` and the branch
+  contexts under `/vc/branches/`) are byte-frozen outright — they enter
+  signature scopes.
 - **Identifier paths live at the root** (`/oauth/...`, `/vc/...`), never
   under a site section like `/spec/` — identifiers name protocol elements,
   not places in a website. Human documentation sections may exist alongside
@@ -57,5 +58,5 @@ remain in `site/` as inert history but are not shipped to S3.
 | `oauth/grant-type/did/` | `https://dplaax.dev/oauth/grant-type/did` — the DID OAuth grant type | frozen (wire-live since 2026-07-12) |
 | `vc/v1` (assembled from `contexts/v1.jsonld`) | `https://dplaax.dev/vc/v1` — the v0 credential JSON-LD context | frozen, sha256-pinned `9716bca…` |
 | `vc/branches/<base>/<feature>/<stamp>` (assembled from `contexts/branches/`) | `https://dplaax.dev/vc/branches/v1/keybinding/202611101543` and later snapshots — the contexts of a feature on a base version | each frozen, sha256-pinned in `contexts/branches/SHA256SUMS` |
-| `schemas/*.json` (assembled from `schemas/`) | `https://dplaax.dev/schemas/<name>.json` — the 16 wire JSON Schemas | `$id`-addressed |
+| `schemas/*.json` (assembled from `schemas/`) | `https://dplaax.dev/schemas/<name>.json` — the 18 wire JSON Schemas | `$id`-addressed |
 | `index.html`, `404.html` | apex root / fallback → redirect to `www.dplaax.dev` | — |

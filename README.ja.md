@@ -5,11 +5,14 @@ dPLaaX（"data PipeLine as a X"）は、データが組織やシステムの境�
 記録し、その連なりを第三者が独立に確かめられるようにするプロトコルである
 （→ [concept.ja.md](concept.ja.md)）。
 
-> **Status: v0.1 (draft)。** すべての rule は `draft` であり、実装からの
+> **Status: v0.2.0-alpha.1 (draft)。** すべての rule は `draft` であり、実装からの
 > フィードバックで変わり続ける（→ [VERSIONING.ja.md](VERSIONING.ja.md)）。
 > **Public review とコントリビューションを歓迎する** —
-> [CONTRIBUTING.ja.md](CONTRIBUTING.ja.md) を参照。ガバナンスはコントリビュータの
-> 増加に応じて段階的に整備する（現状: maintainer 裁量、議論は Issue で公開）。
+> [CONTRIBUTING.ja.md](CONTRIBUTING.ja.md) を参照。ガバナンス（誰が決めるか、変更の
+> 区分、draft→stable の昇格、継承）は [GOVERNANCE.md](GOVERNANCE.md) にある。既知の
+> 実装: [provin-line/oss](https://github.com/provin-line/oss)（v0.4.0 は、0.2.0-alpha.1
+> より前の `main`（`a517672`）の vector 145 本を取り込んで CI で走らせ、飛ばす vector
+> には 1 本ずつ理由を記録している）。
 
 dPLaaX の normative spec。**規範の SoT は次の 3 artifact のみ**であり、散文は規範を持たない。
 
@@ -34,7 +37,7 @@ markdown（本書、concept.md、GLOSSARY.md 等）はすべて non-normative。
 
 | field | 規約 |
 | --- | --- |
-| `id` | `<domain>.<topic>[.<name>]`。`status: todo` の間は仮 id、`draft` 昇格で凍結。ただし最初の consumed release までは、台帳記録を伴う意図的な rename + タグ切り直しを許す（VERSIONING.md と STATUS ledger 参照）— consumed release 以降は draft 昇格が hard freeze |
+| `id` | `<domain>.<topic>[.<name>]`。`status: todo` の間は仮 id、`draft` 昇格で凍結。最初の公開 release である v0.1.0 より前は、台帳記録を伴う意図的な rename + タグ切り直しを許した（VERSIONING.md と STATUS ledger 参照）。v0.1.0 以降は draft 昇格が hard freeze |
 | `status` | `todo`（転記前 stub）/ `draft` / `stable` |
 | `class` | `core`（既定）/ `audit-reachable` / `effect-gated`。conformance class の所属。後二者は opt-in |
 | `statement` | 規範文。`draft` 以上で必須、256 文字以内、RFC 2119 の規範語を 1 つ以上含む。1 rule = 1 表現で、他所での再表現は禁止 |
@@ -56,7 +59,7 @@ markdown（本書、concept.md、GLOSSARY.md 等）はすべて non-normative。
 python3 tools/lint.py
 ```
 
-強制内容: 規範語が `rules/*.yaml` の `statement` 以外（markdown 全文・`notes`）に出現したら fail / id の全ファイル横断 uniqueness / `uses`・`schemas`・`vectors` 参照の解決 / `status`・`class` の enum / `statement` の長さ・規範語包含。STATUS.md は一時的な作業台帳のため走査対象外。
+強制内容: 規範語が `rules/*.yaml` の `statement` 以外（markdown 全文・`notes`）に出現したら fail / id の全ファイル横断 uniqueness / `uses`・`schemas`・`vectors` 参照の解決 / `status`・`class` の enum / `statement` の長さ・規範語包含 / `contexts/branches/` の branch context（path と UTC の stamp、`SHA256SUMS` の pin、branch の中では語の追加だけ、base やほかの branch の語を定義し直さないこと、`DPLAAX_BASE_REF` を与えたときは出荷済みの snapshot が変わっていないこと）。STATUS.md は一時的な作業台帳のため走査対象外。
 
 rule entry の構造（shape）は `tools/rule.schema.json` が定義し、各 `rules/*.yaml` 先頭の modeline で IDE 検証に束縛されている。内容規律は lint、構造は schema、と分担する。
 
