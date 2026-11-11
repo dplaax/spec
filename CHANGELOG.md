@@ -72,6 +72,12 @@ declared when the specification goes public.
   protected kid, the signed-payload method id) must be the resolver-selected
   id, and an A3.1 contract request carries both. A legacy request naming
   neither has nothing to match.
+- `vectors/README.md`, section "Fixture proofs": the proofs in the vectors
+  are fixtures, with a placeholder `proofValue` and no proof-local
+  `@context`. A driver re-signs each credential by eddsa-jcs-2022, adding
+  only those two members, except where an expected value digests a
+  credential with its proof (the `identity.*` ids, the `commitment.*` source
+  roots, and documents carried as bytes). No vector changed.
 
 ## [0.1.0] - 2026-07-17
 
