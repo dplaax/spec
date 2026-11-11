@@ -37,9 +37,9 @@ markdown は規範外。0.x では rule の削除・意味変更も minor で許
 
 ## ガバナンス
 
-現状は maintainer 裁量で判断し、議論は Issue / PR 上で公開で行う。
-コントリビュータの増加に応じて、意思決定プロセス（rule の昇格判断・
-breaking 判断の合議体制）を段階的に明文化する予定。提案があれば Issue へ。
+役割、変更の区分と手続き、`draft` から `stable` への昇格、決め方、継承は
+[GOVERNANCE.md](GOVERNANCE.md) にある。議論は Issue / PR 上で公開で行う。
+この手続きの変更は Issue で提案する。
 
 ## License
 

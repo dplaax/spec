@@ -47,10 +47,10 @@ release — see [VERSIONING.md](VERSIONING.md) for details.
 
 ## Governance
 
-Currently, decisions are made at maintainer discretion; all discussion happens
-publicly in Issues and PRs. As the contributor base grows, the decision-making
-process (rule promotion, breaking-change deliberation) will be formalized
-incrementally. Open an Issue to propose changes to this process.
+[GOVERNANCE.md](GOVERNANCE.md) sets out the roles, the change classes and
+their procedures, promotion from `draft` to `stable`, the decision method, and
+succession. All discussion happens publicly in Issues and PRs. Open an Issue
+to propose changes to this process.
 
 ## License
 
