@@ -17,10 +17,10 @@ to this repository.
 
 ## Change proposals (Pull Requests)
 
-Open pull requests against `develop`. `main` takes pull requests only from
-this repository's `develop`, `release/*` and `hotfix/*` branches
-(`.github/workflows/branch-guard.yml`), so a pull request from a fork targets
-`develop`.
+Open pull requests against `develop`. A pull request into `main` from a fork,
+or from a branch other than this repository's `develop`, `release/*` and
+`hotfix/*`, fails the `branch-guard` check
+(`.github/workflows/branch-guard.yml`).
 
 1. **Normative content lives in exactly three artifacts** — `rules/` (behavior
    and judgment), `schemas/` (wire shape), `vectors/` (expected inputs and

@@ -14,7 +14,7 @@ the resulting chain can be independently verified by third parties
 > [GOVERNANCE.md](GOVERNANCE.md). Known implementation:
 > [provin-line/oss](https://github.com/provin-line/oss) (v0.4.0 vendors the
 > 145 vectors of this repo's `main` at `a517672`, from before 0.2.0-alpha.1,
-> and checks them in CI).
+> and runs them in CI, recording a reason for each vector it skips).
 
 The normative spec for dPLaaX. **The source of truth for all normative content
 is exactly the following three artifacts**; prose is non-normative.
@@ -42,7 +42,7 @@ Each entry in `rules/*.yaml`:
 
 | field | convention |
 | --- | --- |
-| `id` | `<domain>.<topic>[.<name>]`. Provisional while `status: todo`; frozen on promotion to `draft`. Before v0.1.0, the first published release, a tagged-and-re-cut rename was possible as a deliberate, ledgered act (see VERSIONING.md and the STATUS ledger). Implementations vendor v0.1.0 and later, so from v0.1.0 onward draft promotion is the hard freeze point |
+| `id` | `<domain>.<topic>[.<name>]`. Provisional while `status: todo`; frozen on promotion to `draft`. Before v0.1.0, the first published release, a tagged-and-re-cut rename was possible as a deliberate, ledgered act (see VERSIONING.md and the STATUS ledger). From v0.1.0 onward, draft promotion is the hard freeze point |
 | `status` | `todo` (stub before transcription) / `draft` / `stable` |
 | `class` | `core` (default) / `audit-reachable` / `effect-gated`. Conformance class membership; the latter two are opt-in |
 | `statement` | The normative statement. A hard requirement for `draft` and above; at most 256 characters; contains at least one RFC 2119 normative keyword. One rule, one expression — re-expressing elsewhere is prohibited |

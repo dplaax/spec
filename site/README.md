@@ -21,8 +21,9 @@ redirect.
 
 - **Published documents are frozen.** Once a path has shipped in a release,
   its meaning never changes; editorial fixes are fine, semantic changes get a
-  NEW path (`/v2`, a new grant name). JSON-LD contexts, if ever hosted here,
-  are byte-frozen outright — they enter signature scopes.
+  NEW path (`/v2`, a new grant name). JSON-LD contexts (`/vc/v1` and the branch
+  contexts under `/vc/branches/`) are byte-frozen outright — they enter
+  signature scopes.
 - **Identifier paths live at the root** (`/oauth/...`, `/vc/...`), never
   under a site section like `/spec/` — identifiers name protocol elements,
   not places in a website. Human documentation sections may exist alongside
