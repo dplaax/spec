@@ -17,6 +17,11 @@ to this repository.
 
 ## Change proposals (Pull Requests)
 
+Open pull requests against `develop`. `main` takes pull requests only from
+this repository's `develop`, `release/*` and `hotfix/*` branches
+(`.github/workflows/branch-guard.yml`), so a pull request from a fork targets
+`develop`.
+
 1. **Normative content lives in exactly three artifacts** — `rules/` (behavior
    and judgment), `schemas/` (wire shape), `vectors/` (expected inputs and
    outputs). Markdown is non-normative; every normative change must be expressed

@@ -13,6 +13,10 @@ dPLaaX spec へのコントリビューションと public review を歓迎す�
 
 ## 変更提案（Pull Request）
 
+pull request は `develop` に向ける。`main` は、この repo の `develop`・`release/*`・
+`hotfix/*` の branch からの pull request だけを受ける（`.github/workflows/branch-guard.yml`）
+ので、fork からの pull request は `develop` に向ける。
+
 1. **規範は 3 artifact のみ** — `rules/`（挙動・判定）、`schemas/`（wire shape）、
    `vectors/`（期待入出力）。markdown は non-normative であり、規範の変更は
    必ず rule / schema / vector の変更として表現する（→ [README.ja.md](README.ja.md)）。

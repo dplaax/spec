@@ -10,8 +10,8 @@ dPLaaX（"data PipeLine as a X"）は、データが組織やシステムの境�
 > **Public review とコントリビューションを歓迎する** —
 > [CONTRIBUTING.ja.md](CONTRIBUTING.ja.md) を参照。ガバナンス（誰が決めるか、変更の
 > 区分、draft→stable の昇格、継承）は [GOVERNANCE.md](GOVERNANCE.md) にある。既知の
-> 実装: [provin-line/oss](https://github.com/provin-line/oss)（v0.4.0 は 0.1.0 の後の
-> `main` の `vectors/` を取り込み、CI で確かめる）。
+> 実装: [provin-line/oss](https://github.com/provin-line/oss)（v0.4.0 は、0.2.0-alpha.1
+> より前の `main`（`a517672`）の vector 145 本を取り込み、CI で確かめる）。
 
 dPLaaX の normative spec。**規範の SoT は次の 3 artifact のみ**であり、散文は規範を持たない。
 
@@ -36,7 +36,7 @@ markdown（本書、concept.md、GLOSSARY.md 等）はすべて non-normative。
 
 | field | 規約 |
 | --- | --- |
-| `id` | `<domain>.<topic>[.<name>]`。`status: todo` の間は仮 id、`draft` 昇格で凍結。ただし最初の consumed release までは、台帳記録を伴う意図的な rename + タグ切り直しを許す（VERSIONING.md と STATUS ledger 参照）— consumed release 以降は draft 昇格が hard freeze |
+| `id` | `<domain>.<topic>[.<name>]`。`status: todo` の間は仮 id、`draft` 昇格で凍結。最初の公開 release である v0.1.0 より前は、台帳記録を伴う意図的な rename + タグ切り直しを許した（VERSIONING.md と STATUS ledger 参照）。実装は v0.1.0 以降を取り込むので、v0.1.0 以降は draft 昇格が hard freeze |
 | `status` | `todo`（転記前 stub）/ `draft` / `stable` |
 | `class` | `core`（既定）/ `audit-reachable` / `effect-gated`。conformance class の所属。後二者は opt-in |
 | `statement` | 規範文。`draft` 以上で必須、256 文字以内、RFC 2119 の規範語を 1 つ以上含む。1 rule = 1 表現で、他所での再表現は禁止 |
