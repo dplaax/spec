@@ -82,7 +82,7 @@ rules:
       whose DID is byte-identical to its credentialSubject.id, and MUST reject
       it when presented as authority for any other identity, even one under the
       same Owner.
-    uses: [delegation.shape, delegation.binding, delegation.proof]
+    uses: [delegation.shape, delegation.binding, delegation.proof, did.dplaax.syntax]
     schemas: [delegation-credential.json]
     vectors: [delegation-006, delegation-007, delegation-008]
     notes: >-

@@ -1,12 +1,9 @@
 {
   "id": "did-019",
-  "rule": "did.dplaax.hierarchy",
-  "description": "A DID with a one-segment resource path is none of the three",
+  "rule": "did.dplaax.syntax",
+  "description": "A string whose method name is in upper case is not a did:dplaax DID",
   "input": {
-    "did": "did:dplaax:poc.dplaax.dev:org:acme:pipeline"
+    "did": "did:DPLAAX:poc.dplaax.dev:org:acme"
   },
-  "expect": {
-    "level": "none",
-    "owner": "did:dplaax:poc.dplaax.dev:org:acme"
-  }
+  "expect": "reject"
 }

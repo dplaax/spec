@@ -1,12 +1,9 @@
 {
   "id": "did-016",
-  "rule": "did.dplaax.hierarchy",
-  "description": "A DID with resource path pipeline:<id> is a Pipeline of the Owner of its first three segments",
+  "rule": "did.dplaax.syntax",
+  "description": "A DID URL with a fragment is not a did:dplaax DID",
   "input": {
-    "did": "did:dplaax:poc.dplaax.dev:org:acme:pipeline:p1"
+    "did": "did:dplaax:poc.dplaax.dev:org:acme#key-1"
   },
-  "expect": {
-    "level": "pipeline",
-    "owner": "did:dplaax:poc.dplaax.dev:org:acme"
-  }
+  "expect": "reject"
 }

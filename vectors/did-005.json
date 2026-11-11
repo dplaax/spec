@@ -1,9 +1,9 @@
 {
   "id": "did-005",
   "rule": "did.dplaax.syntax",
-  "description": "A DID of two segments after the method is refused",
+  "description": "A registry of exactly 253 octets is accepted",
   "input": {
-    "did": "did:dplaax:poc.dplaax.dev:org"
+    "did": "did:dplaax:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:org:acme"
   },
-  "expect": "reject"
+  "expect": "accept"
 }

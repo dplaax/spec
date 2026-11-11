@@ -42,6 +42,7 @@ VECTOR_REQUIRED_FILES = {
     "chain.yaml",
     "credential.yaml",
     "delegation.yaml",
+    "did.yaml",
     "process.yaml",
     "registry.yaml",
     "resolver.yaml",

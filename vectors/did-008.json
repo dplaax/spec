@@ -1,9 +1,9 @@
 {
   "id": "did-008",
   "rule": "did.dplaax.syntax",
-  "description": "A segment with a slash is refused",
+  "description": "A string of two segments after the method is not a did:dplaax DID",
   "input": {
-    "did": "did:dplaax:poc.dplaax.dev:org:ac/me"
+    "did": "did:dplaax:poc.dplaax.dev:org"
   },
   "expect": "reject"
 }

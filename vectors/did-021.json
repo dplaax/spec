@@ -1,12 +1,9 @@
 {
   "id": "did-021",
-  "rule": "did.dplaax.hierarchy",
-  "description": "pipeline is compared byte for byte, so a resource path of Pipeline:<id> is none of the three",
+  "rule": "did.dplaax.syntax",
+  "description": "A string with a registry of 254 octets is not a did:dplaax DID",
   "input": {
-    "did": "did:dplaax:poc.dplaax.dev:org:acme:Pipeline:p1"
+    "did": "did:dplaax:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:org:acme"
   },
-  "expect": {
-    "level": "none",
-    "owner": "did:dplaax:poc.dplaax.dev:org:acme"
-  }
+  "expect": "reject"
 }

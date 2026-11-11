@@ -1,12 +1,9 @@
 {
   "id": "did-020",
-  "rule": "did.dplaax.hierarchy",
-  "description": "A DID whose resource path names process before pipeline is none of the three",
+  "rule": "did.dplaax.syntax",
+  "description": "A string whose scheme is in upper case is not a did:dplaax DID",
   "input": {
-    "did": "did:dplaax:poc.dplaax.dev:org:acme:process:x:pipeline:p1"
+    "did": "DID:dplaax:poc.dplaax.dev:org:acme"
   },
-  "expect": {
-    "level": "none",
-    "owner": "did:dplaax:poc.dplaax.dev:org:acme"
-  }
+  "expect": "reject"
 }

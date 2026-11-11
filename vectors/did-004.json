@@ -1,9 +1,9 @@
 {
   "id": "did-004",
   "rule": "did.dplaax.syntax",
-  "description": "A registry of exactly 253 octets is accepted",
+  "description": "A segment may begin with a dot, being not only dots",
   "input": {
-    "did": "did:dplaax:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:org:acme"
+    "did": "did:dplaax:poc.dplaax.dev:org:.acme"
   },
   "expect": "accept"
 }

@@ -1,9 +1,9 @@
 {
   "id": "did-010",
   "rule": "did.dplaax.syntax",
-  "description": "A segment with a non-ASCII character is refused",
+  "description": "A string with an empty segment inside is not a did:dplaax DID",
   "input": {
-    "did": "did:dplaax:poc.dplaax.dev:org:acmé"
+    "did": "did:dplaax:poc.dplaax.dev:org::acme"
   },
   "expect": "reject"
 }

@@ -1,9 +1,9 @@
 {
   "id": "did-006",
   "rule": "did.dplaax.syntax",
-  "description": "A DID with an empty segment (a trailing colon) is refused",
+  "description": "A registry need not be a well-formed host name: an underscore is accepted",
   "input": {
-    "did": "did:dplaax:poc.dplaax.dev:org:acme:"
+    "did": "did:dplaax:poc_dplaax:org:acme"
   },
-  "expect": "reject"
+  "expect": "accept"
 }

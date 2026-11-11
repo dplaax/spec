@@ -1,9 +1,9 @@
 {
   "id": "did-013",
   "rule": "did.dplaax.syntax",
-  "description": "A DID whose method is in upper case is refused",
+  "description": "A string with a space in a segment is not a did:dplaax DID",
   "input": {
-    "did": "did:DPLAAX:poc.dplaax.dev:org:acme"
+    "did": "did:dplaax:poc.dplaax.dev:org:ac me"
   },
   "expect": "reject"
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate vectors/did-0{01..21}.json from the rule text.
+"""Regenerate vectors/did-0{01..31}.json from the rule text.
 
 Run: python3 tools/gen_did_vectors.py [--check]
 
@@ -34,14 +34,16 @@ PROCESS = PIPELINE + ":process:x"
 
 
 def registry_of(length: int) -> str:
-    """A DNS-shaped name of exactly length octets: labels of 63, then the rest."""
+    """A DNS-shaped name of exactly length octets: labels of at most 63, none
+    empty."""
     labels, left = [], length
     while left > 63:
-        labels.append("a" * 63)
-        left -= 64
+        take = 63 if left - 64 >= 1 else left - 2
+        labels.append("a" * take)
+        left -= take + 1
     labels.append("b" * left)
     name = ".".join(labels)
-    assert len(name) == length
+    assert len(name) == length and all(labels), (length, name)
     return name
 
 
@@ -92,31 +94,39 @@ def build() -> list[dict]:
     syntax("An Owner DID is a did:dplaax DID", OWNER, "accept")
     syntax("A Process DID, with four resource-path segments, is a did:dplaax DID", PROCESS, "accept")
     syntax("Segments may use dots, underscores and hyphens", "did:dplaax:poc.dplaax.dev:org:acme_co-1.x", "accept")
-    syntax("A registry of exactly 253 octets is accepted",
-           f"did:dplaax:{registry_of(253)}:org:acme", "accept")
-    syntax("A DID of two segments after the method is refused", "did:dplaax:poc.dplaax.dev:org", "reject")
-    syntax("A DID with an empty segment (a trailing colon) is refused", OWNER + ":", "reject")
-    syntax("A segment made of dots only is refused", "did:dplaax:poc.dplaax.dev:org:..", "reject")
-    syntax("A segment with a slash is refused", "did:dplaax:poc.dplaax.dev:org:ac/me", "reject")
-    syntax("A segment with a space is refused", "did:dplaax:poc.dplaax.dev:org:ac me", "reject")
-    syntax("A segment with a non-ASCII character is refused", "did:dplaax:poc.dplaax.dev:org:acmé", "reject")
-    syntax("A segment with a percent-encoded octet is refused", "did:dplaax:poc.dplaax.dev:org:%41cme", "reject")
-    syntax("A DID of another method is refused", "did:dplaaxx:poc.dplaax.dev:org:acme", "reject")
-    syntax("A DID whose method is in upper case is refused", "did:DPLAAX:poc.dplaax.dev:org:acme", "reject")
-    syntax("A registry of 254 octets is refused",
-           f"did:dplaax:{registry_of(254)}:org:acme", "reject")
+    syntax("A segment may begin with a dot, being not only dots", "did:dplaax:poc.dplaax.dev:org:.acme", "accept")
+    syntax("A registry of exactly 253 octets is accepted", f"did:dplaax:{registry_of(253)}:org:acme", "accept")
+    syntax("A registry need not be a well-formed host name: an underscore is accepted", "did:dplaax:poc_dplaax:org:acme", "accept")
+    syntax("A registry need not be a well-formed host name: a 64-octet label is accepted", f"did:dplaax:{'a' * 64}:org:acme", "accept")
+    syntax("A string of two segments after the method is not a did:dplaax DID", "did:dplaax:poc.dplaax.dev:org", "reject")
+    syntax("A string with an empty segment (a trailing colon) is not a did:dplaax DID", OWNER + ":", "reject")
+    syntax("A string with an empty segment inside is not a did:dplaax DID", "did:dplaax:poc.dplaax.dev:org::acme", "reject")
+    syntax("A string with a segment of dots only is not a did:dplaax DID", "did:dplaax:poc.dplaax.dev:org:..", "reject")
+    syntax("A string with a slash in a segment is not a did:dplaax DID", "did:dplaax:poc.dplaax.dev:org:ac/me", "reject")
+    syntax("A string with a space in a segment is not a did:dplaax DID", "did:dplaax:poc.dplaax.dev:org:ac me", "reject")
+    syntax("A string with a non-ASCII character is not a did:dplaax DID", "did:dplaax:poc.dplaax.dev:org:acm\u00e9", "reject")
+    syntax("A string with a percent-encoded octet is not a did:dplaax DID", "did:dplaax:poc.dplaax.dev:org:%41cme", "reject")
+    syntax("A DID URL with a fragment is not a did:dplaax DID", OWNER + "#key-1", "reject")
+    syntax("A string with a trailing newline is not a did:dplaax DID", OWNER + "\n", "reject")
+    syntax("A string with another method name (did:dplaaxx) is not a did:dplaax DID", "did:dplaaxx:poc.dplaax.dev:org:acme", "reject")
+    syntax("A string whose method name is in upper case is not a did:dplaax DID", "did:DPLAAX:poc.dplaax.dev:org:acme", "reject")
+    syntax("A string whose scheme is in upper case is not a did:dplaax DID", "DID:dplaax:poc.dplaax.dev:org:acme", "reject")
+    syntax("A string with a registry of 254 octets is not a did:dplaax DID", f"did:dplaax:{registry_of(254)}:org:acme", "reject")
 
     def level(description, did):
         assert syntax_ok(did), did
         add("did.dplaax.hierarchy", description, did, hierarchy(did))
 
     level("A DID with no resource path is an Owner, its own Owner", OWNER)
-    level("A DID with resource path pipeline:<id> is a Pipeline of the Owner of its first three segments", PIPELINE)
+    level("A DID with resource path pipeline:<id> is a Pipeline, its Owner the DID of its first three segments", PIPELINE)
     level("A DID with resource path pipeline:<id>:process:<id> is a Process, its Pipeline the DID of its first five segments", PROCESS)
     level("A DID with resource path pipeline:<id>:<other>:<id> is none of the three and has no Pipeline", PIPELINE + ":step:x")
     level("A DID with a one-segment resource path is none of the three", OWNER + ":pipeline")
+    level("A DID with resource path pipeline:<id>:<other> is none of the three", PIPELINE + ":x")
+    level("A DID whose resource path continues past a Process's is none of the three", PROCESS + ":key:k1")
     level("A DID whose resource path names process before pipeline is none of the three", OWNER + ":process:x:pipeline:p1")
     level("pipeline is compared byte for byte, so a resource path of Pipeline:<id> is none of the three", OWNER + ":Pipeline:p1")
+    level("The level is read by position: a DID whose account type is pipeline and that has no resource path is an Owner", "did:dplaax:poc.dplaax.dev:pipeline:p1")
     return v
 
 
@@ -132,11 +142,11 @@ def main() -> int:
     for vector in build():
         path = VECTORS / f"{vector['id']}.json"
         if args.check:
-            if not path.exists() or json.loads(path.read_text()) != vector:
+            if not path.exists() or path.read_text(encoding="utf-8") != dump(vector):
                 print(f"FAIL {path.name}: does not match its derivation")
                 bad += 1
             continue
-        path.write_text(dump(vector))
+        path.write_text(dump(vector), encoding="utf-8")
     if args.check:
         print("OK — did vectors match their derivation" if not bad else f"\n{bad} vector(s) differ")
     return 1 if bad else 0
