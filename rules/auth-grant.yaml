@@ -24,24 +24,33 @@ rules:
     status: draft
     class: core
     statement: >-
-      A grant request MUST carry, inside the signed payload, the absolute
-      verification method id it uses; first-match, try-all, and
-      document-array-order dependence MUST be rejected.
-    uses: [auth.contract.normative-sot]
+      First-match, try-all, and array-order dependence MUST be rejected. An A3.1
+      contract request MUST sign the absolute method id it uses. A
+      LEGACY_DID_LOGIN@1 request MAY omit it only when the document has exactly
+      one controller-matched method.
+    uses: [auth.contract.normative-sot, auth.legacy.did-login]
     schemas: []
-    vectors: []
+    vectors: [auth-grant-legacy-no-method-001, auth-grant-legacy-no-method-ambiguous-001]
     notes: >-
       Without a signed exact method id, key selection depends on array order or a
       try-all loop, so a rotated or attacker-added method can be silently chosen.
-      The signed id pins which key the grant claims.
+      The signed id pins which key the grant claims. The A3.1 contracts are
+      OWNER_AUTHENTICATION_LOGIN@1 and OWNER_ASSERTION_CONTROL_LOGIN@1. A legacy
+      request predates the signed id; selecting a document's only
+      controller-matched method is as independent of array order as a signed
+      id, and requiring the id would refuse every pre-A3.1 client inside the
+      bounded window that auth.legacy.did-login drains. With a second
+      controller-matched method there is no single candidate, so a legacy
+      request naming none fails closed rather than trying each.
 
   - id: auth.grant.kid-match
     status: draft
     class: core
     statement: >-
-      The JWS protected kid, the signed-payload method id, and the
-      resolver-selected method id MUST be identical; any divergence among the
-      three MUST fail closed.
+      Every method reference a request carries (the JWS protected kid, the
+      signed-payload method id) MUST be identical to the resolver-selected
+      method id, and an A3.1 contract request MUST carry both; any divergence
+      MUST fail closed.
     uses: [auth.grant.exact-method]
     schemas: []
     vectors: [auth-grant-kid-mismatch-001]

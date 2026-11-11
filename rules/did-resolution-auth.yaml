@@ -12,7 +12,7 @@ rules:
       The requested DID and the returned document id MUST be compared by a
       method-specific equality rule; did:dplaax MUST use byte-exact equality and
       MUST NOT apply any normalization.
-    uses: [auth.contract.normative-sot]
+    uses: [auth.contract.normative-sot, did.dplaax.syntax]
     schemas: []
     vectors: [did-resolution-id-mismatch-001]
     notes: >-

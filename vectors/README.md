@@ -42,7 +42,8 @@ objects. Shapes are fixed per family as follows:
 | `commitment.scope.*` | `{"credential": <object>, "predecessor": <object>}` | `"accept"` / `"reject"` |
 | `commitment.source-root.*` (construction-type) | `{"sources": [<credential>, ...], "source_root_canonical": <id>}` | expected output object with `{"derived_from", "source_root", "source_root_canonical"}` |
 | `signer.*` | `{"credential": <object>}` or registry operation `{"registry_op": {...}}` | `"accept"` / `"reject"` |
-| `delegation.*` | `{"credential": <delegation credential JSON>}` | `"accept"` / `"reject"` (owner-signed authority delegation; the issuer is an Owner DID and the subject is structurally under it) |
+| `delegation.*` | `{"credential": <delegation credential JSON>}`; use-type (`delegation.use.*`) adds `"target"`, the DID of the identity a consumer is asked to act for | `"accept"` / `"reject"` (owner-signed authority delegation; the issuer is an Owner DID and the subject is structurally under it; for use-type, whether the delegation is authority for `target`) |
+| `did.*` | `{"did": <string>}`: a candidate did:dplaax DID | `did.dplaax.syntax`: `"accept"` / `"reject"`; `did.dplaax.hierarchy`: `{"level": "owner" \| "pipeline" \| "process" \| "none", "owner": <the DID of its first three segments>, "pipeline"?: <the DID of its first five, for a Process only>}` |
 | `confidence.*` | synthesis-type `{"axes": {<axis>: <state>}}`; lifecycle-type `{"registry": [...], "cryptosuite", "proof_created"}` | `{"confidence": <state>}` |
 | `process.*` | `{"process_type", "credential"?, "behavior"?, "sequence"?}` (issuance and verification behavior conformance) | `"accept"` / `"reject"` |
 | `resolver.*` | format-type `{"key", "body"}`; state-type `{"resolver_state", "non_existence_authority"?}` → confidence (`non_existence_authority` marks whether the queried source is authoritative for non-existence in the identifier's namespace — required for `NotFound` inputs, whose mapping depends on it (→ `resolver.states`); omitted for states whose mapping is authority-independent); behavior-type `{"sequence": [...]}`; batch `{"request", "response"}`; encoding `{"entry"}` | `"accept"` / `"reject"` / `{"confidence"}` / `{"state"}` |
@@ -52,11 +53,47 @@ objects. Shapes are fixed per family as follows:
 | `effect.*` / `claims.effect.*` | artifact-type `{"credential": <record object>}` — the record named by the rule's schema (ReleaseAuthorization / quarantine entry / ObservationRecord / DecisionRecord / effect-status record); judgment-type uses named carriers as needed: `{"authorization"?, "entry"?, "transition"?, "release_input"?, "decision_record"?, "legacy_receipt"?, "scope"?, "evidence"?, "sequence"?, ...}` | `"accept"` / `"reject"` / an expected-disposition object (e.g. `{"evidence", "policy_decision"}`) |
 | `release.*` | artifact-type `{"credential": <ReleaseEvidenceManifest / AdvisoryAssessment / ReleaseWaiver>}`; judgment-type uses named carriers: `{"manifest"?, "scan"?, "assessment"?, "waiver"?, "workflow"?, "image_ref"?, "sequence"?, ...}` | `"accept"` / `"reject"` |
 | `identity.*` | derivation-type `{"credential": <wire-form JSON object>}` or `{"variants": [<wire form>, ...]}` — the input is carried as an object, not text, because these rules digest the CANONICAL projection: the spelling it arrived in is what the id is defined to erase; store-type `{"sequence": [{"op": "put-variant" \| "get-variant" \| "list-variants" \| "legacy-put" \| "get", ...}]}`, where an op names a store event and `stored_bytes` (a JSON text) injects what storage holds when byte-level precision is the point | `"reject"` or an expected-output object (`{"canonical", "body_address", "wire_variant_id"}` for derivation; `{"variant_set", "exact_bytes"?, "projection_variant_id"?}` for store-type) |
+| `keybinding.*` | binding-type `{"credential": <KeyBindingCredential>, "status_list": <the revocation list the verifier holds>, "anchor": {"issuer", "issuance_keys", "max_validity_seconds", "max_status_age_seconds"}, "verifier": {"audience", "skew_seconds"}, "at": <decision time>}`; list-type `{"credential": <revocation list read>, "held"?: <the list held of the same issuer and id>, "anchor", "verifier": {"skew_seconds"}, "at"}`; hash-type `{"credential": <revocation list>}`. `anchor` is the relying party's trust anchor for the issuer. The driver re-signs every credential the input carries (`credential`, `status_list`, `held`) as [Fixture proofs](#fixture-proofs) says; the issuers' fixture DID documents are `did:dplaax:poc.dplaax.dev:org:acme` with `#issuer` and `#signing`, and `did:dplaax:poc.dplaax.dev:org:other` with `#issuer` | `"accept"` / `"reject"` (list-type accept: the verifier holds the list read, or keeps the held one when it is the same list); `keybinding.status-list.monotonic` rejections `{"result": "reject", "reason": "status-list-rewound" \| "status-list-revocation-cleared"}`; hash-type `{"contentHash": "sha256:<hex>"}` |
 
 - Id numbering: `<family>-<3-digit sequence>`, file name: `<id>.json`
 - `description` states in one sentence what normative behavior is being fixed
   (do not name specific implementations)
+- The `did-*` vectors are generated by `tools/gen_did_vectors.py` from the rule
+  text (`--check` re-derives and diffs).
 - The `identity-*` vectors are generated by `tools/gen_identity_vectors.py`
   (`--check` re-derives and diffs). Their hashes come from the rule text alone,
   never from an implementation's output — a KAT an implementation authored
   proves only that the code equals itself. Edit the generator, not the JSON.
+- The `keybinding-*` vectors are generated by `tools/gen_keybinding_vectors.py`
+  in the same way: each is one defect against a well-formed baseline, and the
+  content hashes are computed from `keybinding.status-list.content-hash`
+  alone. `--check` compares an `encodedList` by the bits it expands to, since
+  another gzip writer may spell the same bits otherwise.
+
+## Fixture proofs
+
+The proofs in these vectors are fixtures. Their `proofValue` is a
+placeholder, not a signature, and none carries a proof-local `@context`, so
+as written none is an eddsa-jcs-2022 proof (`signer.suite.eddsa-jcs-2022`).
+
+- **Re-signing.** The driver re-signs each credential an input carries by
+  eddsa-jcs-2022, under a fixture key of the verification method its proof
+  names, and serves the DID documents that hold those keys as fixtures. It
+  adds only the proof-local `@context`, which is the document's `@context`,
+  and the `proofValue`. Every other proof member stays as written, so a
+  defect a vector puts in a proof remains: a missing `cryptosuite`
+  (`signer-001`), the suite `none` (`signer-002`), a proof set (`cred-009`),
+  an unknown member (`cred-020`).
+- **Used as written.** Where an expected value is a digest over a
+  credential's proof, the driver uses the credential as written and does not
+  re-sign it. These rules decide on the bytes, not on a signature:
+  - the credentials of the `identity.*` vectors, whose ids digest the full
+    wire document (`identity.wire-variant-id`);
+  - the `sources` of the `commitment.*` vectors, whose `source_root` leaves
+    hash each signed source, body and proof (`commitment.source-root.leaf`);
+  - documents carried as bytes: `stored_bytes` in the `identity.*`
+    store-type vectors, and a resolver entry's `body`
+    (`resolver.body.encoding`).
+- **The suite itself.** Whether an implementation's eddsa-jcs-2022 conforms
+  is checked by `signer.suite.eddsa-jcs-2022` and the official W3C test
+  vectors, not by these vectors.

@@ -13,6 +13,10 @@ dPLaaX spec へのコントリビューションと public review を歓迎す�
 
 ## 変更提案（Pull Request）
 
+pull request は `develop` に向ける。fork や、この repo の `develop`・`release/*`・
+`hotfix/*` 以外の branch から `main` への pull request は、`branch-guard` の check が
+落ちる（`.github/workflows/branch-guard.yml`）。
+
 1. **規範は 3 artifact のみ** — `rules/`（挙動・判定）、`schemas/`（wire shape）、
    `vectors/`（期待入出力）。markdown は non-normative であり、規範の変更は
    必ず rule / schema / vector の変更として表現する（→ [README.ja.md](README.ja.md)）。
@@ -33,9 +37,9 @@ markdown は規範外。0.x では rule の削除・意味変更も minor で許
 
 ## ガバナンス
 
-現状は maintainer 裁量で判断し、議論は Issue / PR 上で公開で行う。
-コントリビュータの増加に応じて、意思決定プロセス（rule の昇格判断・
-breaking 判断の合議体制）を段階的に明文化する予定。提案があれば Issue へ。
+役割、変更の区分と手続き、`draft` から `stable` への昇格、決め方、継承は
+[GOVERNANCE.md](GOVERNANCE.md) にある。議論は Issue / PR 上で公開で行う。
+この手続きの変更は Issue で提案する。
 
 ## License
 

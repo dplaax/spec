@@ -17,6 +17,11 @@ to this repository.
 
 ## Change proposals (Pull Requests)
 
+Open pull requests against `develop`. A pull request into `main` from a fork,
+or from a branch other than this repository's `develop`, `release/*` and
+`hotfix/*`, fails the `branch-guard` check
+(`.github/workflows/branch-guard.yml`).
+
 1. **Normative content lives in exactly three artifacts** — `rules/` (behavior
    and judgment), `schemas/` (wire shape), `vectors/` (expected inputs and
    outputs). Markdown is non-normative; every normative change must be expressed
@@ -42,10 +47,10 @@ release — see [VERSIONING.md](VERSIONING.md) for details.
 
 ## Governance
 
-Currently, decisions are made at maintainer discretion; all discussion happens
-publicly in Issues and PRs. As the contributor base grows, the decision-making
-process (rule promotion, breaking-change deliberation) will be formalized
-incrementally. Open an Issue to propose changes to this process.
+[GOVERNANCE.md](GOVERNANCE.md) sets out the roles, the change classes and
+their procedures, promotion from `draft` to `stable`, the decision method, and
+succession. All discussion happens publicly in Issues and PRs. Open an Issue
+to propose changes to this process.
 
 ## License
 

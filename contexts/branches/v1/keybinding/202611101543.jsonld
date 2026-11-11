@@ -1,0 +1,23 @@
+{
+  "@context": {
+    "@version": 1.1,
+    "@protected": true,
+    "KeyBindingCredential": "https://dplaax.dev/vocab#KeyBindingCredential",
+    "kind": "https://dplaax.dev/vocab#kind",
+    "roles": {
+      "@id": "https://dplaax.dev/vocab#roles",
+      "@container": "@set"
+    },
+    "audience": {
+      "@id": "https://dplaax.dev/vocab#audience",
+      "@type": "@id"
+    },
+    "keyClass": "https://dplaax.dev/vocab#keyClass",
+    "key": "https://dplaax.dev/vocab#key",
+    "keyId": "https://dplaax.dev/vocab#keyId",
+    "publicKeyJwk": {
+      "@id": "https://dplaax.dev/vocab#publicKeyJwk",
+      "@type": "@json"
+    }
+  }
+}

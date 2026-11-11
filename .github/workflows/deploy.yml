@@ -11,8 +11,10 @@
 # The served tree is ASSEMBLED here from the single source of truth: site/ holds
 # the hand-authored apex pages (root + 404 redirect to www.dplaax.dev, the
 # grant-type doc); the wire identifiers are copied byte-for-byte from their
-# canonical locations (contexts/v1.jsonld -> /vc/v1, schemas/*.json ->
-# /schemas/*). Nothing is duplicate-committed under site/.
+# canonical locations (contexts/v1.jsonld -> /vc/v1,
+# contexts/branches/<base>/<feature>/<stamp>.jsonld ->
+# /vc/branches/<base>/<feature>/<stamp>, schemas/*.json -> /schemas/*).
+# Nothing is duplicate-committed under site/.
 #
 # Disabled until the AWS OIDC role, bucket, and distribution exist. To activate,
 # change `if: false` and populate repo secrets:
@@ -58,6 +60,14 @@ jobs:
           # URIs carry no extension); Content-Type is set explicitly below.
           cp site/oauth/grant-type/did/index.html _site/oauth/grant-type/did
           cp contexts/v1.jsonld _site/vc/v1
+          # branch contexts: each snapshot at its frozen URI, without the
+          # .jsonld extension.
+          mkdir -p _site/vc/branches
+          (cd contexts/branches && find . -name '*.jsonld' -type f) | while IFS= read -r f; do
+            dest="_site/vc/branches/${f#./}"
+            mkdir -p "$(dirname "$dest")"
+            cp "contexts/branches/${f#./}" "${dest%.jsonld}"
+          done
           cp schemas/*.json _site/schemas/
 
       - name: Guard byte-exact context (must match the sha256 pin)
@@ -67,6 +77,16 @@ jobs:
           actual=$(sha256sum _site/vc/v1 | cut -d' ' -f1)
           if [ "$actual" != "$expected" ]; then
             echo "::error::served /vc/v1 sha256 $actual != pinned $expected (contexts/v1.jsonld drifted from the signing-scope pin)"
+            exit 1
+          fi
+          # every served branch snapshot has its pin in
+          # contexts/branches/SHA256SUMS and matches it, and every pin has its
+          # snapshot (tools/lint.py keeps a shipped snapshot's pin unchanged).
+          (cd _site/vc/branches && sha256sum -c --strict "$GITHUB_WORKSPACE/contexts/branches/SHA256SUMS")
+          served=$(cd _site/vc/branches && find . -type f | sed 's|^\./||' | sort)
+          pinned=$(awk '{print $2}' contexts/branches/SHA256SUMS | sort)
+          if [ "$served" != "$pinned" ]; then
+            echo "::error::served branch snapshots and contexts/branches/SHA256SUMS differ"
             exit 1
           fi
 
@@ -96,6 +116,7 @@ jobs:
           # scan, so --delete leaves the excluded keys alone.
           aws s3 sync _site/ "s3://${S3_BUCKET}/" --delete \
             --exclude "vc/v1" \
+            --exclude "vc/branches/*" \
             --exclude "oauth/grant-type/did"
 
       - name: Upload the extensionless identifier objects
@@ -106,6 +127,11 @@ jobs:
           # holds them as application/octet-stream, even transiently.
           aws s3 cp _site/vc/v1 "s3://${S3_BUCKET}/vc/v1" \
             --content-type application/ld+json
+          # branch snapshots: uploaded, never deleted (the sync above leaves
+          # vc/branches/ alone), so every snapshot once shipped stays served.
+          aws s3 cp _site/vc/branches "s3://${S3_BUCKET}/vc/branches" --recursive \
+            --content-type application/ld+json \
+            --cache-control "public, max-age=31536000, immutable"
           aws s3 cp _site/oauth/grant-type/did "s3://${S3_BUCKET}/oauth/grant-type/did" \
             --content-type text/html
 

@@ -6,7 +6,8 @@ URL path: `site/oauth/grant-type/did/index.html` serves
 
 The apex `dplaax.dev` serves the protocol's **wire identifiers** — the OAuth
 grant-type namespace document (`/oauth/grant-type/did`), the JSON-LD context
-(`/vc/v1`), and the JSON Schemas (`/schemas/*.json`). The identifiers
+(`/vc/v1`) and its branch contexts (`/vc/branches/…`), and the JSON Schemas
+(`/schemas/*.json`). The identifiers
 themselves are compared byte-for-byte and never dereferenced at runtime;
 these pages exist so that a URI a developer encounters on the wire resolves
 to its own documentation.
@@ -20,8 +21,9 @@ redirect.
 
 - **Published documents are frozen.** Once a path has shipped in a release,
   its meaning never changes; editorial fixes are fine, semantic changes get a
-  NEW path (`/v2`, a new grant name). JSON-LD contexts, if ever hosted here,
-  are byte-frozen outright — they enter signature scopes.
+  NEW path (`/v2`, a new grant name). JSON-LD contexts (`/vc/v1` and the branch
+  contexts under `/vc/branches/`) are byte-frozen outright — they enter
+  signature scopes.
 - **Identifier paths live at the root** (`/oauth/...`, `/vc/...`), never
   under a site section like `/spec/` — identifiers name protocol elements,
   not places in a website. Human documentation sections may exist alongside
@@ -36,10 +38,12 @@ redirect.
 `infra/deploy.md`). It **assembles** the served tree rather than serving
 `site/` verbatim: it copies the hand-authored pages, then copies the
 machine-readable identifiers in byte-for-byte from their canonical sources —
-`contexts/v1.jsonld` → `/vc/v1`, `schemas/*.json` → `/schemas/*.json` — so
-those payloads live in exactly one place and cannot drift. A guard step fails
-the deploy if the served `/vc/v1` sha256 ever diverges from the signing-scope
-pin (`9716bca…`).
+`contexts/v1.jsonld` → `/vc/v1`, `contexts/branches/<base>/<feature>/<stamp>.jsonld`
+→ `/vc/branches/<base>/<feature>/<stamp>`, `schemas/*.json` → `/schemas/*.json`
+— so those payloads live in exactly one place and cannot drift. A guard step
+fails the deploy if the served `/vc/v1` sha256 ever diverges from the
+signing-scope pin (`9716bca…`), or a served branch snapshot from its pin in
+`contexts/branches/SHA256SUMS`.
 
 S3 object metadata is what lets the extensionless identifier paths carry
 their correct media types (`/vc/v1` → `application/ld+json`) — the reason
@@ -53,5 +57,6 @@ remain in `site/` as inert history but are not shipped to S3.
 | --- | --- | --- |
 | `oauth/grant-type/did/` | `https://dplaax.dev/oauth/grant-type/did` — the DID OAuth grant type | frozen (wire-live since 2026-07-12) |
 | `vc/v1` (assembled from `contexts/v1.jsonld`) | `https://dplaax.dev/vc/v1` — the v0 credential JSON-LD context | frozen, sha256-pinned `9716bca…` |
-| `schemas/*.json` (assembled from `schemas/`) | `https://dplaax.dev/schemas/<name>.json` — the 16 wire JSON Schemas | `$id`-addressed |
+| `vc/branches/<base>/<feature>/<stamp>` (assembled from `contexts/branches/`) | `https://dplaax.dev/vc/branches/v1/keybinding/202611101543` and later snapshots — the contexts of a feature on a base version | each frozen, sha256-pinned in `contexts/branches/SHA256SUMS` |
+| `schemas/*.json` (assembled from `schemas/`) | `https://dplaax.dev/schemas/<name>.json` — the 18 wire JSON Schemas | `$id`-addressed |
 | `index.html`, `404.html` | apex root / fallback → redirect to `www.dplaax.dev` | — |

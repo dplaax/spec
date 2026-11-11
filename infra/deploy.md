@@ -4,7 +4,8 @@
 is a different surface from the human landing page at `www.dplaax.dev` (that
 lives in `dplaax/site`, with its own bucket and distribution). **Nothing here is
 executed automatically** — `.github/workflows/deploy.yml` ships disabled; this
-file documents the target topology.
+file documents the topology `dplaax.dev` is served from, and the manual deploy
+below is how it is published.
 
 ## Why not GitHub Pages
 
@@ -40,12 +41,14 @@ LP build into `wire.dplaax.dev` — that would erase the identifier documents.
 | path (URI)                   | S3 key                 | Content-Type          |
 | ---------------------------- | ---------------------- | --------------------- |
 | `/vc/v1`                     | `vc/v1`                | `application/ld+json` |
-| `/schemas/<name>.json` (×16) | `schemas/<name>.json`  | `application/json`    |
+| `/vc/branches/<base>/<feature>/<stamp>` | `vc/branches/<base>/<feature>/<stamp>` | `application/ld+json` |
+| `/schemas/<name>.json` (×18) | `schemas/<name>.json`  | `application/json`    |
 | `/oauth/grant-type/did`      | `oauth/grant-type/did` | `text/html`           |
 | `/` (root)                   | `index.html`           | `text/html`           |
 | 404                          | `404.html`             | `text/html`           |
 
-The identifier paths (`/vc/v1`, `/oauth/grant-type/did`) are stored as
+The identifier paths (`/vc/v1`, the branch snapshots under `/vc/branches/`,
+`/oauth/grant-type/did`) are stored as
 **extensionless objects** so their frozen URIs resolve directly, without a
 directory-index rewrite. The deploy workflow sets their `Content-Type`
 explicitly (S3 would otherwise guess `application/octet-stream`).
@@ -59,10 +62,12 @@ explicitly (S3 would otherwise guess `application/octet-stream`).
 - TLS: ACM certificate in `us-east-1` for `dplaax.dev`
 - Alternate domain name (CNAME): `dplaax.dev`
 
-## Migration from GitHub Pages (one-time)
+## Migration from GitHub Pages (one-time, completed)
 
-`dplaax.dev` currently serves this tree from Pages
-(`.github/workflows/pages.yml`). Cut over without dropping the live identifier:
+The migration is done and `pages.yml` is retired; the steps are kept as the
+record of how it was done. `dplaax.dev` then
+served this tree from Pages (`.github/workflows/pages.yml`). The cut-over
+kept the live identifier:
 
 1. Provision the bucket, cert, and distribution above.
 2. Run the deploy (enable `deploy.yml`, or run the manual fallback) and verify on
@@ -86,18 +91,31 @@ cp site/index.html _site/index.html
 cp site/404.html   _site/404.html
 cp site/oauth/grant-type/did/index.html _site/oauth/grant-type/did
 cp contexts/v1.jsonld _site/vc/v1
+mkdir -p _site/vc/branches
+(cd contexts/branches && find . -name '*.jsonld' -type f) | while IFS= read -r f; do
+  dest="_site/vc/branches/${f#./}"
+  mkdir -p "$(dirname "$dest")"
+  cp "contexts/branches/${f#./}" "${dest%.jsonld}"
+done
 cp schemas/*.json _site/schemas/
 
-# the same byte-exact guard the workflow enforces
+# the same byte-exact guards the workflow enforces
 expected=9716bca789bdb1042451746800cc463a616a57817008001a3a895e88c0aff25f
 [ "$(shasum -a 256 _site/vc/v1 | cut -d' ' -f1)" = "$expected" ] \
   || { echo "vc/v1 drifted from the signing-scope pin"; exit 1; }
+(cd _site/vc/branches && shasum -a 256 -c --strict "$OLDPWD/contexts/branches/SHA256SUMS")
+[ "$(cd _site/vc/branches && find . -type f | sed 's|^\./||' | sort)" = \
+  "$(awk '{print $2}' contexts/branches/SHA256SUMS | sort)" ] \
+  || { echo "served branch snapshots and contexts/branches/SHA256SUMS differ"; exit 1; }
 
 # extensionless identifier keys are excluded from the sync and uploaded once
 # with the right type (same rationale as the workflow: no octet-stream window)
 aws s3 sync _site/ s3://wire.dplaax.dev/ --delete \
-  --exclude "vc/v1" --exclude "oauth/grant-type/did"
+  --exclude "vc/v1" --exclude "vc/branches/*" --exclude "oauth/grant-type/did"
 aws s3 cp _site/vc/v1 s3://wire.dplaax.dev/vc/v1 --content-type application/ld+json
+# branch snapshots are uploaded, never deleted
+aws s3 cp _site/vc/branches s3://wire.dplaax.dev/vc/branches --recursive --content-type application/ld+json \
+  --cache-control "public, max-age=31536000, immutable"
 aws s3 cp _site/oauth/grant-type/did s3://wire.dplaax.dev/oauth/grant-type/did --content-type text/html
 aws cloudfront create-invalidation --distribution-id <DIST_ID> --paths "/*"
 ```

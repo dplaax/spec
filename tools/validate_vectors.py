@@ -15,10 +15,17 @@ validated against that schema (JSON Schema 2020-12, format assertions on):
     A successful vector of a schema-referencing rule that yields NO fixture is
     an error (coverage cannot silently drop to zero), as is a non-object
     entry in `sources`.
+  - carriers of a fixed schema (CARRIER_SCHEMAS): in every successful vector
+    of a keybinding.* rule, whatever the rule references, `input.status_list`
+    and `input.held` (the revocation list a key-binding verifier holds) are
+    validated against the status-list schema.
 
 Additionally, synthetic negative checks guard against under-strict drift: for
 each schema, a known-good fixture is mutated by deleting each `required`
-member (top level and one level down) and each mutation must FAIL validation.
+member (top level and one level down) and each mutation must FAIL validation;
+and where a schema fixes which of its objects are exact and which are open
+(MEMBER_CHECKS), adding an unknown member there must FAIL or PASS
+accordingly.
 
 Requires: pyyaml, jsonschema[format-nongpl] (see .github/workflows/lint.yml).
 """
@@ -49,7 +56,32 @@ GOOD_FIXTURES = {
     "release-evidence-manifest.json": ("release-001", "input.credential"),
     "advisory-assessment.json": ("release-002", "input.credential"),
     "release-waiver.json": ("release-003", "input.credential"),
+    "key-binding-credential.json": ("keybinding-001", "input.credential"),
+    "status-list-credential.json": ("keybinding-011", "input.credential"),
 }
+
+# Input carriers that always hold the same kind of fixture, validated against
+# their schema in every successful vector that carries them.
+CARRIER_SCHEMAS = {
+    "status_list": "status-list-credential.json",
+    "held": "status-list-credential.json",
+}
+CARRIER_RULE_PREFIX = "keybinding."
+
+# Per schema, the objects of its known-good fixture (dotted paths, "" the
+# top level) that are exact, where an unknown member is refused, and those
+# that are open, where it is kept.
+MEMBER_CHECKS = {
+    "key-binding-credential.json": {
+        "exact": ["credentialStatus", "credentialSubject.key", "credentialSubject.key.publicKeyJwk"],
+        "open": ["", "credentialSubject"],
+    },
+    "status-list-credential.json": {
+        "exact": [],
+        "open": ["", "credentialSubject"],
+    },
+}
+UNKNOWN_MEMBER = "x-member-not-in-the-catalog"
 
 errors: list[str] = []
 
@@ -105,6 +137,25 @@ def fixtures_of(name: str, vector: dict) -> list[tuple[str, dict]]:
     return out
 
 
+def validate_carriers(name: str, vector: dict, validators) -> int:
+    """Validates each CARRIER_SCHEMAS carrier the vector's input holds and
+    returns how many it validated."""
+    checked = 0
+    inp = vector.get("input") or {}
+    for carrier, ref in CARRIER_SCHEMAS.items():
+        if carrier not in inp:
+            continue
+        fixture = inp[carrier]
+        if not isinstance(fixture, dict):
+            errors.append(f"{name}: input.{carrier} is not an object")
+            continue
+        for err in validators[ref].iter_errors(fixture):
+            where = "/".join(str(p) for p in err.absolute_path) or "(root)"
+            errors.append(f"{name}: input.{carrier} vs {ref}: at {where}: {err.message}")
+        checked += 1
+    return checked
+
+
 def validate_vectors(rule_schemas, validators) -> int:
     checked = 0
     for path in sorted((ROOT / "vectors").glob("*.json")):
@@ -113,8 +164,12 @@ def validate_vectors(rule_schemas, validators) -> int:
         except json.JSONDecodeError as e:
             errors.append(f"{path.name}: JSON parse error: {e}")
             continue
+        if not is_successful(v.get("expect")):
+            continue
+        if str(v.get("rule", "")).startswith(CARRIER_RULE_PREFIX):
+            checked += validate_carriers(path.name, v, validators)
         refs = rule_schemas.get(v.get("rule"), [])
-        if not refs or not is_successful(v.get("expect")):
+        if not refs:
             continue
         fixtures = fixtures_of(path.name, v)
         if not fixtures:
@@ -185,11 +240,39 @@ def synthetic_negative_checks(validators) -> int:
     return checked
 
 
+def member_checks(validators) -> int:
+    """Adds an unknown member at each MEMBER_CHECKS path of the schema's
+    known-good fixture: refused where the object is exact, kept where open."""
+    checked = 0
+    for schema_name, paths in MEMBER_CHECKS.items():
+        vec_id, fixture_path = GOOD_FIXTURES[schema_name]
+        v = json.loads((ROOT / "vectors" / f"{vec_id}.json").read_text())
+        fixture = v
+        for key in fixture_path.split("."):
+            fixture = fixture[key]
+        validator = validators[schema_name]
+        for kind in ("exact", "open"):
+            for dotted in paths[kind]:
+                mutant = copy.deepcopy(fixture)
+                node = mutant
+                for key in filter(None, dotted.split(".")):
+                    node = node[key]
+                node[UNKNOWN_MEMBER] = "x"
+                refused = bool(list(validator.iter_errors(mutant)))
+                if kind == "exact" and not refused:
+                    errors.append(f"member-checks: {schema_name}: an unknown member at '{dotted}' PASSED, but that object is exact")
+                if kind == "open" and refused:
+                    errors.append(f"member-checks: {schema_name}: an unknown member at '{dotted or '(root)'}' is refused, but that object is open")
+                checked += 1
+    return checked
+
+
 def main() -> int:
     rule_schemas = load_rule_schemas()
     validators = load_validators()
     checked = validate_vectors(rule_schemas, validators)
     negatives = synthetic_negative_checks(validators)
+    members = member_checks(validators)
 
     if errors:
         for e in errors:
@@ -198,7 +281,8 @@ def main() -> int:
         return 1
     print(
         f"OK — {checked} fixture/schema validations green, "
-        f"{negatives} synthetic negative checks green"
+        f"{negatives} synthetic negative checks green, "
+        f"{members} member checks green"
     )
     return 0
 

@@ -22,8 +22,30 @@ jobs:
       - name: install deps
         run: pip install pyyaml 'jsonschema[format-nongpl]'
       - name: spec lint
-        run: python tools/lint.py
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          # The ref the change is made against, so that the lint can check that
+          # no branch-context snapshot shipped there has changed.
+          if [ -n "$BASE_REF" ]; then
+            git fetch --no-tags --depth=1 origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+            export DPLAAX_BASE_REF="origin/$BASE_REF"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            git fetch --no-tags --depth=1 origin "$BEFORE"
+            export DPLAAX_BASE_REF="$BEFORE"
+          fi
+          python tools/lint.py
       - name: vector-vs-schema validation
         run: python tools/validate_vectors.py
+      # The generated vectors are re-derived from the rule text and compared
+      # with what is committed, so a hand edit to one fails here.
+      - name: key-binding vectors match their derivation
+        run: python tools/gen_keybinding_vectors.py --check
+      - name: identity vectors match their derivation
+        run: python tools/gen_identity_vectors.py --check
       - name: independent EvidenceView vectors
         run: python tools/verify_evidence_vectors.py
+      - name: did vectors match their derivation
+        run: python tools/gen_did_vectors.py --check
