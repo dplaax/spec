@@ -30,7 +30,7 @@ rules:
       The issuer MUST be an Owner DID and the delegated subject MUST be a
       Pipeline or Process DID whose Owner equals the issuer; an issuer MUST NOT
       delegate over an identity outside its own Owner.
-    uses: []
+    uses: [did.dplaax.hierarchy]
     schemas: []
     vectors: [delegation-002, delegation-003]
     notes: >-

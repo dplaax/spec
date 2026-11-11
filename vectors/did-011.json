@@ -1,0 +1,9 @@
+{
+  "id": "did-011",
+  "rule": "did.dplaax.syntax",
+  "description": "A segment with a percent-encoded octet is refused",
+  "input": {
+    "did": "did:dplaax:poc.dplaax.dev:org:%41cme"
+  },
+  "expect": "reject"
+}

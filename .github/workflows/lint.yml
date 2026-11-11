@@ -47,3 +47,5 @@ jobs:
         run: python tools/gen_identity_vectors.py --check
       - name: independent EvidenceView vectors
         run: python tools/verify_evidence_vectors.py
+      - name: did vectors match their derivation
+        run: python tools/gen_did_vectors.py --check

@@ -1,0 +1,9 @@
+{
+  "id": "did-007",
+  "rule": "did.dplaax.syntax",
+  "description": "A segment made of dots only is refused",
+  "input": {
+    "did": "did:dplaax:poc.dplaax.dev:org:.."
+  },
+  "expect": "reject"
+}

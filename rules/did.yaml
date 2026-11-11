@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — did (the did:dplaax DID method: its syntax and its Owner / Pipeline / Process hierarchy)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+rules:
+  - id: did.dplaax.syntax
+    status: draft
+    class: core
+    statement: >-
+      A did:dplaax DID MUST be did:dplaax: followed by colon-separated
+      segments, at least a registry, an account type and an account id, each
+      segment [A-Za-z0-9._-]+ and not only dots, the registry at most 253
+      octets; anything else MUST be refused.
+    uses: [auth.resolve.id-equality]
+    schemas: []
+    vectors: [did-001, did-002, did-003, did-004, did-005, did-006, did-007, did-008, did-009, did-010, did-011, did-012, did-013, did-014]
+    notes: >-
+      The form is did:dplaax:<registry>:<accountType>:<accountId>, then any
+      further segments, which are the resource path. The method name is
+      lower case. Every segment uses only ASCII letters, digits, dot,
+      underscore and hyphen, so an empty segment, a trailing colon, a
+      percent-encoded octet, a slash, a space and a non-ASCII character are
+      refused; a DID of such segments can serve as a storage path without
+      traversal. The grammar is narrower than the generic DID syntax, which
+      allows percent-encoding, and every did:dplaax DID is a DID. The
+      registry names a DNS host (resolution URLs derive from it, as
+      https://<registry>/did/...), and a DNS name is at most 255 octets in
+      its wire form (RFC 1035, 2.3.4), at most 253 octets of text without the
+      trailing dot. DIDs are compared byte for byte and never normalized:
+      segments are case-sensitive (auth.resolve.id-equality). Whether an
+      account type is admitted is deployment policy, not syntax.
+
+  - id: did.dplaax.hierarchy
+    status: draft
+    class: core
+    statement: >-
+      A did:dplaax DID MUST be read as an Owner when it has no resource path,
+      a Pipeline when its resource path is pipeline:<id> and a Process when it
+      is pipeline:<id>:process:<id>, and as none of them otherwise; its Owner
+      is its first three segments.
+    uses: [did.dplaax.syntax]
+    schemas: []
+    vectors: [did-015, did-016, did-017, did-018, did-019, did-020, did-021]
+    notes: >-
+      The hierarchy is read from the DID alone, with no resolution: a DID's
+      Owner is the DID made of its first three segments, and a Process's
+      Pipeline the DID made of its first five. pipeline and process are
+      compared byte for byte, so Pipeline is not pipeline. A resource path of
+      another shape, such as pipeline:<id>:<other>:<id>, names none of the
+      three, and has no Pipeline. delegation.binding takes a subject's Owner
+      this way.

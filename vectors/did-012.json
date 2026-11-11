@@ -1,0 +1,9 @@
+{
+  "id": "did-012",
+  "rule": "did.dplaax.syntax",
+  "description": "A DID of another method is refused",
+  "input": {
+    "did": "did:dplaaxx:poc.dplaax.dev:org:acme"
+  },
+  "expect": "reject"
+}
