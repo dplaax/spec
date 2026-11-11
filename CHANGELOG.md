@@ -15,6 +15,14 @@ frozen from its merge into `develop` (`contexts/README.md`).
 
 ## [Unreleased]
 
+### Changed
+
+- The apex pages (`site/index.html`, `site/404.html`) redirect to
+  `https://www.dplaax.dev/?utm_source=dplaax.dev&utm_medium=redirect`, so the
+  project site can tell visits that came through `dplaax.dev`; the not-found
+  page adds `utm_content=not-found`. The canonical link stays
+  `https://www.dplaax.dev/`; no identifier path changes.
+
 ## [0.2.0-alpha.1] - 2026-11-11
 
 A pre-release on the way to 0.2. The conditions for the 0.2 tag
