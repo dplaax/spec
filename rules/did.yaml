@@ -1,0 +1,56 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — did (the did:dplaax DID method: its syntax and its Owner / Pipeline / Process hierarchy)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+rules:
+  - id: did.dplaax.syntax
+    status: draft
+    class: core
+    statement: >-
+      A string presented as a did:dplaax DID MUST be accepted as one exactly
+      when it is did:dplaax: then colon-separated segments, a registry of at
+      most 253 octets, an account type, an account id and its resource path,
+      each [A-Za-z0-9._-]+ and not only dots.
+    uses: []
+    schemas: []
+    vectors: [did-001, did-002, did-003, did-004, did-005, did-006, did-007, did-008, did-009, did-010, did-011, did-012, did-013, did-014, did-015, did-016, did-017, did-018, did-019, did-020, did-021]
+    notes: >-
+      Whatever consumes it (an issuer, a resolver, a verifier, a registry), a
+      string presented as a did:dplaax DID without this form is refused, never
+      repaired or normalized; a string of another DID method is not one
+      presented as a did:dplaax DID. The form is
+      did:dplaax:<registry>:<accountType>:<accountId>, then any further
+      segments, which are the resource path (none for an Owner). The
+      method name is lower case, and so is the did: scheme here. Every
+      segment uses only ASCII letters, digits, dot, underscore and hyphen, so
+      an empty segment, a trailing colon, a percent-encoded octet, a slash, a
+      space, a fragment or query, and a non-ASCII character all fall outside
+      it. The grammar is narrower than the generic DID syntax, which also
+      allows percent-encoding and empty or dots-only segments, and every
+      did:dplaax DID is a DID. The registry names a DNS host (resolution URLs
+      derive from it, as https://<registry>/did/...), and a DNS name is at most
+      255 octets in its wire form (RFC 1035, 2.3.4), at most 253 octets of
+      text without the trailing dot; only the registry's length is part of the
+      syntax, and it need not be a well-formed host name. Whether an account
+      type is admitted is deployment policy, not syntax. Segments are
+      case-sensitive: auth.resolve.id-equality and
+      delegation.use.subject-bound compare did:dplaax DIDs byte for byte.
+
+  - id: did.dplaax.hierarchy
+    status: draft
+    class: core
+    statement: >-
+      A did:dplaax DID MUST count as an Owner if it has no resource path, a
+      Pipeline if that is pipeline:<id>, a Process if
+      pipeline:<id>:process:<id> (<id> one segment), else none; its Owner and
+      a Process's Pipeline are the DIDs of its first 3 and 5 segments.
+    uses: [did.dplaax.syntax]
+    schemas: []
+    vectors: [did-022, did-023, did-024, did-025, did-026, did-027, did-028, did-029, did-030, did-031]
+    notes: >-
+      The hierarchy is read from the DID alone, with no resolution, and by
+      the position of its segments: a DID whose account type is pipeline is
+      still an Owner. pipeline and process are compared byte for byte, so
+      Pipeline is not pipeline. Every DID has an Owner; only a Process has a
+      Pipeline, so a resource path of another shape, such as
+      pipeline:<id>:<other>:<id>, names none of the three and has no Pipeline.
+      delegation.binding takes a subject's Owner this way.
