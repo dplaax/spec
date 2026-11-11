@@ -11,6 +11,7 @@ already say, it shows whether what the rules say holds against an attacker.
 | --- | --- | --- |
 | [`tamarin/chain.spthy`](tamarin/chain.spthy) | Tamarin 1.12.0 (with Maude 3.5.1) | the authentication of a provenance chain: signatures, links, compromised keys |
 | [`tamarin/delegation.spthy`](tamarin/delegation.spthy) | Tamarin 1.12.0 (with Maude 3.5.1) | delegation from an Owner to its Pipelines and Processes: who can delegate, over what, and what a delegation is used for |
+| [`tamarin/keybinding.spthy`](tamarin/keybinding.spthy) | Tamarin 1.12.0 (with Maude 3.5.1) | key bindings and their revocation lists: whose binding a relying party takes, for whom, and whether a revocation can be undone |
 
 ## Result states
 
@@ -209,6 +210,143 @@ together are exactly the verifier or consumer with that one check dropped or
 relaxed; a refutation under the control then shows the lemma rests on that
 check.
 
+## `keybinding.spthy`
+
+### Contract
+
+The model's header comment says the same.
+
+- **Attacker.** The network is the attacker's (Dolev-Yao).
+- **Trusted.** The relying party's verifier, which is never taken over;
+  signatures, which cannot be forged without the key.
+- **Open to compromise.** An issuer's issuance key, through the rule
+  `CompromiseIssuer`, which records `Compromised(I)`. An issuer's other key,
+  one it signs other credentials with, signs whatever the attacker asks
+  (`OtherKeySigns`).
+- **Issuers' lists.** An issuer issues lists of any `validFrom` and either
+  mark: its state may be restored to an older one, so nothing rests on its
+  lists only moving forward. What is shown is that the list the relying
+  party holds guards its marks.
+- **The relying party.** It trusts an issuer when it holds a trust anchor
+  for it (`!Anchor(V, I, pk)`, the issuer's issuance key), and holds one
+  list per id, which a later list replaces. The list it holds is a state,
+  `Held(~sid, ...)`, made when the first list under the id is held and
+  carried through every later step under the same `~sid`, so that one state
+  exists at a time. It looks a list up by its id, as
+  `keybinding.status.entry` states.
+- **Shape.** A binding's body is `<'binding', I, S, k, A, L>`: issuer,
+  subject, bound key, audience, list. A list's id is a DID URL of its
+  issuer, `<I, f>` for `I#f`. A list is abstracted to the one entry a
+  binding has in it: `<'list', I, L, vf, mark>`, with `vf` a natural number
+  so that lists are ordered and `mark` `'active'` or `'revoked'`. Its content
+  hash is `h(body)`.
+- **Persistence.** The held list is never lost: from the first list under an
+  id on, the relying party holds one, and nothing in the model drops it.
+  Keeping it so across a restart is the relying party's to do, outside the
+  model.
+- **Time.** None. A binding's period and its bound (`keybinding.validity`),
+  a list's period and freshness (`keybinding.status-list.period`,
+  `keybinding.status-list.fresh`) and the clock skew are outside the model,
+  and so are DID resolution (public keys reach the verifier directly), key
+  rotation, the issuer's scope, and how a list's bits are compressed.
+  Receiving the held list again changes nothing and is not modelled. So
+  `keybinding.status-list.fresh`'s refusal to hold a list not yet valid when
+  it is taken, which keeps a list dated ahead from blocking every correct
+  list after it, rests on its vectors alone.
+- **Events.** `Accepted(V, I, S, k, A, L)`: `V` accepted `I`'s binding of `k`
+  to `S` for `A` under `L`. `JudgedUnder(V, I, L, J)`: it was judged under
+  the list `V` holds under `L`, held in `J`'s name. `AcceptedUnder(sid, m)`:
+  it was accepted under the held state `sid`, whose mark was `m`.
+  `Holds(V, L, I, vf, m)`: `V` took a list of `I` as the one it holds under
+  `L`. `St(sid, V, L, J, vf, mark)`: each state of that list.
+
+### Lemmas, rules and implementation
+
+| lemma | kind | property | rule ids / implementation |
+| --- | --- | --- | --- |
+| `executable_binding` | exists-trace | a binding is accepted with no key compromised (reachability) | — |
+| `executable_replace` | exists-trace | a later list replaces the held one with no key compromised | — |
+| `key_from_trusted_issuer` | all-traces | a binding accepted is of an issuer the relying party's trust anchor names, and that issuer bound the key to the subject, or its issuance key was compromised first | `keybinding.issuer` (the anchor: `SkipAnchorCheck`; the issuance key: `AnyIssuerKey`); provin.oss `keybinding.Verifier.VerifyBinding` |
+| `issuer_compromise_exception` | exists-trace | with an issuer's issuance key, a binding it never made is accepted: the exception is live | — |
+| `bound_to_audience` | all-traces | a binding accepted was bound for this relying party, or the issuer's key was compromised first | `keybinding.audience` (`SkipAudienceCheck`; `AnyIssuerKey` too, a forged binding names any audience); provin.oss `VerifyBinding` |
+| `executable_revocation` | exists-trace | the relying party holds a list that marks the entry, with no key compromised | — |
+| `list_authentic` | all-traces | a list the relying party holds was issued, as it is held, by its issuer, or that issuer's issuance key was compromised first | `keybinding.issuer` (a list's key: `AnyListKey`); provin.oss `VerifyStatusList` |
+| `list_of_its_issuer` | all-traces | a binding is judged only under a list held in its own issuer's name, whoever else's key is compromised | `keybinding.status-list.id` (`AnyListIssuer`), `keybinding.status.entry` (the binding names a list of its issuer: `AnyEntryList`); provin.oss `VerifyStatusList` (the id as a DID URL of the issuer), `VerifyBinding` (the list held is the binding's) |
+| `revocation_not_cleared` | all-traces | once the list held under an id marks the entry, every later state of it does, by a later list or an earlier one | `keybinding.status-list.monotonic` (`AcceptClearedMark`); provin.oss `VerifyStatusList` |
+| `accept_needs_active` | all-traces | a binding is accepted only under a held list that leaves its entry active | `keybinding.status.entry` (`AcceptAnyMark`); provin.oss `VerifyBinding` |
+| `same_validfrom_same_content` | all-traces | a list replaces the held one only when it is later; one of the same `validFrom` is the held one only with the same content hash | `keybinding.status-list.monotonic`, `keybinding.status-list.content-hash` (`SameValidFromAnyContent`); provin.oss `VerifyStatusList` |
+
+`list_authentic` and `list_of_its_issuer` together say that a binding is
+judged only under a list its own issuer issued: the first by the list's
+signature, the second by its id. `revocation_not_cleared` and
+`accept_needs_active` together say that no binding under a list id is
+accepted once the relying party has held a list under it that marks the
+entry: acceptance is a step of the held state, and every state after one
+that marks the entry marks it. The single lemma that says so directly did
+not finish in several minutes of search, so it is stated as the two.
+
+`revocation_not_cleared` is proved by induction over the states of the held
+list; the one state at a time (`Held` under one `~sid`) is what makes the
+induction go through, and Tamarin's `S` heuristic proves it in seconds
+(`[heuristic=S]`). `same_validfrom_same_content` and `accept_needs_active`
+hold by the relying party's patterns, like chain's `link_integrity`: they are
+what the rules state for one step, and each is refuted by the control that
+drops that step's check. The content hash being a function of the content is
+carried by `h(body)`; that the hash ignores the compression of the bits is a
+property of `keybinding.status-list.content-hash`, pinned by its vectors,
+not modelled.
+
+### In the code
+
+`Accepted(V, I, S, k, A, L)` is provin.oss's `keybinding.Verifier.VerifyBinding`
+returning a binding, with `V` the Verifier's audience and the anchor's issuer
+`I`. `!Anchor(V, I, pk)` stands for the `keybinding.Anchor` of `I`: its
+issuance keys, of which `VerifyBinding` and `VerifyStatusList` accept only a
+signature under one, by the anchor's issuer. `HoldList` and the replacing
+rules are `VerifyStatusList` with no held list and with one: the list's id
+read as a DID URL of the issuer, a list of another `validFrom` than the held
+one taken only when later (`ErrStatusListRewound` otherwise), the same
+`validFrom` and content hash returning the held list, and a later list that
+unmarks an entry refused (`ErrStatusListRevocationCleared`). `Accept`'s use
+of the held list is `VerifyBinding`'s check that the list held is the
+binding's and does not mark the binding's index (`ErrRevoked`). In the code
+the list held is also tied to the binding's issuer by its own issuer, the
+anchor's, so the code does not rest on the id alone as the model's relying
+party does.
+
+provin.oss's `Verifier` holds no state: `Held` is its caller's. The caller
+passes the list it holds to `VerifyStatusList` and `VerifyBinding`, keeps
+what `VerifyStatusList` returns as the list held, one per issuer and list
+id, never drops it, and restores it after a restart with
+`RestoreStatusList`. The model rests on the caller doing so. The time checks
+of both functions, `RestoreStatusList` itself, and a held list whose key has
+left the anchor (key rotation) are outside the model.
+
+### Results
+
+Expectations: [`tamarin/keybinding.expected.tsv`](tamarin/keybinding.expected.tsv).
+
+| build | lemma | state |
+| --- | --- | --- |
+| default | all eleven | proved |
+| `SkipAnchorCheck` (a binding and a first list are taken under any issuer's issuance key, anchored or not) | `key_from_trusted_issuer` | refuted as expected |
+| `AnyIssuerKey` (a binding is taken under any key of the anchored issuer) | `key_from_trusted_issuer`, `bound_to_audience` | refuted as expected |
+| `SkipAudienceCheck` (a binding for any relying party is taken) | `bound_to_audience` | refuted as expected |
+| `AnyEntryList` (a binding may name a list of another issuer) | `list_of_its_issuer` | refuted as expected |
+| `AnyListIssuer` (a list is held under an id that is not a DID URL of its issuer) | `list_of_its_issuer` | refuted as expected |
+| `AnyListKey` (a first list is taken under any key of the anchored issuer) | `list_authentic` | refuted as expected |
+| `AcceptAnyMark` (a binding is accepted whatever the held list marks) | `accept_needs_active` | refuted as expected |
+| `AcceptClearedMark` (a later list may leave active an entry the held list marks) | `revocation_not_cleared` | refuted as expected |
+| `SameValidFromAnyContent` (a list of the held one's `validFrom` replaces it whatever its content hash; a revoked entry still stays revoked) | `same_validfrom_same_content` | refuted as expected |
+| each control | the other lemmas | proved |
+
+Unresolved: none. Every lemma takes under 15 seconds per build on a laptop.
+
+Each control adds a rule beside a default rule of the relying party and
+keeps every other check, so that the added rule together with the default
+one is the relying party with that one check dropped or relaxed; a
+refutation under the control then shows the lemma rests on that check.
+
 ## Running the checks
 
 ```sh
@@ -252,7 +390,8 @@ Tools: Tamarin 1.12.0 and Maude 3.5.1, the versions CI pins by SHA-256
 
 A pull request that changes a model, or the code a model's contract describes
 (provin.oss `vc.VerifyChain`, `vc.ValidateChainLinks`, `delegation.Verify`,
-the registry's use of a delegation), is reviewed for whether the contract
+the registry's use of a delegation, `keybinding.Verifier`'s `VerifyBinding`
+and `VerifyStatusList`), is reviewed for whether the contract
 above still holds of the code. CI runs the models only when `formal/` or the
 workflow changes; the review carries the rest.
 

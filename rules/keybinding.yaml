@@ -1,0 +1,251 @@
+# yaml-language-server: $schema=../tools/rule.schema.json
+# dplaax rule catalog — keybinding (an issuer's binding of a key to a subject, for one relying party, and its revocation list)
+# File split is non-normative. Entry identity is carried by id (→ README.md).
+rules:
+  - id: keybinding.shape
+    status: draft
+    class: core
+    statement: >-
+      A key binding MUST be a KeyBindingCredential with an issuer, validFrom
+      and a later validUntil, a revocation credentialStatus, and a
+      credentialSubject with id, kind, roles, audience, keyClass and key, as
+      its schema fixes.
+    uses: [credential.field.valid-from, signer.proof.structure]
+    schemas: [key-binding-credential.json]
+    vectors: [keybinding-001, keybinding-002, keybinding-024, keybinding-034, keybinding-035, keybinding-036]
+    notes: >-
+      A key binding states that a key (credentialSubject.key, its keyId and
+      public JWK) is the subject's, a subject of the issuer's namespace, for
+      one relying party (audience), from validFrom until validUntil, with an
+      entry in the issuer's revocation list. The vocabularies of kind, roles
+      and keyClass are the profile's, as delegation.scope's tokens are, and
+      whether an issuer may bind a given kind, role or key class is the
+      relying party's check of the issuer's scope, not this catalog's. The
+      wire carries no JSON number: statusListIndex is a string. The top level
+      and credentialSubject may carry members this catalog does not define;
+      they are kept with the signed body (credential.body-sot) and decide
+      nothing. credentialStatus, key and its JWK have exactly their members
+      (keybinding.status.entry). Its @context is keybinding.context's.
+
+  - id: keybinding.context
+    status: draft
+    class: core
+    statement: >-
+      A key binding's @context MUST be credentials v2, dplaax v1,
+      https://dplaax.dev/vc/branches/v1/keybinding/<12 digits>, then only
+      absolute URIs; one with no such branch URI MUST be refused unless its
+      validFrom is before 2027-01-01T00:00:00Z.
+    uses: [credential.field.context, keybinding.shape]
+    schemas: [key-binding-credential.json]
+    vectors: [keybinding-038, keybinding-040, keybinding-041, keybinding-044, keybinding-045, keybinding-046, keybinding-047, keybinding-048, keybinding-049, keybinding-050, keybinding-051]
+    notes: >-
+      credentials v2 is https://www.w3.org/ns/credentials/v2 and dplaax v1 is
+      https://dplaax.dev/vc/v1. The key-binding terms are defined by the
+      key-binding branch context (contexts/README.md, Branch contexts), whose
+      snapshots are https://dplaax.dev/vc/branches/v1/keybinding/ followed by
+      the UTC time each was frozen, YYYYMMDDHHmm. Any snapshot is accepted by
+      its URI's form, since a later snapshot of a branch only adds terms. The
+      three come first and in that order; what follows them is only absolute
+      URIs, a scheme and a colon first (RFC 3986; the schema's pattern
+      ^[A-Za-z][A-Za-z0-9+.-]*:), never a relative reference nor an inline
+      context object, though VC Data Model 2.0 §4.3 allows objects. A binding
+      with no branch URI has the same form without it: credentials v2,
+      dplaax v1, then only absolute URIs. An issuer that uses members no context defines adds a
+      context URI for them or, last, the undefined-terms context
+      (https://www.w3.org/ns/credentials/undefined-terms/v2, VC Data Model 2.0
+      §5.2). A binding issued before the branch existed carries only
+      credentials v2 and dplaax v1; it is accepted while its validFrom is
+      before the cut-off, so that issuers have until then to add the branch.
+      The proof (eddsa-jcs-2022) signs @context as written and reads no
+      context document. A verifier that expands a binding as JSON-LD reads
+      only the snapshots it embeds (signer.suite.rdfc-expansion-guard), so a
+      binding naming a snapshot it does not embed cannot be expanded there. A
+      revocation list's @context opens with credentials v2, which defines its
+      terms; other contexts may follow (keybinding.status-list.shape).
+
+  - id: keybinding.issuer
+    status: draft
+    class: core
+    statement: >-
+      A verifier MUST accept a key binding or a status list only when its
+      trust anchor names the issuer and the proof verifies under one of the
+      issuance keys the anchor names for that issuer, and MUST reject one
+      signed with any other key.
+    uses: [keybinding.shape]
+    schemas: []
+    vectors: [keybinding-003, keybinding-004, keybinding-026, keybinding-027]
+    notes: >-
+      A trust anchor is the relying party's configuration for one issuer: the
+      issuer's DID, the verification methods it issues bindings and status
+      lists with, the longest validity it may give a binding, and how old its
+      status list may be. Another key of the same issuer, one it signs other
+      credentials with, neither binds keys nor issues lists. A list signed
+      otherwise could leave unmarked what the issuer revoked.
+
+  - id: keybinding.validity
+    status: draft
+    class: core
+    statement: >-
+      A verifier MUST reject a key binding at a decision before its validFrom
+      or at or after its validUntil, each widened by the verifier's clock
+      skew, and one whose validUntil less validFrom exceeds the longest its
+      trust anchor allows the issuer.
+    uses: [keybinding.shape, keybinding.issuer]
+    schemas: []
+    vectors: [keybinding-005, keybinding-006, keybinding-028, keybinding-029, keybinding-030]
+    notes: >-
+      The period is half-open: a binding is valid at its validFrom and not at
+      its validUntil. The bound on its length keeps a binding's revocation
+      within reach of the issuer's status list.
+
+  - id: keybinding.audience
+    status: draft
+    class: core
+    statement: >-
+      A verifier MUST reject a key binding whose credentialSubject.audience is
+      not byte-identical to the verifier's own identifier.
+    uses: [keybinding.shape]
+    schemas: []
+    vectors: [keybinding-007]
+    notes: >-
+      A binding is for one relying party: the issuer's word that a key is the
+      subject's, given to one company, is not a credential another can present
+      as its own. The relying party's identifier is its organization DID.
+
+  - id: keybinding.status.entry
+    status: draft
+    class: core
+    statement: >-
+      A key binding's statusListIndex MUST be a decimal string without leading
+      zeros and its statusListCredential the id of a list of its issuer; a
+      verifier MUST reject it when it holds no list under that id, or that
+      list marks the index or lacks it.
+    uses: [keybinding.shape, keybinding.status-list.id]
+    schemas: [key-binding-credential.json]
+    vectors: [keybinding-008, keybinding-009, keybinding-010, keybinding-033]
+    notes: >-
+      An entry is marked when its bit is set: index i is bit 7 - (i mod 8) of
+      byte i div 8 of the expanded list, the first entry the most significant
+      bit of the first byte (W3C Bitstring Status List); a list lacks an index
+      at or past its number of entries. credentialStatus has exactly type, statusPurpose, statusListIndex and
+      statusListCredential: a statusSize or statusMessage would change what
+      the entry's bits mean, so an entry carrying one is not this entry.
+
+  - id: keybinding.status-list.id
+    status: draft
+    class: core
+    statement: >-
+      A status list's id MUST be a DID URL of its issuer, <issuer>#fragment
+      with one # and a fragment of [A-Za-z0-9._-] that is not only dots; a
+      verifier MUST reject a list with any other id, a relative #fragment or
+      another DID's URL included.
+    uses: [keybinding.issuer]
+    schemas: [status-list-credential.json]
+    vectors: [keybinding-011, keybinding-012, keybinding-013]
+    notes: >-
+      The id ties a list to its issuer's namespace, so a binding cannot name a
+      list in another issuer's name and an issuer cannot issue one. The
+      fragment grammar is the one key references use, so that every reader
+      reads an id alike. The list is signed with one of the issuance keys of
+      its issuer's trust anchor (keybinding.issuer); its form is
+      keybinding.status-list.shape's.
+
+  - id: keybinding.status-list.shape
+    status: draft
+    class: core
+    statement: >-
+      A status list MUST be a BitstringStatusListCredential whose
+      credentialSubject is a revocation BitstringStatusList with an
+      encodedList, and whose @context is credentials v2, then only absolute
+      URIs, as its schema fixes.
+    uses: [keybinding.status-list.id]
+    schemas: [status-list-credential.json]
+    vectors: [keybinding-039, keybinding-042, keybinding-052, keybinding-053, keybinding-054]
+    notes: >-
+      The list is a W3C Bitstring Status List credential for revocation: its
+      encodedList is the multibase base64url of the GZIP of the bitstring, at
+      least 131072 entries (16 KiB, the W3C minimum, so an index says little
+      about who holds it). credentials v2 is
+      https://www.w3.org/ns/credentials/v2 and defines the list's terms; an
+      absolute URI begins with a scheme and a colon (RFC 3986), never a
+      relative reference nor an inline context object. An issuer that uses
+      members no context defines adds a context URI for them or, last, the
+      undefined-terms context (VC Data Model 2.0 §5.2). The top level and
+      credentialSubject may carry such members, kept with the signed body.
+
+  - id: keybinding.status-list.period
+    status: draft
+    class: core
+    statement: >-
+      A status list's validFrom and validUntil MUST be UTC times to the second,
+      validUntil the later; a verifier MUST reject a list that is not so when
+      it reads it, and MUST NOT hold it.
+    uses: [credential.field.valid-from, keybinding.status-list.id]
+    schemas: [status-list-credential.json]
+    vectors: [keybinding-014]
+    notes: >-
+      A list with an empty period, once held, would refuse every binding under
+      it and could not be replaced by a correct list of an earlier validFrom
+      (keybinding.status-list.monotonic); refusing it when read keeps it out
+      of what is held, including what a verifier restores after a restart.
+
+  - id: keybinding.status-list.content-hash
+    status: draft
+    class: core
+    statement: >-
+      A status list's content hash MUST be sha256: and the lowercase hex
+      SHA-256 of the RFC 8785 form of the list without its proof, with
+      credentialSubject.encodedList replaced by sha256: and the lowercase hex
+      SHA-256 of the expanded bits.
+    uses: [canon.jcs.base]
+    schemas: [status-list-credential.json]
+    vectors: [keybinding-015, keybinding-016, keybinding-025]
+    notes: >-
+      The hash covers the bits, not their compression: gzip writes other bytes
+      in another implementation or version, and the same list compressed
+      otherwise is the same list. Every other member, validUntil included, is
+      covered as it is. Two lists of the same validFrom are told apart by it
+      (keybinding.status-list.monotonic).
+
+  - id: keybinding.status-list.monotonic
+    status: draft
+    class: core
+    statement: >-
+      Against the held list of its issuer and id, a verifier MUST reject an
+      earlier list, or one of equal validFrom and other content hash, as
+      status-list-rewound, and a later one that unmarks an entry the held list
+      marks as status-list-revocation-cleared.
+    uses: [keybinding.status-list.content-hash, keybinding.status.entry]
+    schemas: [status-list-credential.json]
+    vectors: [keybinding-017, keybinding-018, keybinding-019, keybinding-020, keybinding-021]
+    notes: >-
+      A list only moves forward and a revocation is not reversible. A list of
+      the held one's validFrom and content hash is the held list again, not a
+      step back. An entry past the end of a later list is unmarked in it. The
+      two reasons are told apart because a cleared revocation is the one sign
+      that an issuer undid a revocation, which an audit distinguishes from a
+      stale list. Keeping the held list across restarts is the verifier's.
+
+  - id: keybinding.status-list.fresh
+    status: draft
+    class: core
+    statement: >-
+      A verifier MUST NOT accept a binding under a list that at the decision
+      is not yet valid or is at or after its validUntil, each widened by the
+      skew, or whose age exceeds the anchor's maximum, and MUST NOT hold a
+      list not yet valid when it takes it.
+    uses: [keybinding.status.entry, keybinding.issuer]
+    schemas: []
+    vectors: [keybinding-022, keybinding-023, keybinding-031, keybinding-032, keybinding-037, keybinding-043]
+    notes: >-
+      The verifier decides from the list it holds, without asking the issuer
+      at the decision; the bound on the list's age bounds how long a
+      revocation takes to reach it. A list's age at the decision is the time
+      since its validFrom; the clock skew widens the list's period, not its
+      age. Taking a list includes restoring the held one after a restart: a
+      list dated ahead, once held, would leave every correct list after it
+      refused as earlier (keybinding.status-list.monotonic), so it is never
+      held. A list the verifier holds past its
+      freshness still guards its marks against a later list
+      (keybinding.status-list.monotonic), though no binding is accepted under
+      it.
