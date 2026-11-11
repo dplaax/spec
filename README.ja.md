@@ -5,11 +5,13 @@ dPLaaX（"data PipeLine as a X"）は、データが組織やシステムの境�
 記録し、その連なりを第三者が独立に確かめられるようにするプロトコルである
 （→ [concept.ja.md](concept.ja.md)）。
 
-> **Status: v0.1 (draft)。** すべての rule は `draft` であり、実装からの
+> **Status: v0.2.0-alpha.1 (draft)。** すべての rule は `draft` であり、実装からの
 > フィードバックで変わり続ける（→ [VERSIONING.ja.md](VERSIONING.ja.md)）。
 > **Public review とコントリビューションを歓迎する** —
-> [CONTRIBUTING.ja.md](CONTRIBUTING.ja.md) を参照。ガバナンスはコントリビュータの
-> 増加に応じて段階的に整備する（現状: maintainer 裁量、議論は Issue で公開）。
+> [CONTRIBUTING.ja.md](CONTRIBUTING.ja.md) を参照。ガバナンス（誰が決めるか、変更の
+> 区分、draft→stable の昇格、継承）は [GOVERNANCE.md](GOVERNANCE.md) にある。既知の
+> 実装: [provin-line/oss](https://github.com/provin-line/oss)（v0.4.0 は 0.1.0 の後の
+> `main` の `vectors/` を取り込み、CI で確かめる）。
 
 dPLaaX の normative spec。**規範の SoT は次の 3 artifact のみ**であり、散文は規範を持たない。
 

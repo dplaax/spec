@@ -6,14 +6,14 @@ boundary — who received what, performed what action, and passed on what, so th
 the resulting chain can be independently verified by third parties
 (→ [concept.md](concept.md)).
 
-> **Status: v0.1 (draft).** All rules are in `draft` state and will continue to
+> **Status: v0.2.0-alpha.1 (draft).** All rules are in `draft` state and will continue to
 > evolve based on implementation feedback (→ [VERSIONING.md](VERSIONING.md)).
 > **Public review and contributions are welcome** —
 > see [CONTRIBUTING.md](CONTRIBUTING.md). Governance — who decides, change
 > classes, draft→stable promotion, succession — is documented in
 > [GOVERNANCE.md](GOVERNANCE.md). Known implementation:
-> [provin-line/oss](https://github.com/provin-line/oss) (v0.3.0 tracks spec
-> v0.1 draft; vendors and CI-gates this repo's `vectors/`).
+> [provin-line/oss](https://github.com/provin-line/oss) (v0.4.0 vendors this
+> repo's `vectors/` as of `main` after 0.1.0 and checks them in CI).
 
 The normative spec for dPLaaX. **The source of truth for all normative content
 is exactly the following three artifacts**; prose is non-normative.
