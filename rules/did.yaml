@@ -6,16 +6,20 @@ rules:
     status: draft
     class: core
     statement: >-
-      A string MUST be taken as a did:dplaax DID exactly when it is
-      did:dplaax: then colon-separated segments, a registry of at most 253
-      octets, an account type, an account id and then its resource path, each
-      segment [A-Za-z0-9._-]+ and not only dots.
+      A string presented as a did:dplaax DID MUST be accepted as one exactly
+      when it is did:dplaax: then colon-separated segments, a registry of at
+      most 253 octets, an account type, an account id and its resource path,
+      each [A-Za-z0-9._-]+ and not only dots.
     uses: []
     schemas: []
     vectors: [did-001, did-002, did-003, did-004, did-005, did-006, did-007, did-008, did-009, did-010, did-011, did-012, did-013, did-014, did-015, did-016, did-017, did-018, did-019, did-020, did-021]
     notes: >-
-      The form is did:dplaax:<registry>:<accountType>:<accountId>, then any
-      further segments, which are the resource path (none for an Owner). The
+      Whatever consumes it (an issuer, a resolver, a verifier, a registry), a
+      string presented as a did:dplaax DID without this form is refused, never
+      repaired or normalized; a string of another DID method is not one
+      presented as a did:dplaax DID. The form is
+      did:dplaax:<registry>:<accountType>:<accountId>, then any further
+      segments, which are the resource path (none for an Owner). The
       method name is lower case, and so is the did: scheme here. Every
       segment uses only ASCII letters, digits, dot, underscore and hyphen, so
       an empty segment, a trailing colon, a percent-encoded octet, a slash, a
